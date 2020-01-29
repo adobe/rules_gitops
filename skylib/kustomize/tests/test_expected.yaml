@@ -1,0 +1,40 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubedobe:cluster-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: adcloud_k8s_sudo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-app: kube-dns
+  name: akube-dns
+  namespace: newnamespace-1
+spec:
+  ports:
+  - name: dns
+    port: 53
+  selector:
+    k8s-app: kube-dns
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-app: kube-dns
+  name: bkube-dns
+  namespace: newnamespace-1
+spec:
+  ports:
+  - name: dns
+    port: 53
+  selector:
+    k8s-app: kube-dns

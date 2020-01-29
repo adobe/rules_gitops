@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: prometheus2
+  name: prometheus2
+  namespace: rtb-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus2
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: prometheus2
+      name: prometheus2
+    spec:
+      containers:
+      - args:
+        - -logtostderr
+        - -zk=rtb-zk01.us-east-1a.public:2181,rtb-zk02.us-east-1a.public:2181,rtb-zk03.us-east-1a.public:2181,rtb-zk04.us-east-1a.public:2181,rtb-zk05.us-east-1a.public:2181
+        - -ofile=/etc/prometheus-sa/sa-rtb.yaml
+        - /sa/presence/rtb
+        image: salist
+        name: samonitor
+        volumeMounts:
+        - mountPath: /etc/prometheus-sa
+          name: shared-data
+      - args:
+        - --storage.tsdb.path=/data/
+        - --storage.tsdb.retention=360h
+        - --web.enable-lifecycle
+        - --web.console.libraries=/etc/prometheus/console_libraries
+        - --web.console.templates=/etc/prometheus/consoles
+        - --config.file=/etc/prometheus-configs/prometheus.config
+        - --web.external-url=https://prometheus.rtb-prod.us-east-1.k8s.tubemogul.info/
+        image: prom/prometheus:v2.2.1
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 1
+        name: prometheus
+        ports:
+        - containerPort: 9090
+          name: webui
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+            scheme: HTTP
+        resources:
+          limits:
+            cpu: "10"
+            memory: 22Gi
+          requests:
+            cpu: "10"
+            memory: 22Gi
+        volumeMounts:
+        - mountPath: /etc/prometheus-sa
+          name: shared-data
+        - mountPath: /etc/prometheus-configs
+          name: config-volume
+        - mountPath: /data
+          name: data-volume
+      - args:
+        - -file=/etc/prometheus-configs/..data
+        - -notify-http-method=POST
+        - -notify-http-url=http://127.0.0.1:9090/-/reload
+        image: filewatcher
+        name: filewatcher
+        resources:
+          limits:
+            cpu: 0.01
+            memory: 10Mi
+          requests:
+            cpu: 0.01
+            memory: 10Mi
+        volumeMounts:
+        - mountPath: /etc/prometheus-configs
+          name: config-volume
+      securityContext:
+        fsGroup: 99
+        runAsUser: 99
+      volumes:
+      - emptyDir: {}
+        name: shared-data
+      - configMap:
+          name: prometheus2
+        name: config-volume
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: prometheus2-data

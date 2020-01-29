@@ -1,0 +1,35 @@
+{
+    "title": "Deploy to test 1",
+    "description": "Deploy to test 1.",
+    "state": "OPEN",
+    "open": true,
+    "closed": false,
+    "fromRef": {
+        "id": "refs/heads/deploy/test_1",
+        "repository": {
+            "slug": "repo",
+            "name": null,
+            "project": {
+                "key": "TM"
+            }
+        }
+    },
+    "toRef": {
+        "id": "refs/heads/master",
+        "repository": {
+            "slug": "repo",
+            "name": null,
+            "project": {
+                "key": "TM"
+            }
+        }
+    },
+    "locked": false,
+    "reviewers": [
+        {
+            "user": {
+                "name": "aleksey.pesternikov"
+            }
+        }
+    ]
+}

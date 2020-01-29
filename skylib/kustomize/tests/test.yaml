@@ -1,0 +1,42 @@
+# namespace should be replaced
+apiVersion: v1
+kind: Service
+metadata:
+  name: akube-dns
+  namespace: kube-system
+  labels:
+    k8s-app: kube-dns
+spec:
+  selector:
+    k8s-app: kube-dns
+  ports:
+  - name: dns
+    port: 53
+---
+#namespace should be set
+apiVersion: v1
+kind: Service
+metadata:
+  name: bkube-dns
+  labels:
+    k8s-app: kube-dns
+spec:
+  selector:
+    k8s-app: kube-dns
+  ports:
+  - name: dns
+    port: 53
+---
+# should be NO namespace since this object is globally scoped
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubedobe:cluster-admin
+subjects:
+- kind: Group
+  name: adcloud_k8s_sudo
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
