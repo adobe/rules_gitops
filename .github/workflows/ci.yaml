@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Mount bazel cache
+        uses: actions/cache@v1
+        with:
+          path: "/home/runner/.cache/bazel"
+          key: bazel
+      - name: Install bazelisk
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/bin/"
+          curl -LOs -o "${GITHUB_WORKSPACE}/bin/bazel" "https://github.com/bazelbuild/bazelisk/releases/download/v1.3.0/bazelisk-linux-amd64"
+          chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
+      - name: Build
+        run: |
+          "${GITHUB_WORKSPACE}/bin/bazel" build //...
+      - name: Check
+        run: |
+          "${GITHUB_WORKSPACE}/bin/bazel" bazel run //:buildifier-check
+      - name: Test
+        run: |
+          "${GITHUB_WORKSPACE}/bin/bazel" test //...
+      - name: Build Examples
+        run: |
+          cd "${GITHUB_WORKSPACE}/examples"
+          "${GITHUB_WORKSPACE}/bin/bazel" build //...
+      - name: Test Examples
+        run: |
+          cd "${GITHUB_WORKSPACE}/examples"
+          "${GITHUB_WORKSPACE}/bin/bazel" test //...
