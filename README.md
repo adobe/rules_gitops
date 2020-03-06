@@ -12,6 +12,7 @@ Bazel GitOps Rules is an alternative to [rules_k8s](https://github.com/bazelbuil
   * The results manifests are rendered without pushing containers.
   * Pushes all the images in parallel.
 
+
 ## Rules
 
 * [k8s_deploy](#k8s_deploy)
@@ -22,16 +23,30 @@ Bazel GitOps Rules is an alternative to [rules_k8s](https://github.com/bazelbuil
 
 Add the following to your `WORKSPACE` file to add the necessary external dependencies:
 
+<!--
+# generate the WORKSPACE snippet:
+
+rev=$(git rev-parse HEAD) && sha265=$(curl -Ls https://github.com/adobe/rules_gitops/archive/${rev}.zip | shasum -a 256 - | cut -d ' ' -f1) && cat <<EOF
+# copy/paste following snippet into README.md
+rules_gitops_version = "${rev}"
+http_archive(
+    name = "com_adobe_rules_gitops",
+    sha256 = "${sha265}",
+    strip_prefix = "rules_gitops-%s" % rules_gitops_version,
+    urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
+)
+EOF
+-->
+
 ```python
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# TODO(KZ): update to the latest good HEAD commit
-rules_gitops_version = "88de1a777eeb1db7765409378e78052f592f4ddb"
+rules_gitops_version = "b05aa4f32fa2b30a1dae3b95808d427ceaf7bd2d"
 http_archive(
     name = "com_adobe_rules_gitops",
-    # sha256 = "1d1b7ef326703984a9787110b519b3f3935d31f640f70e8600f57bf4ba64769b",
-    strip_prefix = "bazel_gitops_tools-%s" % rules_gitops_version,
-    urls = ["https://git.corp.adobe.com/AdCloud/bazel_gitops_tools/archive/%s.zip" % rules_gitops_version],
+    sha256 = "395408a3dc9c3db2b5c200b8722a13a60898c861633b99e6e250186adffd1370",
+    strip_prefix = "rules_gitops-%s" % rules_gitops_version,
+    urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
 )
 
 load("@rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
@@ -288,10 +303,12 @@ When you run `bazel run //helloworld:mynamespace.apply`, it'll deploy a _hellowo
 
 Please note that the `objects` attribute is ignored by `.gitops` targets.
 
+
 <a name="gitops_and_deployment"></a>
 ### GitOps and Deployment
 
-TDDO(KZ): document gitops and deployment
+<!-- TODO(KZ): document gitops and deployment -->
+
 
 <a name="k8s_test_setup"></a>
 ## k8s_test_setup
@@ -328,19 +345,37 @@ The output of the `k8s_test_setup` rule (a shell script) is referenced in the `j
 
 The test code launches the script to perform the test setup. The tes code should also monitor the script console output to listen to the pod readiness events.
 
+
 ## Building & Testing
 
-1. `bazel test //...`
+### Building & Testing GitOps Rules
 
-### Contributing
+```bash
+bazel test //...
+```
+
+### Building & Testing Examples Project
+
+```bash
+cd examples
+bazel test //...
+```
+
+
+## Contributing
 
 Contributions are welcomed! Read the [Contributing Guide](./.github/CONTRIBUTING.md) for more information.
 
-### Licensing
+
+## Adopters
+Here's a (non-exhaustive) list of companies that use `rules_gitops` in production. Don't see yours? [You can add it in a PR!](https://github.com/adobe/rules_gitops/edit/master/README.md)
+  * [Adobe (Advertising Cloud)](https://www.adobe.com/advertising/adobe-advertising-cloud.html)
+
+
+## Licensing
 
 The contents of third party dependencies in [/vendor](./vendor) folder are covered by their repositories' respective licenses.
 
 The contents of [/templating/fasttemplate](./templating/fasttemplate) are licensed under MIT License. See [LICENSE](./templating/fasttemplate/LICENSE) for more information.
 
 All other files are licensed under the Apache V2 License. See [LICENSE](LICENSE) for more information.
-
