@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["decoder.go"],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/util/yaml",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/yaml",
     importpath = "k8s.io/apimachinery/pkg/util/yaml",
     visibility = ["//visibility:public"],
     deps = [

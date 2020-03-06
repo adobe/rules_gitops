@@ -6,7 +6,7 @@ go_library(
         "generated.pb.go",
         "intstr.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/util/intstr",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/intstr",
     importpath = "k8s.io/apimachinery/pkg/util/intstr",
     visibility = ["//visibility:public"],
     deps = [

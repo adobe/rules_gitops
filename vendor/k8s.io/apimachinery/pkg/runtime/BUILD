@@ -23,7 +23,7 @@ go_library(
         "types_proto.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/runtime",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/runtime",
     importpath = "k8s.io/apimachinery/pkg/runtime",
     visibility = ["//visibility:public"],
     deps = [

@@ -12,7 +12,7 @@ go_library(
         "suffix.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/api/resource",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/api/resource",
     importpath = "k8s.io/apimachinery/pkg/api/resource",
     visibility = ["//visibility:public"],
     deps = [

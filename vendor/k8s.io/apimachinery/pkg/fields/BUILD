@@ -8,7 +8,7 @@ go_library(
         "requirements.go",
         "selector.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/fields",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/fields",
     importpath = "k8s.io/apimachinery/pkg/fields",
     visibility = ["//visibility:public"],
     deps = ["//vendor/k8s.io/apimachinery/pkg/selection:go_default_library"],

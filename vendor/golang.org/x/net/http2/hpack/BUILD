@@ -8,7 +8,7 @@ go_library(
         "huffman.go",
         "tables.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/golang.org/x/net/http2/hpack",
+    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/net/http2/hpack",
     importpath = "golang.org/x/net/http2/hpack",
     visibility = ["//visibility:public"],
 )

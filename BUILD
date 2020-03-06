@@ -10,6 +10,7 @@
 
 # gazelle:proto disable
 # gazelle:build_tags darwin,linux
+# gazelle:exclude examples
 
 licenses(["notice"])  # Apache 2.0
 
@@ -18,7 +19,7 @@ load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
 
 exports_files(["WORKSPACE"])
 
-# gazelle:prefix git.corp.adobe.com/AdCloud/bazel_gitops_tools
+# gazelle:prefix github.com/adobe/rules_gitops
 gazelle(
     name = "gazelle",
     build_tags = [

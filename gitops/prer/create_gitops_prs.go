@@ -23,13 +23,13 @@ import (
 	"strings"
 	"sync"
 
-	"git.corp.adobe.com/AdCloud/bazel_gitops_tools/gitops/bazel"
-	"git.corp.adobe.com/AdCloud/bazel_gitops_tools/gitops/bitbucket"
-	"git.corp.adobe.com/AdCloud/bazel_gitops_tools/gitops/commitmsg"
-	"git.corp.adobe.com/AdCloud/bazel_gitops_tools/gitops/exec"
-	"git.corp.adobe.com/AdCloud/bazel_gitops_tools/gitops/git"
+	"github.com/adobe/rules_gitops/gitops/bazel"
+	"github.com/adobe/rules_gitops/gitops/bitbucket"
+	"github.com/adobe/rules_gitops/gitops/commitmsg"
+	"github.com/adobe/rules_gitops/gitops/exec"
+	"github.com/adobe/rules_gitops/gitops/git"
 
-	"git.corp.adobe.com/AdCloud/bazel_gitops_tools/gitops/blaze_query"
+	"github.com/adobe/rules_gitops/gitops/blaze_query"
 	proto "github.com/golang/protobuf/proto"
 )
 

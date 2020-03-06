@@ -6,7 +6,7 @@ go_library(
         "klog.go",
         "klog_file.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/klog",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/klog",
     importpath = "k8s.io/klog",
     visibility = ["//visibility:public"],
 )

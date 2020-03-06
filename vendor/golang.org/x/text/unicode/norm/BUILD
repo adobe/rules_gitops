@@ -15,7 +15,7 @@ go_library(
         "transform.go",
         "trie.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/golang.org/x/text/unicode/norm",
+    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/text/unicode/norm",
     importpath = "golang.org/x/text/unicode/norm",
     visibility = ["//visibility:public"],
     deps = ["//vendor/golang.org/x/text/transform:go_default_library"],

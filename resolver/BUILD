@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["resolver.go"],
-    importpath = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/resolver",
+    importpath = "github.com/adobe/rules_gitops/resolver",
     visibility = ["//visibility:private"],
     deps = ["//resolver/pkg:go_default_library"],
 )

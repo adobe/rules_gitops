@@ -10,7 +10,7 @@ go_library(
         "watch.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/watch",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/watch",
     importpath = "k8s.io/apimachinery/pkg/watch",
     visibility = ["//visibility:public"],
     deps = [

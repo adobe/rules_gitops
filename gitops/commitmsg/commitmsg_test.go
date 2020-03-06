@@ -16,7 +16,7 @@ import (
 	"reflect"
 	"testing"
 
-	"git.corp.adobe.com/AdCloud/bazel_gitops_tools/gitops/commitmsg"
+	"github.com/adobe/rules_gitops/gitops/commitmsg"
 )
 
 func TestRoundtrip(t *testing.T) {

@@ -8,7 +8,7 @@ go_library(
         "unstructured_list.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     importpath = "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     visibility = ["//visibility:public"],
     deps = [

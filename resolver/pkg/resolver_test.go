@@ -19,7 +19,7 @@ import (
 	"strings"
 	"testing"
 
-	resolver "git.corp.adobe.com/AdCloud/bazel_gitops_tools/resolver/pkg"
+	resolver "github.com/adobe/rules_gitops/resolver/pkg"
 )
 
 func TestNoError(t *testing.T) {

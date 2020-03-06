@@ -8,7 +8,7 @@ go_library(
         "selector.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/labels",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/labels",
     importpath = "k8s.io/apimachinery/pkg/labels",
     visibility = ["//visibility:public"],
     deps = [

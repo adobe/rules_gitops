@@ -6,7 +6,7 @@ go_library(
         "dec.go",
         "rounder.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/gopkg.in/inf.v0",
+    importmap = "github.com/adobe/rules_gitops/vendor/gopkg.in/inf.v0",
     importpath = "gopkg.in/inf.v0",
     visibility = ["//visibility:public"],
 )

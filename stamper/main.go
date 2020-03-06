@@ -18,7 +18,7 @@ import (
 	"os"
 	"strings"
 
-	"git.corp.adobe.com/AdCloud/bazel_gitops_tools/templating/fasttemplate"
+	"github.com/adobe/rules_gitops/templating/fasttemplate"
 )
 
 type arrayFlags []string

@@ -19,7 +19,7 @@ import (
 	"os"
 	"strings"
 
-	resolver "git.corp.adobe.com/AdCloud/bazel_gitops_tools/resolver/pkg"
+	resolver "github.com/adobe/rules_gitops/resolver/pkg"
 )
 
 type imagesFlags map[string]string

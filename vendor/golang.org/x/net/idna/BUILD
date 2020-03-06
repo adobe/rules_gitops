@@ -13,7 +13,7 @@ go_library(
         "trie.go",
         "trieval.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/golang.org/x/net/idna",
+    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/net/idna",
     importpath = "golang.org/x/net/idna",
     visibility = ["//visibility:public"],
     deps = [

@@ -15,7 +15,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["create_gitops_prs.go"],
-    importpath = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/gitops/prer",
+    importpath = "github.com/adobe/rules_gitops/gitops/prer",
     visibility = ["//visibility:private"],
     deps = [
         "//gitops/bazel:go_default_library",

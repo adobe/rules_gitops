@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "errors.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/util/errors",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/errors",
     importpath = "k8s.io/apimachinery/pkg/util/errors",
     visibility = ["//visibility:public"],
     deps = ["//vendor/k8s.io/apimachinery/pkg/util/sets:go_default_library"],

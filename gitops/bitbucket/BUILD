@@ -15,7 +15,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = ["bitbucket.go"],
-    importpath = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/gitops/bitbucket",
+    importpath = "github.com/adobe/rules_gitops/gitops/bitbucket",
     visibility = ["//visibility:public"],
 )
 

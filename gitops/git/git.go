@@ -19,7 +19,7 @@ import (
 	oe "os/exec"
 	"path/filepath"
 
-	"git.corp.adobe.com/AdCloud/bazel_gitops_tools/gitops/exec"
+	"github.com/adobe/rules_gitops/gitops/exec"
 )
 
 var (

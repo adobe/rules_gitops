@@ -15,7 +15,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/templating",
+    importpath = "github.com/adobe/rules_gitops/templating",
     visibility = ["//visibility:private"],
     deps = ["//templating/fasttemplate:go_default_library"],
 )

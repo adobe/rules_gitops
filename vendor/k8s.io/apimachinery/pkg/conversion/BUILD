@@ -8,7 +8,7 @@ go_library(
         "doc.go",
         "helper.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/conversion",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/conversion",
     importpath = "k8s.io/apimachinery/pkg/conversion",
     visibility = ["//visibility:public"],
     deps = ["//vendor/k8s.io/apimachinery/third_party/forked/golang/reflect:go_default_library"],

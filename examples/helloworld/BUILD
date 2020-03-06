@@ -17,7 +17,7 @@ load("@rules_gitops//gitops:defs.bzl", "k8s_deploy")
 go_library(
     name = "go_default_library",
     srcs = ["helloworld.go"],
-    importpath = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/examples/helloworld",
+    importpath = "github.com/adobe/rules_gitops/examples/helloworld",
     visibility = ["//visibility:private"],
 )
 

@@ -7,7 +7,7 @@ go_library(
         "bidirule10.0.0.go",
         "bidirule9.0.0.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/golang.org/x/text/secure/bidirule",
+    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/text/secure/bidirule",
     importpath = "golang.org/x/text/secure/bidirule",
     visibility = ["//visibility:public"],
     deps = [

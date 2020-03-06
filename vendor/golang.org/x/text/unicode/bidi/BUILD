@@ -12,7 +12,7 @@ go_library(
         "tables9.0.0.go",
         "trieval.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/golang.org/x/text/unicode/bidi",
+    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/text/unicode/bidi",
     importpath = "golang.org/x/text/unicode/bidi",
     visibility = ["//visibility:public"],
 )

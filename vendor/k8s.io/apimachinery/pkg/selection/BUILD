@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["operator.go"],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/k8s.io/apimachinery/pkg/selection",
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/selection",
     importpath = "k8s.io/apimachinery/pkg/selection",
     visibility = ["//visibility:public"],
 )

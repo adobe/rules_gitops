@@ -7,7 +7,7 @@ go_library(
         "yaml.go",
         "yaml_go110.go",
     ],
-    importmap = "git.corp.adobe.com/AdCloud/bazel_gitops_tools/vendor/github.com/ghodss/yaml",
+    importmap = "github.com/adobe/rules_gitops/vendor/github.com/ghodss/yaml",
     importpath = "github.com/ghodss/yaml",
     visibility = ["//visibility:public"],
     deps = ["//vendor/gopkg.in/yaml.v2:go_default_library"],
