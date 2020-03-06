@@ -19,7 +19,7 @@ jobs:
       - name: Install bazelisk
         run: |
           mkdir -p "${GITHUB_WORKSPACE}/bin/"
-          curl -LOs -o "${GITHUB_WORKSPACE}/bin/bazel" "https://github.com/bazelbuild/bazelisk/releases/download/v1.3.0/bazelisk-linux-amd64"
+          curl -Ls -o "${GITHUB_WORKSPACE}/bin/bazel" "https://github.com/bazelbuild/bazelisk/releases/download/v1.3.0/bazelisk-linux-amd64"
           chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
       - name: Build
         run: |
