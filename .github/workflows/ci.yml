@@ -25,7 +25,7 @@ jobs:
       run: buildifier -mode=check -r .
   build_and_test:
     runs-on: ubuntu-latest
-    container: docker://l.gcr.io/google/bazel:2.1.1
+    container: docker://l.gcr.io/google/bazel:2.1.0
     steps:
     - uses: actions/checkout@v1
     - name: build and test
