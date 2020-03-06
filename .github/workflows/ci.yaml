@@ -26,7 +26,7 @@ jobs:
           "${GITHUB_WORKSPACE}/bin/bazel" build //...
       - name: Check
         run: |
-          "${GITHUB_WORKSPACE}/bin/bazel" bazel run //:buildifier-check
+          "${GITHUB_WORKSPACE}/bin/bazel" run //:buildifier-check
       - name: Test
         run: |
           "${GITHUB_WORKSPACE}/bin/bazel" test //...
