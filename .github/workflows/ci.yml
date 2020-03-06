@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  gofmt:
+    runs-on: ubuntu-latest
+    container: docker://golang:1.14
+    steps:
+    - uses: actions/checkout@v1
+    - name: run gofmt
+      run: test -z "$(gofmt -d . | tee /dev/stderr)"
+  buildifier:
+    runs-on: ubuntu-latest
+    container: docker://golang:1.14
+    steps:
+    - uses: actions/checkout@v1
+    - name: install buildifier
+      run: go get github.com/bazelbuild/buildtools/buildifier
+    - name: run buildifier
+      run: buildifier -mode=check -r .
+  build_and_test:
+    runs-on: ubuntu-latest
+    container: docker://l.gcr.io/google/bazel:2.1.1
+    steps:
+    - uses: actions/checkout@v1
+    - name: build and test
+      run: bazel test //...
