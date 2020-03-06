@@ -51,11 +51,11 @@ http_archive(
     urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
 )
 
-load("@rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
+load("@com_adobe_rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
 
 rules_gitops_dependencies()
 
-load("@rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
+load("@com_adobe_rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
 
 rules_gitops_repositories()
 

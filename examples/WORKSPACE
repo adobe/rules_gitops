@@ -11,15 +11,15 @@
 workspace(name = "examples")
 
 local_repository(
-    name = "rules_gitops",
+    name = "com_adobe_rules_gitops",
     path = "..",
 )
 
-load("@rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
+load("@com_adobe_rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
 
 rules_gitops_dependencies()
 
-load("@rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
+load("@com_adobe_rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
 
 rules_gitops_repositories()
 

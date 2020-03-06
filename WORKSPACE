@@ -8,18 +8,18 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-workspace(name = "rules_gitops")
+workspace(name = "com_adobe_rules_gitops")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 #
 # Self dependencies
 #
-load("@rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
+load("@com_adobe_rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
 
 rules_gitops_dependencies()
 
-load("@rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
+load("@com_adobe_rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
 
 rules_gitops_repositories()
 
