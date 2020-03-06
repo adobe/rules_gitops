@@ -55,7 +55,7 @@ load("@rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
 
 rules_gitops_dependencies()
 
-load("@rules_gitops//gitops:repositories.bzl", "rules_gitops_repositores")
+load("@rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
 
 rules_gitops_repositores()
 
