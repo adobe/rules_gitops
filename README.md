@@ -45,17 +45,17 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 rules_gitops_version = "11de21b82d2e240751e0c3f958f8498dd5047131"
 http_archive(
-    name = "rules_gitops",
+    name = "com_adobe_rules_gitops",
     sha256 = "713cb03aa532c0ce88531a077ac48e799aeec0dc796a08e44a7d6582067f399e",
     strip_prefix = "rules_gitops-%s" % rules_gitops_version,
     urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
 )
 
-load("@rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
+load("@com_adobe_rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
 
 rules_gitops_dependencies()
 
-load("@rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
+load("@com_adobe_rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
 
 rules_gitops_repositories()
 
