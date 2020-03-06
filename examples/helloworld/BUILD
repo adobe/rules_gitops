@@ -44,6 +44,7 @@ go_image(
 k8s_deploy(
     name = "mynamespace",
     cluster = "dev",
+    image_registry = "dev.registry",  # override the default registry host for developent
     images = {
         "helloworld-image": ":image",
     },
@@ -62,6 +63,7 @@ k8s_deploy(
     name = "canary",
     cluster = CLUSTER,
     deployment_branch = "helloworld-canary",
+    image_registry = "prod.registry",  # override the default registry host for production
     image_repository_prefix = "k8s",
     images = {
         "helloworld-image": ":image",
@@ -78,6 +80,7 @@ k8s_deploy(
     name = "release",
     cluster = CLUSTER,
     deployment_branch = "helloworld-prod",
+    image_registry = "prod.registry",  # override the default registry host for production
     image_repository_prefix = "k8s",
     images = {
         "helloworld-image": ":image",

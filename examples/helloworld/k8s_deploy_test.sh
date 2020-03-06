@@ -31,7 +31,7 @@ cat mynamespace.show
 grep -F "kind: Deployment" mynamespace.show
 grep -F "kind: Service" mynamespace.show
 grep -F "name: helloworld" mynamespace.show
-grep -E "image:.*/helloworld/image@sha256" mynamespace.show
+grep -E "image: dev\.registry/.*/helloworld/image@sha256" mynamespace.show
 
 $(rlocation examples/helloworld/canary.show) > canary.show
 echo "DEBUG: canary.show:"
@@ -41,7 +41,7 @@ grep -F "kind: Deployment" canary.show
 grep -F "kind: Service" canary.show
 grep -F "namespace: $NAMESPACE" canary.show
 grep -F "name: helloworld-canary" canary.show
-grep -E "image:.*/k8s/helloworld/image@sha256" canary.show
+grep -E "image: prod\.registry/k8s/helloworld/image@sha256" canary.show
 
 $(rlocation examples/helloworld/release.show) > release.show
 echo "DEBUG: release.show:"
@@ -51,4 +51,4 @@ grep -F "kind: Deployment" release.show
 grep -F "kind: Service" release.show
 grep -F "namespace: $NAMESPACE" canary.show
 grep -F "name: helloworld" mynamespace.show
-grep -E "image:.*/k8s/helloworld/image@sha256" release.show
+grep -E "image: prod\.registry/k8s/helloworld/image@sha256" release.show

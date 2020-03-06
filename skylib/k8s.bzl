@@ -129,6 +129,7 @@ def k8s_deploy(
                     name = imgname + "_mynamespace_push",
                     image = img,
                     legacy_image_name = imgname,
+                    registry = image_registry,
                     repository = image_repository,
                     repository_prefix = "{BUILD_USER}",
                 )
