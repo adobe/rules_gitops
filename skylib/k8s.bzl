@@ -76,7 +76,7 @@ show = rule(
 def k8s_deploy(
         name,  # name of the rule is important for gitops, since it will become a part of the target manifest file name in /cloud
         cluster = "dev",
-	user = "{BUILD_USER}",
+        user = "{BUILD_USER}",
         namespace = None,
         configmaps_srcs = None,
         secrets_srcs = None,
@@ -216,7 +216,7 @@ def k8s_deploy(
             name = name + ".apply",
             srcs = [name],
             cluster = cluster,
-	    user = user,
+            user = user,
             namespace = namespace,
             visibility = visibility,
         )
