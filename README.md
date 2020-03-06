@@ -1,5 +1,7 @@
 # Bazel GitOps Rules
 
+![CI](https://github.com/adobe/rules_gitops/workflows/CI/badge.svg)
+
 Bazel GitOps Rules provides tooling to bridge the gap between Bazel (for hermetic, reproducible, container builds) and continuous, git-operation driven, deployments. Users author standard kubernetes manifests and kustomize overlays for their services. Bazel GitOps Rules handles image push and substitution, applies necessary kustomizations, and handles content addressed substitutions of all object references (configmaps, secrets, etc). Bazel targets are exposed for applying the rendered manifest directly to a Kubernetes cluster, or into version control facilitating deployment via Git operations.
 
 Bazel GitOps Rules is an alternative to [rules_k8s](https://github.com/bazelbuild/rules_k8s). The main differences are:

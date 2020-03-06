@@ -89,7 +89,7 @@ def k8s_deploy(
         deps_aliases = {},
         images = {},
         image_chroot = None,  # DEPRECATED. ignored now. If default repo path is not working for you, use image_repository to change it
-        image_registry = "cr.k8s.tubemogul.info",  # registry to push container to. jenkins will need an access configured for gitops to work. Ignored for mynamespace.
+        image_registry = "docker.io",  # registry to push container to. jenkins will need an access configured for gitops to work. Ignored for mynamespace.
         image_repository = None,  # repository (registry path) to push container to. Generated from the image bazel path if empty.
         image_repository_prefix = None,  # Mutually exclusive with 'image_repository'. Add a prefix to the repository name generated from the image bazel path
         objects = [],

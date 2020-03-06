@@ -186,7 +186,7 @@ Args:
         "legacy_image_name": attr.string(doc = "image name used in deployments, for compatibility with k8s_deploy. Do not use, refer images by full bazel target name instead"),
         "registry": attr.string(
             doc = "The registry to which we are pushing.",
-            default = "cr.k8s.tubemogul.info",
+            default = "docker.io",
         ),
         "repository": attr.string(
             doc = "the name of the image. If not present, default to the image's bazel target path",
