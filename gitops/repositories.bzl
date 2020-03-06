@@ -20,7 +20,7 @@ load("@io_bazel_rules_docker//repositories:go_repositories.bzl", container_go_de
 load("@rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize_setup")
 load("@rules_gitops//skylib:toolchain.bzl", "docker_toolchain_configure")
 
-def rules_gitops_repositores():
+def rules_gitops_repositories():
     """Initializes Declares workspaces the GitOps rules depend on.
 
     Workspaces that use rules_gitops should call this after rules_gitops_dependencies call.
