@@ -32,5 +32,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: cr.k8s.tubemogul.info/skylib/kustomize/tests/image@sha256:fe5183fe769efa21a26c11bdd2356d2058eb61c4d9c9db9febf90e0680417ae3
+      - image: docker.io/skylib/kustomize/tests/image@sha256:fe5183fe769efa21a26c11bdd2356d2058eb61c4d9c9db9febf90e0680417ae3
         name: myapp

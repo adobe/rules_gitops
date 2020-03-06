@@ -88,3 +88,20 @@ k8s_deploy(
     ],
     namespace = NAMESPACE,
 )
+
+sh_test(
+    name = "k8s_deploy_test",
+    srcs = ["k8s_deploy_test.sh"],
+    args = [
+        CLUSTER,
+        NAMESPACE,
+    ],
+    data = [
+        ":canary.show",
+        ":mynamespace.show",
+        ":release.show",
+    ],
+    deps = [
+        "@bazel_tools//tools/bash/runfiles",
+    ],
+)

@@ -28,8 +28,8 @@ func TestNoError(t *testing.T) {
 		imgmap map[string]string
 	}{
 		{"happypath", map[string]string{
-			"salist":      "cr.k8s.tubemogul.info/rtb/sacli/cmd/salist/image@sha256:5711bcf54511ab2fef6e08d9c9f9ae3f3a269e66834048465cc7502adb0d489b",
-			"filewatcher": "cr.k8s.tubemogul.info/kube/filewatcher/image:tag",
+			"salist":      "docker.io/rtb/sacli/cmd/salist/image@sha256:5711bcf54511ab2fef6e08d9c9f9ae3f3a269e66834048465cc7502adb0d489b",
+			"filewatcher": "docker.io/kube/filewatcher/image:tag",
 		}},
 	}
 	for _, testcase := range testcases {
