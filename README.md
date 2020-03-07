@@ -79,6 +79,7 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ------------------------- | -------------- | -----------
 | ***cluster***             | `None`         | The name of the cluster in which these manifests will be applied.
 | ***namespace***           | `None`         | The target namespace to assign to all manifests. Any namespace value in the source manifests will be replaced or added if not specified.
+| ***user***                | `{BUILD_USER}` | The user passed to kubectl in .apply rule. Must exist in users ~/.kube/config 
 | ***configmaps_srcs***     | `None`         | A list of files (of any type) that will be combined into configmaps. See [Generating Configmaps](#generating-configmaps).
 | ***configmaps_renaming*** | `None`         | Configmaps/Secrets renaming policy. Could be None or 'hash'. 'hash' renaming policy is used to add a unique suffix to the generated configmap or secret name. All references to the configmap or secret in other manifests will be replaced with the generated name.
 | ***secrets_srcs***        | `None`         | A list of files (of any type) that will be combined into a secret similar to configmaps.
