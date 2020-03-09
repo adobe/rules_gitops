@@ -37,9 +37,6 @@ gazelle(
 
 buildifier(
     name = "buildifier",
-    exclude_patterns = [
-        "./experimental/*",
-    ],
     lint_mode = "warn",
     lint_warnings = [
         "-module-docstring",
@@ -58,9 +55,6 @@ buildifier(
 
 buildifier(
     name = "buildifier-check",
-    exclude_patterns = [
-        "./experimental/*",
-    ],
     lint_mode = "warn",
     lint_warnings = [
         "-module-docstring",
