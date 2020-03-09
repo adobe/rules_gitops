@@ -9,34 +9,59 @@ on:
 jobs:
   build:
     runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        bazel-version:
+          - 2.0.1
+          - 2.1.1
+          - 2.2.0
+    env:
+      USE_BAZEL_VERSION: ${{ matrix.bazel-version }}
     steps:
       - uses: actions/checkout@v2
-      - name: Mount bazel cache
+      - name: Mount Bazel cache
         uses: actions/cache@v1
         with:
           path: ~/.cache/bazel
-          key: bazel-${{ github.sha }}
+          key: bazel-${{ matrix.bazel-version }}-${{ github.sha }}
           restore-keys: |
-            bazel-      
-      - name: Install bazelisk
+            bazel-${{ matrix.bazel-version }}-
+            bazel-
+      - name: Setup build tools
         run: |
-          mkdir -p "${GITHUB_WORKSPACE}/bin/"
-          curl -Ls -o "${GITHUB_WORKSPACE}/bin/bazel" "https://github.com/bazelbuild/bazelisk/releases/download/v1.3.0/bazelisk-linux-amd64"
-          chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
+          TOOLS_DIR="${HOME}/.cache/tools"
+          mkdir -p "${TOOLS_DIR}/bin/"
+          curl -Ls -o "${TOOLS_DIR}/bin/bazel" "https://github.com/bazelbuild/bazelisk/releases/download/v1.3.0/bazelisk-linux-amd64"
+          chmod +x "${TOOLS_DIR}/bin/bazel"
+          curl -Ls -o "${TOOLS_DIR}/bin/buildifier" "https://github.com/bazelbuild/buildtools/releases/download/0.29.0/buildifier"
+          chmod +x "${TOOLS_DIR}/bin/buildifier"
+          echo "::add-path::${TOOLS_DIR}/bin"
       - name: Build
         run: |
-          "${GITHUB_WORKSPACE}/bin/bazel" build //...
+          bazel build //...
       - name: Check
+        # run downloaded version of buildifier to reduce uncached build times
+        # see: bazel run //:buildifier-check
         run: |
-          "${GITHUB_WORKSPACE}/bin/bazel" run //:buildifier-check
+          find . -type f \(\
+            -name '*.bzl' \
+            -o -name '*.sky' \
+            -o -name BUILD \
+            -o -name BUILD.bazel \
+            -o -name WORKSPACE \
+            -o -name WORKSPACE.bazel \
+          \) | xargs buildifier \
+            -mode=check \
+            -lint=warn \
+            --warnings=-module-docstring,-function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-print
       - name: Test
         run: |
-          "${GITHUB_WORKSPACE}/bin/bazel" test //...
-      - name: Build Examples
+          bazel test //...
+      - name: Build examples
         run: |
-          cd "${GITHUB_WORKSPACE}/examples"
-          "${GITHUB_WORKSPACE}/bin/bazel" build //...
-      - name: Test Examples
+          cd examples
+          bazel build //...
+      - name: Test examples
         run: |
-          cd "${GITHUB_WORKSPACE}/examples"
-          "${GITHUB_WORKSPACE}/bin/bazel" test //...
+          cd examples
+          bazel test //...
