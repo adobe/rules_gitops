@@ -158,6 +158,7 @@ def k8s_deploy(
             name = name + ".apply",
             srcs = [name],
             cluster = cluster,
+            user = user,
             namespace = namespace,
             visibility = visibility,
         )
@@ -166,6 +167,7 @@ def k8s_deploy(
             srcs = [name],
             command = "delete",
             cluster = cluster,
+            user = user,
             namespace = namespace,
             visibility = visibility,
         )
