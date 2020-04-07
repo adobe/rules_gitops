@@ -81,7 +81,7 @@ def k8s_deploy(
         configmaps_srcs = None,
         secrets_srcs = None,
         configmaps_renaming = None,  # configmaps renaming policy. Could be None or 'hash'.
-        manifests = [],
+        manifests = None,
         name_prefix = None,
         name_suffix = None,
         patches = None,
@@ -493,7 +493,7 @@ def _k8s_test_setup_impl(ctx):
     commands = []  # the list of commands to execute
 
     # add files referenced by rule attributes to runfiles
-    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, ctx.executable._kustomize, ctx.executable._it_sidecar]
+    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, ctx.executable._kustomize, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
     files += ctx.files._set_namespace
 
     push_statements, files, pushes_runfiles = imagePushStatements(ctx, [o for o in ctx.attr.objects if KustomizeInfo in o], files)
@@ -506,10 +506,10 @@ def _k8s_test_setup_impl(ctx):
             transitive.append(obj.default_runfiles.files)
 
             # add object' execution command
-            commands += [_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${KUBECTL} apply -f -"]
+            commands += [_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -"]
         else:
             files += obj.files.to_list()
-            commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
+            commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
 
     files += [ctx.executable._template_engine]
 
@@ -522,7 +522,8 @@ def _k8s_test_setup_impl(ctx):
             "%{kubectl}": ctx.file.kubectl.path,
             "%{portforwards}": " ".join(["-portforward=" + p for p in ctx.attr.portforward_services]),
             "%{push_statements}": push_statements,
-            "%{set_namespace}": ctx.executable._set_namespace.path,
+            "%{set_namespace}": ctx.executable._set_namespace.short_path,
+            "%{it_manifest_filter}": ctx.executable._it_manifest_filter.short_path,
             "%{statements}": "\n".join(commands),
             "%{test_timeout}": ctx.attr.setup_timeout,
             "%{waitforapps}": " ".join(["-waitforapp=" + p for p in ctx.attr.wait_for_apps]),
@@ -572,6 +573,11 @@ k8s_test_setup = rule(
         ),
         "_set_namespace": attr.label(
             default = Label("//skylib/kustomize:set_namespace"),
+            cfg = "host",
+            executable = True,
+        ),
+        "_it_manifest_filter": attr.label(
+            default = Label("//it_manifest_filter:it_manifest_filter"),
             cfg = "host",
             executable = True,
         ),

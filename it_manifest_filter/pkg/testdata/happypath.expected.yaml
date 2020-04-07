@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: pesterni
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mariadb
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+  namespace: pesterni
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mysql-secret
+        image: cr.k8s.tubemogul.info/pesterni/db/image@sha256:f4504709ea0a2f3a8f0ba29de5ef7cdc6e3be1c4411d39a60058861c16e6a5aa
+        name: mariadb
+        ports:
+        - containerPort: 3306
+          name: mysql
+        readinessProbe:
+          exec:
+            command:
+            - mysql
+            - -h
+            - 127.0.0.1
+            - -e
+            - SELECT 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 10m
+            memory: 1Gi
+        volumeMounts:
+        - mountPath: /data
+          name: data-volume
+      volumes:
+      - emptyDir: {}
+        name: data-volume
