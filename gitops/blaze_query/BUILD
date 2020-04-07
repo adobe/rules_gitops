@@ -1,3 +1,6 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
 # Copyright 2020 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License. You may obtain a copy
@@ -14,8 +17,20 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["build.pb.go"],
+    embed = [":blaze_query_go_proto"],
     importpath = "github.com/adobe/rules_gitops/gitops/blaze_query",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_golang_protobuf//proto:go_default_library"],
+)
+
+proto_library(
+    name = "blaze_query_proto",
+    srcs = ["build.proto"],
+    visibility = ["//visibility:public"],
+)
+
+go_proto_library(
+    name = "blaze_query_go_proto",
+    importpath = "github.com/adobe/rules_gitops/gitops/blaze_query",
+    proto = ":blaze_query_proto",
+    visibility = ["//visibility:public"],
 )

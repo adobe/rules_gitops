@@ -8,7 +8,6 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-# gazelle:proto disable
 # gazelle:build_tags darwin,linux
 # gazelle:exclude examples
 
@@ -30,8 +29,6 @@ gazelle(
     extra_args = [
         "-build_file_name",
         "BUILD,BUILD.bazel",
-        "-proto",
-        "disable",
     ],
 )
 

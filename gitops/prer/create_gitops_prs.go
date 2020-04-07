@@ -23,13 +23,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/adobe/rules_gitops/gitops/analysis"
 	"github.com/adobe/rules_gitops/gitops/bazel"
 	"github.com/adobe/rules_gitops/gitops/bitbucket"
 	"github.com/adobe/rules_gitops/gitops/commitmsg"
 	"github.com/adobe/rules_gitops/gitops/exec"
 	"github.com/adobe/rules_gitops/gitops/git"
 
-	"github.com/adobe/rules_gitops/gitops/blaze_query"
 	proto "github.com/golang/protobuf/proto"
 )
 
@@ -48,9 +48,9 @@ var (
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
 )
 
-func bazelQuery(query string) *blaze_query.QueryResult {
-	log.Println("Executing bazel query ", query)
-	cmd := oe.Command(*bazelCmd, "query", query, "--output=proto")
+func bazelQuery(query string) *analysis.CqueryResult {
+	log.Println("Executing bazel cquery ", query)
+	cmd := oe.Command(*bazelCmd, "cquery", query, "--output=proto")
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		log.Fatal(err)
@@ -62,7 +62,7 @@ func bazelQuery(query string) *blaze_query.QueryResult {
 	if err != nil {
 		log.Fatal(err)
 	}
-	qr := &blaze_query.QueryResult{}
+	qr := &analysis.CqueryResult{}
 	if err := proto.Unmarshal(buildproto, qr); err != nil {
 		log.Fatal(err)
 	}
@@ -87,17 +87,18 @@ func main() {
 	q := fmt.Sprintf("attr(deployment_branch, \".+\", attr(release_branch_prefix, \"%s\", kind(gitops, %s)))", *releaseBranch, *target)
 	qr := bazelQuery(q)
 	releaseTrains := make(map[string][]string)
-	for _, t := range qr.Target {
+	for _, t := range qr.Results {
 		var releaseTrain string
-		for _, a := range t.Rule.GetAttribute() {
+		for _, a := range t.Target.GetRule().GetAttribute() {
 			if a.GetName() == "deployment_branch" {
 				releaseTrain = a.GetStringValue()
 			}
 		}
-		releaseTrains[releaseTrain] = append(releaseTrains[releaseTrain], t.Rule.GetName())
+		releaseTrains[releaseTrain] = append(releaseTrains[releaseTrain], t.Target.Rule.GetName())
 	}
 	if (len(releaseTrains)) == 0 {
-		log.Fatal("No matching targets found")
+		log.Println("No matching targets found")
+		return
 	}
 
 	for train, targets := range releaseTrains {
@@ -152,7 +153,7 @@ func main() {
 		}
 	}
 	if len(updatedGitopsTargets) == 0 {
-		log.Println("no gitops changes to push")
+		log.Println("No gitops changes to push")
 		return
 	}
 
@@ -170,8 +171,8 @@ func main() {
 			}
 		}()
 	}
-	for _, t := range qr.Target {
-		targetsCh <- t.Rule.GetName()
+	for _, t := range qr.Results {
+		targetsCh <- t.Target.Rule.GetName()
 	}
 	close(targetsCh)
 	wg.Wait()

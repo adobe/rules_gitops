@@ -74,6 +74,7 @@ func (r *Repo) SwitchToBranch(branch string) (new bool) {
 
 // RecreateBranch discards a branch content and reset it from master.
 func (r *Repo) RecreateBranch(branch string) {
+	exec.Mustex(r.Dir, "git", "checkout", "master")
 	exec.Mustex(r.Dir, "git", "branch", "-f", branch, "master")
 	exec.Mustex(r.Dir, "git", "checkout", branch)
 }
