@@ -7,9 +7,9 @@ go_library(
     importpath = "google.golang.org/appengine/urlfetch",
     visibility = ["//visibility:public"],
     deps = [
+        "//vendor/golang.org/x/net/context:go_default_library",
         "//vendor/google.golang.org/appengine/internal:go_default_library",
         "//vendor/google.golang.org/appengine/internal/urlfetch:go_default_library",
         "@com_github_golang_protobuf//proto:go_default_library",
-        "@org_golang_x_net//context:go_default_library",
     ],
 )

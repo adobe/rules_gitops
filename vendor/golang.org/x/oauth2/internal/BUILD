@@ -11,5 +11,5 @@ go_library(
     importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/oauth2/internal",
     importpath = "golang.org/x/oauth2/internal",
     visibility = ["//vendor/golang.org/x/oauth2:__subpackages__"],
-    deps = ["@org_golang_x_net//context/ctxhttp:go_default_library"],
+    deps = ["//vendor/golang.org/x/net/context/ctxhttp:go_default_library"],
 )

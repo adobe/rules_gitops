@@ -13,8 +13,8 @@ go_library(
     importpath = "k8s.io/apimachinery/pkg/util/net",
     visibility = ["//visibility:public"],
     deps = [
+        "//vendor/golang.org/x/net/http2:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/util/sets:go_default_library",
         "//vendor/k8s.io/klog:go_default_library",
-        "@org_golang_x_net//http2:go_default_library",
     ],
 )
