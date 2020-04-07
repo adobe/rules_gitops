@@ -13,7 +13,6 @@ GtiOps rules dependencies
 """
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("//:go_repositories.bzl", "go_repositories")
 
 def rules_gitops_dependencies():
     """Declares workspaces the GitOps rules depend on.
@@ -22,7 +21,6 @@ def rules_gitops_dependencies():
 
     PRs updating dependencies are NOT ACCEPTED.
     """
-    go_repositories()
 
     _maybe(
         http_archive,
