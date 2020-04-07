@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zk
+  namespace: actv-apps-uat
+spec:
+  podManagementPolicy: Parallel
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zk
+  serviceName: zk-hs
+  template:
+    metadata:
+      labels:
+        app: zk
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - zk
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - command:
+            - sh
+            - -c
+            - start-zookeeper --servers=3 --data_dir=/var/lib/zookeeper/data --data_log_dir=/var/lib/zookeeper/data
+              --conf_dir=/opt/zookeeper/conf --client_port=2181 --election_port=3888 --server_port=2888
+              --tick_time=2000 --init_limit=10 --sync_limit=5 --heap=512M --max_client_cnxns=60
+              --snap_retain_count=3 --purge_interval=1 --max_session_timeout=40000 --min_session_timeout=4000
+              --log_level=ERROR
+          image: k8s.gcr.io/kubernetes-zookeeper:1.0-3.4.10
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - zookeeper-ready 2181
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          name: kubernetes-zookeeper
+          ports:
+            - containerPort: 2181
+              name: client
+            - containerPort: 2888
+              name: server
+            - containerPort: 3888
+              name: leader-election
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - zookeeper-ready 2181
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: "0.5"
+              memory: 1Gi
+          volumeMounts:
+            - mountPath: /var/lib/zookeeper
+              name: datadir
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      volumes:
+        - emptyDir: {}
+          name: datadir
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates:
+    - metadata:
+        annotations:
+          volume.beta.kubernetes.io/storage-class: standard
+          volume.beta.kubernetes.io/storage-provisioner: kubernetes.io/aws-ebs
+        name: datadir
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+        storageClassName: standard
+    - metadata:
+        annotations:
+          volume.beta.kubernetes.io/storage-class: standard
+          volume.beta.kubernetes.io/storage-provisioner: kubernetes.io/aws-ebs
+        name: datadir2
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: standard
+
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: zk-pdb
+  namespace: actv-apps-uat
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: zk

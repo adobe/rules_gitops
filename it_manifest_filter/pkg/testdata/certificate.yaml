@@ -1,0 +1,19 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: actv-notification-certificate
+  namespace: namespace
+spec:
+  secretName: actv-notification-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: actv-notification-service.@k8s.namespace@.@k8s.cluster@.k8s.tubemogul.info
+  dnsNames:
+    - actv-notification-service.@k8s.namespace@.@k8s.cluster@.k8s.tubemogul.info
+  acme:
+    config:
+      - dns01:
+          provider: route53
+        domains:
+          - actv-notification-service.@k8s.namespace@.@k8s.cluster@.k8s.tubemogul.info

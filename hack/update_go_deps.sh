@@ -13,52 +13,7 @@ set -euo pipefail
 
 bindir=$(cd `dirname "$0"` && pwd)
 repo_path=$bindir/..
-vendordir=$repo_path/vendor
-
-novendor=(
-    "golang.org/x/net"
-    "golang.org/x/text"
-    "golang.org/x/tools"
-    "golang.org/x/sync"
-    "github.com/golang/glog"
-    "github.com/golang/protobuf"
-    "github.com/mwitkow/go-proto-validators"
-    "github.com/gogo/protobuf"
-    "github.com/google/go-genproto"
-    "google.golang.org/genproto/"
-    "google.golang.org/grpc"
-    "github.com/googleapis/googleapis"
-    "github.com/bazelbuild/buildtools"
-    "github.com/fsnotify/fsnotify"
-    "github.com/pelletier/go-toml"
-    "github.com/pmezard/go-difflib"
-    "github.com/magiconair"
-    "github.com/prometheus/client_golang/prometheus/process_collector_windows.go"
-    "golang.org/x/crypto/ssh/terminal/util_windows.go"
-)
-
 cd $repo_path
-GO111MODULE=on go mod vendor
-#dep ensure
-
-for pkg in ${novendor[@]}; do
-    echo "Removing $pkg..."
-    rm -rf ${vendordir}/${pkg}
-done
-
-#    -not -iname "*.proto" \
-find vendor -type f \
-    -not -iname "*.c" \
-    -not -iname "*.go" \
-    -not -iname "*.h" \
-    -not -iname "*.s" \
-    -not -iname "AUTHORS*" \
-    -not -iname "CONTRIBUTORS*" \
-    -not -iname "COPYING*" \
-    -not -iname "LICENSE*" \
-    -not -iname "NOTICE*" \
-    -delete
-
-
-bazel run //:gazelle
-bazel run //:buildifier
+bazelisk run //:gazelle -- update-repos -from_file=go.mod -to_macro=go_repositories.bzl%go_repositories -prune=true -build_file_proto_mode=disable_global
+bazelisk run //:gazelle
+bazelisk run //:buildifier
