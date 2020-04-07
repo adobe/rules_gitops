@@ -60,3 +60,8 @@ http_archive(
 load("@com_github_bazelbuild_buildtools//buildifier:deps.bzl", "buildifier_dependencies")
 
 buildifier_dependencies()
+
+load("//:go_repositories.bzl", "go_repositories")
+
+# gazelle:repository_macro go_repositories.bzl%go_repositories
+go_repositories()
