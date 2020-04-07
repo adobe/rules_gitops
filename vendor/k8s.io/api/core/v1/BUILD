@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "annotation_key_constants.go",
+        "doc.go",
+        "generated.pb.go",
+        "objectreference.go",
+        "register.go",
+        "resource.go",
+        "taint.go",
+        "toleration.go",
+        "types.go",
+        "types_swagger_doc_generated.go",
+        "well_known_labels.go",
+        "well_known_taints.go",
+        "zz_generated.deepcopy.go",
+    ],
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/api/core/v1",
+    importpath = "k8s.io/api/core/v1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/k8s.io/apimachinery/pkg/api/resource:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/runtime/schema:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/types:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/util/intstr:go_default_library",
+        "@com_github_gogo_protobuf//proto:go_default_library",
+        "@com_github_gogo_protobuf//sortkeys:go_default_library",
+    ],
+)

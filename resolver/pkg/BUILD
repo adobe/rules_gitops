@@ -6,9 +6,9 @@ go_library(
     importpath = "github.com/adobe/rules_gitops/resolver/pkg",
     visibility = ["//visibility:public"],
     deps = [
-        "@com_github_ghodss_yaml//:go_default_library",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1/unstructured:go_default_library",
-        "@io_k8s_apimachinery//pkg/util/yaml:go_default_library",
+        "//vendor/github.com/ghodss/yaml:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1/unstructured:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/util/yaml:go_default_library",
     ],
 )
 
