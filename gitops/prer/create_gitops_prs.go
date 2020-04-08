@@ -19,7 +19,6 @@ import (
 	"log"
 	"os"
 	oe "os/exec"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -36,7 +35,7 @@ import (
 var (
 	releaseBranch          = flag.String("release_branch", "master", "filter gitops targets by release branch")
 	bazelCmd               = flag.String("bazel_cmd", "tools/bazel", "bazel binary to use")
-	workspace              = flag.String("workspace_file", "WORKSPACE", "location of WORKSPACE file to locate the workspace")
+	workspace              = flag.String("workspace", "", "path to workspace root")
 	repo                   = flag.String("git_repo", "https://bitbucket.tubemogul.info/scm/tm/repo.git", "git repo location")
 	gitMirror              = flag.String("git_mirror", "", "git mirror location, like /mnt/mirror/bitbucket.tubemogul.info/tm/repo.git for jenkins")
 	gitopsTmpDir           = flag.String("gitops_tmpdir", os.TempDir(), "location to check out git tree with /cloud.")
@@ -75,12 +74,7 @@ func main() {
 		log.Fatal("git_mirror must be defined")
 	}
 	if *workspace != "" {
-		location, err := os.Readlink(*workspace)
-		if err != nil {
-			log.Fatal(err)
-		}
-		dir := filepath.Dir(location)
-		if err := os.Chdir(dir); err != nil {
+		if err := os.Chdir(*workspace); err != nil {
 			log.Fatal(err)
 		}
 	}

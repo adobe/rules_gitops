@@ -30,10 +30,6 @@ go_library(
 
 go_binary(
     name = "create_gitops_prs",
-    data = [
-        # required for find_repo_root()
-        "//:WORKSPACE",
-    ],
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
 )
