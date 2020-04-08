@@ -40,27 +40,6 @@ do
   esac
 done
 
-# find_repo_root prints the absolute path to the repository root. This is
-# discovered by locating the WORKSPACE file in a parent directory, and
-# deferencing symlinks. If no WORKSPACE file is found, this function prints
-# an error and exits.
-function find_repo_root {
-  pushd . &>/dev/null
-  while [ $(pwd) != / -a ! -f WORKSPACE ]; do
-    cd ..
-  done
-  if [ ! -f WORKSPACE ]; then
-    echo "error: could not find WORKSPACE file in any parent directory" >&2
-    exit 1
-  fi
-  if [ "$is_bazel_run" = true ]; then
-    dirname $(readlink WORKSPACE)
-  else
-    pwd
-  fi
-  popd &>/dev/null
-}
-
 function guess_runfiles() {
     pushd ${BASH_SOURCE[0]}.runfiles > /dev/null 2>&1
     pwd
@@ -85,14 +64,13 @@ function waitpids() {
     fi
 }
 
-REPO_ROOT=$(find_repo_root)
-cd $REPO_ROOT
+cd $BUILD_WORKSPACE_DIRECTORY
 
 if [ "%{deployment_branch}" != "" -a "${DEPLOYMENT_ROOT}" != "" ] ; then
   TARGET_DIR=${DEPLOYMENT_ROOT}
 else
   echo "--deployment-root or deployment_branch is not specified, using repo root"
-  TARGET_DIR=$REPO_ROOT
+  TARGET_DIR=$BUILD_WORKSPACE_DIRECTORY
 fi
 
 %{statements}
