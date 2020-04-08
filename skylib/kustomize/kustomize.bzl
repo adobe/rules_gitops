@@ -411,7 +411,6 @@ fi
     )
     runfiles = files + ctx.files.srcs + [ctx.executable._template_engine, ctx.file._info_file]
     transitive = depset(transitive = [obj.default_runfiles.files for obj in ctx.attr.srcs])
-    runfiles += list([ctx.file.workspace])
 
     rf = ctx.runfiles(files = runfiles, transitive_files = transitive)
     for dep_rf in pushes_runfiles:
@@ -431,10 +430,6 @@ gitops = rule(
         "deployment_branch": attr.string(),
         "release_branch_prefix": attr.string(),
         "strip_prefixes": attr.string_list(),
-        "workspace": attr.label(
-            default = "//:WORKSPACE",
-            allow_single_file = True,
-        ),
         "_info_file": attr.label(
             default = Label("//skylib:more_stable_status.txt"),
             allow_single_file = True,
