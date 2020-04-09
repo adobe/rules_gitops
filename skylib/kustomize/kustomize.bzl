@@ -330,7 +330,7 @@ push_all = rule(
     implementation = _push_all_impl,
     doc = """
 push_all run all pushes referred in images attribute
-rules_docker's container_push or kubedobe_push could be used.
+k8s_container_push should be used.
     """,
     attrs = {
         "srcs": attr.label_list(doc = "a list of images used in manifests", providers = (KustomizeInfo,)),
