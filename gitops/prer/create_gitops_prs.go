@@ -152,7 +152,7 @@ func main() {
 	}
 
 	// Push images
-	qr = bazelQuery(fmt.Sprintf("kind(kubedobe_container_push, deps(%s))", strings.Join(updatedGitopsTargets, " + ")))
+	qr = bazelQuery(fmt.Sprintf("kind(k8s_container_push, deps(%s))", strings.Join(updatedGitopsTargets, " + ")))
 	targetsCh := make(chan string)
 	var wg sync.WaitGroup
 	wg.Add(*pushParallelism)
