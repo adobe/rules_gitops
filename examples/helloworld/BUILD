@@ -42,8 +42,10 @@ go_image(
 )
 
 CLUSTER = "kind-kind"
+
 USER = "kind-kind"
-REGISTRY= "localhost:5000"
+
+REGISTRY = "localhost:5000"
 
 k8s_deploy(
     name = "mynamespace",
