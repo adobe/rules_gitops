@@ -37,6 +37,8 @@ jobs:
           chmod +x "${TOOLS_DIR}/bin/bazel"
           curl -Ls -o "${TOOLS_DIR}/bin/buildifier" "https://github.com/bazelbuild/buildtools/releases/download/0.29.0/buildifier"
           chmod +x "${TOOLS_DIR}/bin/buildifier"
+          curl -Ls -o "${TOOLS_DIR}/bin/kind" "https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-linux-amd64"
+          chmod +x "${TOOLS_DIR}/bin/kind"
           echo "::add-path::${TOOLS_DIR}/bin"
       - name: Build
         run: |
