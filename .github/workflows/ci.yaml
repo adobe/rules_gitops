@@ -72,3 +72,7 @@ jobs:
         run: |
           cd examples
           bazel test //...
+      - name: E2E
+        run: |
+          cd examples
+          ./e2e-test.sh
