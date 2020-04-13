@@ -40,6 +40,9 @@ jobs:
           curl -Ls -o "${TOOLS_DIR}/bin/kind" "https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-linux-amd64"
           chmod +x "${TOOLS_DIR}/bin/kind"
           echo "::add-path::${TOOLS_DIR}/bin"
+      - name: Setup kind cluster
+        run: |
+          ./create_kind_cluster.sh
       - name: Build
         run: |
           bazel build //...
