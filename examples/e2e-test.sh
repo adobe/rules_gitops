@@ -28,7 +28,7 @@ kubectl create namespace $MYNAMESPACE || true
 kubectl create namespace hwteam || true
 
 bazel run //helloworld:mynamespace.apply
-kubectl -n $MYNAMESPACE wait --timeout=30s --for=condition=Available deployment/helloworld
+kubectl -n $MYNAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld
 
 bazel run //helloworld:mynamespace.delete
 
@@ -44,4 +44,4 @@ bazel run //helloworld:release.gitops
 #apply everything generated
 kubectl apply -f cloud -R
 #wait for readiness
-kubectl -n hwteam wait --timeout=30s --for=condition=Available deployment/helloworld deployment/helloworld-canary
+kubectl -n hwteam wait --timeout=60s --for=condition=Available deployment/helloworld deployment/helloworld-canary
