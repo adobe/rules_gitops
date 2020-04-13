@@ -34,5 +34,4 @@ containerdConfigPatches:
     endpoint = ["http://${reg_ip}:${reg_port}"]
 EOF
 
-}
 
