@@ -41,10 +41,16 @@ go_image(
     visibility = ["//visibility:public"],
 )
 
+CLUSTER = "kind-kind"
+
+USER = "kind-kind"
+
+REGISTRY = "localhost:5000"
+
 k8s_deploy(
     name = "mynamespace",
-    cluster = "dev",
-    image_registry = "dev.registry",  # override the default registry host for developent
+    cluster = CLUSTER,
+    image_registry = REGISTRY,  # override the default registry host for developent
     images = {
         "helloworld-image": ":image",
     },
@@ -53,9 +59,8 @@ k8s_deploy(
         "service.yaml",
     ],
     namespace = "{BUILD_USER}",
+    user = USER,
 )
-
-CLUSTER = "dev"
 
 NAMESPACE = "hwteam"
 
@@ -63,7 +68,7 @@ k8s_deploy(
     name = "canary",
     cluster = CLUSTER,
     deployment_branch = "helloworld-canary",
-    image_registry = "prod.registry",  # override the default registry host for production
+    image_registry = REGISTRY,  # override the default registry for production
     image_repository_prefix = "k8s",
     images = {
         "helloworld-image": ":image",
@@ -74,13 +79,14 @@ k8s_deploy(
     ],
     name_suffix = "-canary",
     namespace = NAMESPACE,
+    user = USER,
 )
 
 k8s_deploy(
     name = "release",
     cluster = CLUSTER,
     deployment_branch = "helloworld-prod",
-    image_registry = "prod.registry",  # override the default registry host for production
+    image_registry = REGISTRY,  # override the default registry host for production
     image_repository_prefix = "k8s",
     images = {
         "helloworld-image": ":image",
@@ -90,6 +96,7 @@ k8s_deploy(
         "service.yaml",
     ],
     namespace = NAMESPACE,
+    user = USER,
 )
 
 sh_test(
