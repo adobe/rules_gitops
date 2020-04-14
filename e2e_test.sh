@@ -31,13 +31,12 @@ if [ "${cluster_running}" != 'true' ]; then
 fi
 
 delete() {
-    echo "Deleting kind cluster"
-    # kind delete cluster
+    echo "Cleanup..."
 }
 
 # Setup a trap to delete the namespace on error
 set +o xtrace
-trap "echo FAILED, cleaning up...; delete" EXIT
+trap "echo FAILED ; delete" EXIT
 set -o xtrace
 
 ./examples/e2e-test.sh
