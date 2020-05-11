@@ -17,8 +17,8 @@ load("//skylib:push.bzl", "K8sPushInfo")
 load("//skylib:stamp.bzl", "stamp")
 
 _binaries = {
-    "darwin_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/v3.0.0/kustomize_3.0.0_darwin_amd64", "58bf0cf1fe6839a1463120ced1eae385423efa6437539eb491650db5089c60b9"),
-    "linux_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/v3.0.0/kustomize_3.0.0_linux_amd64", "ef0dbeca85c419891ad0e12f1f9df649b02ceb01517fa9aea0297ef14e400c7a"),
+    "darwin_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.5.5/kustomize_v3.5.5_darwin_amd64.tar.gz", "5e286dc6e02c850c389aa3c1f5fc4ff5d70f064e480d49e804f209c717c462bd"),
+    "linux_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.5.5/kustomize_v3.5.5_linux_amd64.tar.gz", "23306e0c0fb24f5a9fea4c3b794bef39211c580e4cbaee9e21b9891cb52e73e7"),
 }
 
 def _download_binary_impl(ctx):
@@ -39,7 +39,7 @@ sh_binary(
 """)
 
     filename, sha256 = _binaries[platform]
-    ctx.download(filename, "bin/kustomize", sha256 = sha256, executable = True)
+    ctx.download_and_extract(filename, "bin/", sha256 = sha256)
 
 _download_binary = repository_rule(
     _download_binary_impl,
