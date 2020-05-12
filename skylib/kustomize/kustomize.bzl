@@ -121,6 +121,11 @@ def _kustomize_impl(ctx):
         kustomization_yaml += "nameSuffix: '{}'\n".format(ctx.attr.name_suffix)
         use_stamp = use_stamp or "{" in ctx.attr.name_suffix
 
+    if ctx.attr.configurations:
+        kustomization_yaml += "configurations:\n"
+        for _, f in enumerate(ctx.files.configurations):
+            kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
+
     if ctx.files.patches:
         kustomization_yaml += "patches:\n"
         for _, f in enumerate(ctx.files.patches):
@@ -224,7 +229,7 @@ def _kustomize_impl(ctx):
 
     ctx.actions.run(
         outputs = [ctx.outputs.yaml],
-        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
+        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
         executable = script,
         mnemonic = "Kustomize",
         tools = [ctx.executable._kustomize_bin],
@@ -263,6 +268,7 @@ kustomize = rule(
         "start_tag": attr.string(default = "{{"),
         "substitutions": attr.string_dict(default = {}),
         "deps": attr.label_list(default = [], allow_files = True),
+        "configurations": attr.label_list(allow_files = True),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
             allow_single_file = True,

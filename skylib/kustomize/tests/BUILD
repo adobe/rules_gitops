@@ -264,3 +264,61 @@ file_compare_test(
     expected = "expected_patch.yaml",
     file = ":patch",
 )
+
+#-------------------
+# prefix and suffix for deployments: legacy compatibility
+kustomize(
+    name = "deployment_prefix_compat",
+    manifests = ["deployment_with_labels.yaml"],
+    name_prefix = "prefix-",
+    namespace = "",
+)
+
+file_compare_test(
+    name = "deployment_prefix_compat_test",
+    expected = "expected_deployment_prefix_compat.yaml",
+    file = ":deployment_prefix_compat",
+)
+
+kustomize(
+    name = "deployment_suffix_compat",
+    manifests = ["deployment_with_labels.yaml"],
+    name_suffix = "-suffix",
+    namespace = "",
+)
+
+file_compare_test(
+    name = "deployment_suffix_compat_test",
+    expected = "expected_deployment_suffix_compat.yaml",
+    file = ":deployment_suffix_compat",
+)
+
+#-------------------
+# prefix and suffix for deployments
+kustomize(
+    name = "deployment_prefix",
+    configurations = ["//skylib/kustomize:nameprefix_deployment_labels_config.yaml"],
+    manifests = ["deployment_with_labels.yaml"],
+    name_prefix = "prefix-",
+    namespace = "",
+)
+
+file_compare_test(
+    name = "deployment_prefix_test",
+    expected = "expected_deployment_prefix.yaml",
+    file = ":deployment_prefix",
+)
+
+kustomize(
+    name = "deployment_suffix",
+    configurations = ["//skylib/kustomize:nameprefix_deployment_labels_config.yaml"],
+    manifests = ["deployment_with_labels.yaml"],
+    name_suffix = "-suffix",
+    namespace = "",
+)
+
+file_compare_test(
+    name = "deployment_suffix_test",
+    expected = "expected_deployment_suffix.yaml",
+    file = ":deployment_suffix",
+)

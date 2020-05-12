@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-suffix
+spec:
+  selector:
+    matchLabels:
+      app: myapp-suffix
+  template:
+    metadata:
+      labels:
+        app: myapp-suffix
+    spec:
+      containers:
+      - image: test-image
+        name: myapp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp2-suffix
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: myapp-suffix
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: myapp-suffix
+    spec:
+      containers:
+      - image: test-image
+        name: myapp
