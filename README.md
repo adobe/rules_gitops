@@ -80,7 +80,7 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ------------------------- | -------------- | -----------
 | ***cluster***             | `None`         | The name of the cluster in which these manifests will be applied.
 | ***namespace***           | `None`         | The target namespace to assign to all manifests. Any namespace value in the source manifests will be replaced or added if not specified.
-| ***user***                | `{BUILD_USER}` | The user passed to kubectl in .apply rule. Must exist in users ~/.kube/config 
+| ***user***                | `{BUILD_USER}` | The user passed to kubectl in .apply rule. Must exist in users ~/.kube/config
 | ***configmaps_srcs***     | `None`         | A list of files (of any type) that will be combined into configmaps. See [Generating Configmaps](#generating-configmaps).
 | ***configmaps_renaming*** | `None`         | Configmaps/Secrets renaming policy. Could be None or 'hash'. 'hash' renaming policy is used to add a unique suffix to the generated configmap or secret name. All references to the configmap or secret in other manifests will be replaced with the generated name.
 | ***secrets_srcs***        | `None`         | A list of files (of any type) that will be combined into a secret similar to configmaps.
@@ -89,6 +89,10 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***name_suffix***         | `None`         | Adds suffix to the names of all resources defined in manifests.
 | ***patches***             | `None`         | A list of patch files to overlay the base manifests. See [Base Manifests and Overlays](#base-manifests-and-overlays).
 | ***substitutions***       | `None`         | Does parameter substitution in all the manifests (including configmaps). This should generally be limited to "CLUSTER" and "NAMESPACE" only. Any other replacements should be done with overlays.
+| ***configurations***      | `[]`           | A list of files with [kustomize configurations](https://github.com/kubernetes-sigs/kustomize/blob/master/examples/transformerconfigs/README.md).
+| ***prefix_suffix_app_labels*** | `False`   | Add the bundled configuration file allowing adding suffix and prefix to labels `app` and `app.kubernetes.io/name` and respective selector in Deployment.
+| ***common_labels***       | `{}`           | A map of labels that should be added to all objects and object templates.
+| ***common_annotations***  | `{}`           | A map of annotations that should be added to all objects and object templates.
 | ***start_tag***           | `"{{"`         | The character start sequence used for substitutions.
 | ***end_tag***             | `"}}"`         | The character end sequence used for substitutions.
 | ***deps***                | `[]`           | A list of dependencies used to drive `k8s_deploy` functionality (i.e. `deps_aliases`).
