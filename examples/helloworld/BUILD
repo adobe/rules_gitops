@@ -78,6 +78,7 @@ k8s_deploy(
         "service.yaml",
     ],
     name_suffix = "-canary",
+    prefix_suffix_app_labels = True,
     namespace = NAMESPACE,
     user = USER,
 )

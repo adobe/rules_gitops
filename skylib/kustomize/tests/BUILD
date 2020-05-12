@@ -322,3 +322,22 @@ file_compare_test(
     expected = "expected_deployment_suffix.yaml",
     file = ":deployment_suffix",
 )
+
+#-------------------
+# common labels and common annotations
+kustomize(
+    name = "common_labels",
+    manifests = [
+        "deployment_with_labels.yaml",
+        "service.yaml"
+    ],
+    common_labels = {"flavor": "canary"},
+    common_annotations = {"ownerTeam": "apps"},
+    namespace = "",
+)
+
+file_compare_test(
+    name = "common_labels_test",
+    expected = "expected_common_labels.yaml",
+    file = ":common_labels",
+)

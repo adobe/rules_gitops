@@ -131,6 +131,16 @@ def _kustomize_impl(ctx):
         for _, f in enumerate(ctx.files.patches):
             kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
 
+    if ctx.attr.common_labels:
+        kustomization_yaml += "commonLabels:\n"
+        for k in ctx.attr.common_labels:
+            kustomization_yaml += "  {}: '{}'\n".format(k, ctx.attr.common_labels[k])
+
+    if ctx.attr.common_annotations:
+        kustomization_yaml += "commonAnnotations:\n"
+        for k in ctx.attr.common_annotations:
+            kustomization_yaml += "  {}: '{}'\n".format(k, ctx.attr.common_annotations[k])
+
     kustomization_yaml += "generatorOptions:\n"
 
     kustomization_yaml += "  disableNameSuffixHash: {}\n".format(str(ctx.attr.disable_name_suffix_hash).lower())
@@ -269,6 +279,8 @@ kustomize = rule(
         "substitutions": attr.string_dict(default = {}),
         "deps": attr.label_list(default = [], allow_files = True),
         "configurations": attr.label_list(allow_files = True),
+        "common_labels": attr.string_dict(default = {}),
+        "common_annotations": attr.string_dict(default = {}),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
             allow_single_file = True,
