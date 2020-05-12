@@ -13,7 +13,7 @@ load(
     _get_runfile_path = "runfile",
 )
 load(
-    "//skylib/kustomize:kustomize.bzl",
+    "@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl",
     "KustomizeInfo",
     "imagePushStatements",
     "kubectl",
@@ -84,8 +84,12 @@ def k8s_deploy(
         manifests = None,
         name_prefix = None,
         name_suffix = None,
+        prefix_suffix_app_labels = False,  # apply kustomize configuration to modify "app" labels in Deployments when name prefix or suffix applied
         patches = None,
         substitutions = {},  # dict of template parameter substitutions. CLUSTER and NAMESPACE parameters are added automatically.
+        configurations = [],  # additional kustomize configuration files. rules_gitops provides
+        common_labels = {},  # list of common labels to apply to all objects see commonLabels kustomize docs
+        common_annotations = {},  # list of common annotations to apply to all objects see commonAnnotations kustomize docs
         deps = [],
         deps_aliases = {},
         images = {},
@@ -106,6 +110,8 @@ def k8s_deploy(
 
     if not manifests:
         manifests = native.glob(["*.yaml", "*.yaml.tpl"])
+    if prefix_suffix_app_labels:
+        configurations = configurations + ["@com_adobe_rules_gitops//skylib/kustomize:nameprefix_deployment_labels_config.yaml"]
     for reservedname in ["CLUSTER", "NAMESPACE"]:
         if substitutions.get(reservedname):
             fail("do not put %s in substitutions parameter of k8s_deploy. It will be added autimatically" % reservedname)
@@ -150,6 +156,9 @@ def k8s_deploy(
             end_tag = end_tag,
             name_prefix = name_prefix,
             name_suffix = name_suffix,
+            configurations = configurations,
+            common_labels = common_labels,
+            common_annotations = common_annotations,
             patches = patches,
             objects = objects,
             visibility = visibility,
@@ -213,6 +222,9 @@ def k8s_deploy(
             end_tag = end_tag,
             name_prefix = name_prefix,
             name_suffix = name_suffix,
+            configurations = configurations,
+            common_labels = common_labels,
+            common_annotations = common_annotations,
             patches = patches,
         )
         kubectl(

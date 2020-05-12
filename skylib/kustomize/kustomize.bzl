@@ -17,8 +17,8 @@ load("//skylib:push.bzl", "K8sPushInfo")
 load("//skylib:stamp.bzl", "stamp")
 
 _binaries = {
-    "darwin_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/v3.0.0/kustomize_3.0.0_darwin_amd64", "58bf0cf1fe6839a1463120ced1eae385423efa6437539eb491650db5089c60b9"),
-    "linux_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/v3.0.0/kustomize_3.0.0_linux_amd64", "ef0dbeca85c419891ad0e12f1f9df649b02ceb01517fa9aea0297ef14e400c7a"),
+    "darwin_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.5.5/kustomize_v3.5.5_darwin_amd64.tar.gz", "5e286dc6e02c850c389aa3c1f5fc4ff5d70f064e480d49e804f209c717c462bd"),
+    "linux_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.5.5/kustomize_v3.5.5_linux_amd64.tar.gz", "23306e0c0fb24f5a9fea4c3b794bef39211c580e4cbaee9e21b9891cb52e73e7"),
 }
 
 def _download_binary_impl(ctx):
@@ -39,7 +39,7 @@ sh_binary(
 """)
 
     filename, sha256 = _binaries[platform]
-    ctx.download(filename, "bin/kustomize", sha256 = sha256, executable = True)
+    ctx.download_and_extract(filename, "bin/", sha256 = sha256)
 
 _download_binary = repository_rule(
     _download_binary_impl,
@@ -121,10 +121,25 @@ def _kustomize_impl(ctx):
         kustomization_yaml += "nameSuffix: '{}'\n".format(ctx.attr.name_suffix)
         use_stamp = use_stamp or "{" in ctx.attr.name_suffix
 
+    if ctx.attr.configurations:
+        kustomization_yaml += "configurations:\n"
+        for _, f in enumerate(ctx.files.configurations):
+            kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
+
     if ctx.files.patches:
         kustomization_yaml += "patches:\n"
         for _, f in enumerate(ctx.files.patches):
             kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
+
+    if ctx.attr.common_labels:
+        kustomization_yaml += "commonLabels:\n"
+        for k in ctx.attr.common_labels:
+            kustomization_yaml += "  {}: '{}'\n".format(k, ctx.attr.common_labels[k])
+
+    if ctx.attr.common_annotations:
+        kustomization_yaml += "commonAnnotations:\n"
+        for k in ctx.attr.common_annotations:
+            kustomization_yaml += "  {}: '{}'\n".format(k, ctx.attr.common_annotations[k])
 
     kustomization_yaml += "generatorOptions:\n"
 
@@ -224,7 +239,7 @@ def _kustomize_impl(ctx):
 
     ctx.actions.run(
         outputs = [ctx.outputs.yaml],
-        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
+        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
         executable = script,
         mnemonic = "Kustomize",
         tools = [ctx.executable._kustomize_bin],
@@ -263,6 +278,9 @@ kustomize = rule(
         "start_tag": attr.string(default = "{{"),
         "substitutions": attr.string_dict(default = {}),
         "deps": attr.label_list(default = [], allow_files = True),
+        "configurations": attr.label_list(allow_files = True),
+        "common_labels": attr.string_dict(default = {}),
+        "common_annotations": attr.string_dict(default = {}),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
             allow_single_file = True,

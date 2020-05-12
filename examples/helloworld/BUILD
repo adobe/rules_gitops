@@ -79,6 +79,7 @@ k8s_deploy(
     ],
     name_suffix = "-canary",
     namespace = NAMESPACE,
+    prefix_suffix_app_labels = True,
     user = USER,
 )
 

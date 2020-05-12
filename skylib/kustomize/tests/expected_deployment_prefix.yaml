@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prefix-myapp
+spec:
+  selector:
+    matchLabels:
+      app: prefix-myapp
+  template:
+    metadata:
+      labels:
+        app: prefix-myapp
+    spec:
+      containers:
+      - image: test-image
+        name: myapp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prefix-myapp2
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prefix-myapp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: prefix-myapp
+    spec:
+      containers:
+      - image: test-image
+        name: myapp
