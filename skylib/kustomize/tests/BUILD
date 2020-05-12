@@ -327,12 +327,12 @@ file_compare_test(
 # common labels and common annotations
 kustomize(
     name = "common_labels",
+    common_annotations = {"ownerTeam": "apps"},
+    common_labels = {"flavor": "canary"},
     manifests = [
         "deployment_with_labels.yaml",
-        "service.yaml"
+        "service.yaml",
     ],
-    common_labels = {"flavor": "canary"},
-    common_annotations = {"ownerTeam": "apps"},
     namespace = "",
 )
 
