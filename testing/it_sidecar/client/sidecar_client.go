@@ -8,6 +8,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -15,6 +17,8 @@ import (
 type K8STestSetup struct {
 	WaitForPods         []string
 	PortForwardServices map[string]int
+
+	forwards map[string]int
 
 	cmd *exec.Cmd
 
@@ -29,6 +33,7 @@ var setupCMD = flag.String("setup", "", "the path to the it setup command")
 // ready, and then forwards service logs to test output.  On completion, signals to the it_sidecar
 // to teardown the test namespace
 func (s *K8STestSetup) TestMain(m *testing.M) {
+	s.forwards = make(map[string]int)
 	os.Exit(func() int {
 		flag.Parse()
 
@@ -49,6 +54,10 @@ func (s *K8STestSetup) TestMain(m *testing.M) {
 		// Run tests.
 		return m.Run()
 	}())
+}
+
+func (s *K8STestSetup) GetServiceLocalPort(serviceName string) int {
+	return s.forwards[serviceName]
 }
 
 func (s *K8STestSetup) before() {
@@ -99,10 +108,15 @@ waitForReady:
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Print(str)
+		if strings.HasPrefix(str, "FORWARD") {
+			// remove the "FORWARD " prefix, and any trailing space, split on ":"
+			parts := strings.Split(strings.TrimSpace(str[8:]), ":")
+			localPort, _ := strconv.Atoi(parts[2])
+			s.forwards[parts[0]] = localPort
+		}
 		if "READY\n" == str {
 			break waitForReady
-		} else {
-			fmt.Print(str)
 		}
 	}
 	//Start reading stdout in a new goroutine
@@ -115,3 +129,4 @@ waitForReady:
 	}()
 
 }
+
