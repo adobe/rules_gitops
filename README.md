@@ -50,6 +50,8 @@ http_archive(
     sha256 = "286a4c62c13b1302b89bfdfef62c662a53e0886fbe873d8b5c7bb444ffdf4e5e",
     strip_prefix = "rules_gitops-%s" % rules_gitops_version,
     urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
+)
+
 load("@com_adobe_rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
 
 rules_gitops_dependencies()
