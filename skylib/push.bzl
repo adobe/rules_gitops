@@ -65,10 +65,6 @@ def _impl(ctx):
         tag = "$(cat {})".format(_get_runfile_path(ctx, ctx.file.tag_file))
         pusher_input.append(ctx.file.tag_file)
 
-    # If any stampable attr contains python format syntax (which is how users
-    # configure stamping), we enable stamping.
-    if ctx.attr.stamp:
-        print("Attr 'stamp' is deprecated; it is now automatically inferred. Please remove it from %s" % ctx.label)
     stamp = "{" in tag or "{" in registry or "{" in repository
     stamp_inputs = [ctx.file._info_file] if stamp else []
     for f in stamp_inputs:
@@ -83,13 +79,6 @@ def _impl(ctx):
     digester_img_args, digester_img_inputs = _gen_img_args(ctx, image)
     digester_input += digester_img_inputs
     digester_args += digester_img_args
-    tarball = image.get("legacy")
-    if tarball:
-        print("Pushing an image based on a tarball can be very " +
-              "expensive.  If the image is the output of a " +
-              "container_build, consider dropping the '.tar' extension. " +
-              "If the image is checked in, consider using " +
-              "container_import instead.")
 
     pusher_args.append("--format={}".format(ctx.attr.format))
     pusher_args.append("--dst={registry}/{repository}:{tag}".format(
@@ -201,6 +190,7 @@ Args:
         "stamp": attr.bool(
             default = False,
             mandatory = False,
+            doc = "(unused)",
         ),
         "tag": attr.string(
             default = "latest",
