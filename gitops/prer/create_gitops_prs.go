@@ -171,7 +171,7 @@ func main() {
 	close(targetsCh)
 	wg.Wait()
 
-	workdir.Push()
+	workdir.Push(updatedGitopsBranches)
 
 	for _, branch := range updatedGitopsBranches {
 		err := bitbucket.CreatePR(branch, *prInto, fmt.Sprintf("GitOps deployment %s", branch))
