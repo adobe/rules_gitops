@@ -41,7 +41,6 @@ buildifier(
         "-function-docstring-header",
         "-function-docstring-args",
         "-function-docstring-return",
-        "-print",
     ],
 )
 
@@ -59,7 +58,6 @@ buildifier(
         "-function-docstring-header",
         "-function-docstring-args",
         "-function-docstring-return",
-        "-print",
     ],
     mode = "check",
 )

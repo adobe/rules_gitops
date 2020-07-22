@@ -186,8 +186,6 @@ def k8s_deploy(
         )
     else:
         # gitops
-        if objects:
-            print("Warning: objects parameter of k8s_deploy should not be used for gitops in %s. make sure dependencies are processed independently." % native.package_name())
         if not namespace:
             fail("namespace must be defined for gitops k8s_deploy")
         images_v = []
@@ -311,7 +309,6 @@ def _kubeconfig_impl(repository_ctx):
         else:
             # fall back to the default
             server = "https://kubernetes.default"
-        print("Using in cluster configuration. Kubernetes master is running at %s" % server)
     else:
         home = repository_ctx.path(repository_ctx.os.environ["HOME"])
         certs = home.get_child(".kube").get_child("certs")
