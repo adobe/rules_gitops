@@ -173,6 +173,7 @@ def k8s_deploy(
             srcs = [name],
             command = "delete",
             cluster = cluster,
+            push = False,
             user = user,
             namespace = namespace,
             visibility = visibility,
