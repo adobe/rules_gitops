@@ -483,18 +483,20 @@ def _kubectl_impl(ctx):
     kubectl_command_arg = ctx.expand_make_variables("kubectl_command", kubectl_command_arg, {})
 
     statements = ""
+    transitive = None
 
-    trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
-    statements += "\n".join([
-        "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
-        for exe in trans_img_pushes
-    ]) + "\n"
-    statements += "\n".join([
-        "async \"${RUNFILES}/%s\"" % _get_runfile_path(ctx, exe.files_to_run.executable)
-        for exe in trans_img_pushes
-    ]) + "\nwaitpids\n"
-    files += [obj.files_to_run.executable for obj in trans_img_pushes]
-    transitive = depset(transitive = [obj.default_runfiles.files for obj in trans_img_pushes])
+    if ctx.attr.push:
+        trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
+        statements += "\n".join([
+            "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
+            for exe in trans_img_pushes
+        ]) + "\n"
+        statements += "\n".join([
+            "async \"${RUNFILES}/%s\"" % _get_runfile_path(ctx, exe.files_to_run.executable)
+            for exe in trans_img_pushes
+        ]) + "\nwaitpids\n"
+        files += [obj.files_to_run.executable for obj in trans_img_pushes]
+        transitive = depset(transitive = [obj.default_runfiles.files for obj in trans_img_pushes])
 
     namespace = ctx.attr.namespace
     for inattr in ctx.attr.srcs:
@@ -529,6 +531,7 @@ kubectl = rule(
         "namespace": attr.string(mandatory = True),
         "command": attr.string(default = "apply"),
         "user": attr.string(default = "{BUILD_USER}"),
+        "push": attr.bool(default = True),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
             allow_single_file = True,
