@@ -111,6 +111,7 @@ func (r *Repo) IsClean() bool {
 
 // Push pushes all local changes to the remote repository
 // all changes should be already commited
-func (r *Repo) Push() {
-	exec.Mustex(r.Dir, "git", "push", "-f", "--all", "--set-upstream")
+func (r *Repo) Push(branches []string) {
+	args := append([]string{"push", "origin", "-f", "--set-upstream"}, branches...)
+	exec.Mustex(r.Dir, "git", args...)
 }
