@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = ["filter.go"],
-    importpath = "github.com/adobe/rules_gitops/it_manifest_filter/pkg",
+    importpath = "github.com/adobe/rules_gitops/testing/it_manifest_filter/pkg",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/ghodss/yaml:go_default_library",

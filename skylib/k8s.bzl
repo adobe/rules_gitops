@@ -587,7 +587,7 @@ k8s_test_setup = rule(
             executable = True,
         ),
         "_it_manifest_filter": attr.label(
-            default = Label("//it_manifest_filter:it_manifest_filter"),
+            default = Label("//testing/it_manifest_filter:it_manifest_filter"),
             cfg = "host",
             executable = True,
         ),
