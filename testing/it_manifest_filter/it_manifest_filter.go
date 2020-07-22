@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	filter "github.com/adobe/rules_gitops/it_manifest_filter/pkg"
+	filter "github.com/adobe/rules_gitops/testing/it_manifest_filter/pkg"
 )
 
 var (
