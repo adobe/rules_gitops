@@ -15,10 +15,10 @@ GtiOps rules repositories initialization
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 load("@io_bazel_rules_docker//repositories:repositories.bzl", container_repositories = "repositories")
 load("@io_bazel_rules_docker//repositories:go_repositories.bzl", container_go_deps = "go_deps")
 load("@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize_setup")
-load("@com_adobe_rules_gitops//skylib:toolchain.bzl", "docker_toolchain_configure")
 
 def rules_gitops_repositories():
     """Initializes Declares workspaces the GitOps rules depend on.
@@ -30,7 +30,7 @@ def rules_gitops_repositories():
     protobuf_deps()
     go_rules_dependencies()
     go_register_toolchains()
-    docker_toolchain_configure(name = "docker_config")
+    gazelle_dependencies()
     container_repositories()
     container_go_deps()
     kustomize_setup(name = "kustomize_bin")
