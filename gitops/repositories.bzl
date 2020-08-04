@@ -32,6 +32,7 @@ def rules_gitops_repositories():
     go_rules_dependencies()
     go_register_toolchains()
     gazelle_dependencies()
+
     # docker_toolchain_configure(name = "docker_config")
     container_repositories()
     container_go_deps()
