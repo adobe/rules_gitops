@@ -69,17 +69,6 @@ def rules_gitops_dependencies():
         urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.14.3/rules_docker-v0.14.3.tar.gz"],
     )
 
-    # _maybe(
-    #     http_archive,
-    #     name = "bazel_toolchains",
-    #     sha256 = "882fecfc88d3dc528f5c5681d95d730e213e39099abff2e637688a91a9619395",
-    #     strip_prefix = "bazel-toolchains-3.4.0",
-    #     urls = [
-    #         "https://github.com/bazelbuild/bazel-toolchains/releases/download/3.4.0/bazel-toolchains-3.4.0.tar.gz",
-    #         "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/releases/download/3.4.0/bazel-toolchains-3.4.0.tar.gz",
-    #     ],
-    # )
-
 def _maybe(repo_rule, name, **kwargs):
     if name not in native.existing_rules():
         repo_rule(name = name, **kwargs)
