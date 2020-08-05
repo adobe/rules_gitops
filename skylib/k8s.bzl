@@ -437,7 +437,7 @@ _k8s_cmd = rule(
             allow_single_file = True,
         ),
         "_stamper": attr.label(
-            default = Label("@io_bazel_rules_k8s//k8s:stamper"),
+            default = Label("//stamper:stamper"),
             cfg = "host",
             executable = True,
             allow_files = True,
@@ -589,7 +589,7 @@ k8s_test_setup = rule(
             executable = True,
         ),
         "_stamper": attr.label(
-            default = Label("@io_bazel_rules_k8s//k8s:stamper"),
+            default = Label("//stamper:stamper"),
             cfg = "host",
             executable = True,
             allow_files = True,
