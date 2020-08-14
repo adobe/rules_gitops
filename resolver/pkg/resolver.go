@@ -130,7 +130,6 @@ func (pt *imageTagTransformer) updateContainers(obj map[string]interface{}, path
 
 func (pt *imageTagTransformer) updateContainer(obj map[string]interface{}, path string) error {
 	container := obj[path].(map[string]interface{})
-	fmt.Println(container)
 	image, found := container["image"]
 	if found {
 		imagename := image.(string)
