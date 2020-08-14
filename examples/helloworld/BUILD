@@ -57,6 +57,7 @@ k8s_deploy(
     manifests = [
         "deployment.yaml",
         "service.yaml",
+        "cwf.yaml",
     ],
     namespace = "{BUILD_USER}",
     user = USER,
