@@ -27,7 +27,7 @@ go get sigs.k8s.io/kind@v0.7.0
 
 cluster_running="$(docker inspect -f '{{.State.Running}}' kind-control-plane 2>/dev/null || true)"
 if [ "${cluster_running}" != 'true' ]; then
-  ./create_kind.cluster.sh
+  ./create_kind_cluster.sh
 fi
 
 delete() {
