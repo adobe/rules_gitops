@@ -31,6 +31,9 @@ func TestNoError(t *testing.T) {
 			"salist":      "docker.io/rtb/sacli/cmd/salist/image@sha256:5711bcf54511ab2fef6e08d9c9f9ae3f3a269e66834048465cc7502adb0d489b",
 			"filewatcher": "docker.io/kube/filewatcher/image:tag",
 		}},
+		{"cwf", map[string]string{
+			"helloworld-image": "docker.io/kube/hello/image:tag",
+		}},
 	}
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
