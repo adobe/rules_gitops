@@ -81,7 +81,7 @@ type imageTagTransformer struct {
 func (pt *imageTagTransformer) findAndReplaceTag(obj map[string]interface{}) error {
 	found := false
 
-	// Update [container, spec].image
+	// Update [container|spec].image
 	paths := []string{"container", "spec"}
 	for _, path := range paths {
 		_, found = obj[path]
