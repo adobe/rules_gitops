@@ -80,11 +80,16 @@ func (s *K8STestSetup) before() {
 	}
 	go func() {
 		rd := bufio.NewReader(s.er)
-		str, err := rd.ReadString('\n')
-		if err != nil {
-			log.Fatal(err)
+		for {
+			str, err := rd.ReadString('\n')
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Print(str)
 		}
-		log.Println(str)
 	}()
 
 	//Open stdin and stdout
@@ -121,11 +126,16 @@ waitForReady:
 	}
 	//Start reading stdout in a new goroutine
 	go func() {
-		str, err := rd.ReadString('\n')
-		if err != nil {
-			log.Fatal(err)
+		for {
+			str, err := rd.ReadString('\n')
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Print(str)
 		}
-		log.Println(str)
 	}()
 
 }
