@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -34,23 +35,20 @@ var setupCMD = flag.String("setup", "", "the path to the it setup command")
 // to teardown the test namespace
 func (s *K8STestSetup) TestMain(m *testing.M) {
 	s.forwards = make(map[string]int)
+	wg := new(sync.WaitGroup)
+	wg.Add(2) // there will be 2 goroutines, one reading stdout and one reading stdin
 	os.Exit(func() int {
 		flag.Parse()
-
 		// Defer sidecar process tear-down.
 		defer func() {
 			//Closing standard-in pipe signals sidecar process to exit,
 			s.in.Close()
-
+			wg.Wait() // Wait for reader goroutines to actually finish
 			if err := s.cmd.Wait(); err != nil {
 				log.Fatal(err)
 			}
-
-			s.out.Close()
-			s.er.Close()
 		}()
-
-		s.before()
+		s.before(wg)
 		// Run tests.
 		return m.Run()
 	}())
@@ -60,8 +58,8 @@ func (s *K8STestSetup) GetServiceLocalPort(serviceName string) int {
 	return s.forwards[serviceName]
 }
 
-func (s *K8STestSetup) before() {
-	fmt.Printf("setup command: %s\n", *setupCMD)
+func (s *K8STestSetup) before(wg *sync.WaitGroup) {
+	log.Printf("setup command: %s\n", *setupCMD)
 
 	args := make([]string, 0)
 	for _, app := range s.WaitForPods {
@@ -74,7 +72,9 @@ func (s *K8STestSetup) before() {
 	s.cmd = exec.Command(*setupCMD, args...)
 
 	var err error
-	//Open and start reading stderr in a new goroutine
+	// Open and start reading stderr in a new goroutine. StderrPipe will be closed automatically by the call to Wait
+	// so we do not need to close this ourselves.  We must also guarantee that all reads on this pipe are completed
+	// before calling wait, so the goroutines below must be canceled before the defered teardown above
 	if s.er, err = s.cmd.StderrPipe(); err != nil {
 		log.Fatal(err)
 	}
@@ -90,6 +90,7 @@ func (s *K8STestSetup) before() {
 			}
 			log.Print(str)
 		}
+		wg.Done()
 	}()
 
 	//Open stdin and stdout
@@ -136,6 +137,7 @@ waitForReady:
 			}
 			log.Print(str)
 		}
+		wg.Done()
 	}()
 
 }
