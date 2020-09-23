@@ -34,6 +34,17 @@ var setupCMD = flag.String("setup", "", "the path to the it setup command")
 // ready, and then forwards service logs to test output.  On completion, signals to the it_sidecar
 // to teardown the test namespace
 func (s *K8STestSetup) TestMain(m *testing.M) {
+	s.testMain(m, nil)
+}
+
+// TestMainWithHook will execute the provided setup command, wait for configured pods and services to be
+// ready, run the provided hook for any custom pre-test suite setup and then forwards service logs to test output.
+// On completion, signals to the it_sidecar to teardown the test namespace.
+func (s *K8STestSetup) TestMainWithHook(m *testing.M, hook func()) {
+	s.testMain(m, hook)
+}
+
+func (s *K8STestSetup) testMain(m *testing.M, preHook func()) {
 	s.forwards = make(map[string]int)
 	wg := new(sync.WaitGroup)
 	wg.Add(2) // there will be 2 goroutines, one reading stdout and one reading stdin
@@ -49,6 +60,9 @@ func (s *K8STestSetup) TestMain(m *testing.M) {
 			}
 		}()
 		s.before(wg)
+		if preHook != nil {
+			preHook()
+		}
 		// Run tests.
 		return m.Run()
 	}())
@@ -81,6 +95,7 @@ func (s *K8STestSetup) before(wg *sync.WaitGroup) {
 	go func() {
 		rd := bufio.NewReader(s.er)
 		for {
+			log.Println("here")
 			str, err := rd.ReadString('\n')
 			if err == io.EOF {
 				break
@@ -90,6 +105,8 @@ func (s *K8STestSetup) before(wg *sync.WaitGroup) {
 			}
 			log.Print(str)
 		}
+		log.Println("here")
+
 		wg.Done()
 	}()
 
@@ -141,4 +158,3 @@ waitForReady:
 	}()
 
 }
-
