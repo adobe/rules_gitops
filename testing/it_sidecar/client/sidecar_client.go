@@ -95,7 +95,6 @@ func (s *K8STestSetup) before(wg *sync.WaitGroup) {
 	go func() {
 		rd := bufio.NewReader(s.er)
 		for {
-			log.Println("here")
 			str, err := rd.ReadString('\n')
 			if err == io.EOF {
 				break
@@ -105,7 +104,6 @@ func (s *K8STestSetup) before(wg *sync.WaitGroup) {
 			}
 			log.Print(str)
 		}
-		log.Println("here")
 
 		wg.Done()
 	}()
