@@ -99,6 +99,7 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***deps_aliases***        | `{}`           | A dict of labels of file dependencies. File dependency contents are available for template expansion in manifests as `{{imports.<label>}}`. Each dependency in this dictionary should be present in the `deps` attribute.
 | ***objects***             | `[]`           | A list of other instances of `k8s_deploy` that this one depends on. See [Adding Dependencies](#adding-dependencies).
 | ***images***              | `{}`           | A dict of labels of Docker images. See [Injecting Docker Images](#injecting-docker-images).
+| ***image_registry***      | `docker.io`    | The registry to push images to. 
 | ***image_repository***    | `None`         | The repository to push images to. By default, this is generated from the current package path.
 | ***image_repository_prefix*** | `None`     | Add a prefix to the image_repository. Can be used to upload the images in
 | ***release_branch_prefix*** | `master`     | A git branch name/prefix. Automatically run GitOps while building this branch. See [GitOps and Deployment](#gitops_and_deployment).
