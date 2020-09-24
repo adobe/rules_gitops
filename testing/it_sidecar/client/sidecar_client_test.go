@@ -15,7 +15,8 @@ import (
 	"testing"
 )
 
-// This file currently only tests a scenario involving hooks test setup using K8STestSetup.
+// This file currently only tests a scenario involving K8STestSetup where a custom hook is applied after the k8s test
+// cluster is ready but prior to invoking tests.
 var (
 	setup K8STestSetup
 
@@ -41,6 +42,6 @@ func TestMain(m *testing.M) {
 func TestSetupHook(t *testing.T) {
 	isTestRun = true
 	if !isHookRun {
-		t.Fatalf("Pre hook was not run!")
+		t.Fatalf("Pre hook was not run before invoking tests!")
 	}
 }
