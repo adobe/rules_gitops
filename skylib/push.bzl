@@ -80,13 +80,6 @@ def _impl(ctx):
     digester_input += digester_img_inputs
     digester_args += digester_img_args
 
-    pusher_args.append("--format={}".format(ctx.attr.format))
-    pusher_args.append("--dst={registry}/{repository}:{tag}".format(
-        registry = registry,
-        repository = repository,
-        tag = tag,
-    ))
-
     if ctx.attr.skip_unchanged_digest:
         pusher_args += ["-skip-unchanged-digest"]
     digester_args += ["--dst", str(ctx.outputs.digest.path), "--format", str(ctx.attr.format)]
@@ -98,6 +91,16 @@ def _impl(ctx):
         tools = ctx.attr._digester[DefaultInfo].default_runfiles.files,
         mnemonic = "ContainerPushDigest",
     )
+
+    if ctx.attr.image_digest_tag:
+        tag = "$(cat {} | sed 's/sha256://')".format(ctx.outputs.digest.path.replace('_push', ''))
+
+    pusher_args.append("--format={}".format(ctx.attr.format))
+    pusher_args.append("--dst={registry}/{repository}:{tag}".format(
+        registry = registry,
+        repository = repository,
+        tag = tag,
+    ))
 
     # If the docker toolchain is configured to use a custom client config
     # directory, use that instead
@@ -171,6 +174,11 @@ Args:
             allow_single_file = [".tar"],
             mandatory = True,
             doc = "The label of the image to push.",
+        ),
+        "image_digest_tag": attr.bool(
+            default = False,
+            mandatory = False,
+            doc = "Tag the image with the container digest, default to False"
         ),
         "legacy_image_name": attr.string(doc = "image name used in deployments, for compatibility with k8s_deploy. Do not use, refer images by full bazel target name instead"),
         "registry": attr.string(
