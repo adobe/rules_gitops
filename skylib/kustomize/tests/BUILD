@@ -131,6 +131,7 @@ file_compare_test(
 k8s_container_push(
     name = "image_digest_push",
     image = ":image",
+    image_digest_tag = True,
 )
 
 kustomize(
