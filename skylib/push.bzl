@@ -93,7 +93,7 @@ def _impl(ctx):
     )
 
     if ctx.attr.image_digest_tag:
-        tag = "$(cat {} | sed 's/sha256://')".format(ctx.outputs.digest.path.replace('_push', ''))
+        tag = "$(cat {} | sed 's/sha256://')".format(ctx.outputs.digest.path.replace("_push", ""))
 
     pusher_args.append("--format={}".format(ctx.attr.format))
     pusher_args.append("--dst={registry}/{repository}:{tag}".format(
@@ -178,7 +178,7 @@ Args:
         "image_digest_tag": attr.bool(
             default = False,
             mandatory = False,
-            doc = "Tag the image with the container digest, default to False"
+            doc = "Tag the image with the container digest, default to False",
         ),
         "legacy_image_name": attr.string(doc = "image name used in deployments, for compatibility with k8s_deploy. Do not use, refer images by full bazel target name instead"),
         "registry": attr.string(
