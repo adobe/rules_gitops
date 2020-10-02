@@ -129,6 +129,31 @@ file_compare_test(
 )
 
 k8s_container_push(
+    name = "image_digest_push",
+    image = ":image",
+)
+
+kustomize(
+    name = "image_digest_test",
+    testonly = True,
+    images = [
+        ":image_digest_push",
+    ],
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+        "crb.yaml",
+    ],
+    namespace = "",
+)
+
+file_compare_test(
+    name = "image_digest_resolved_file",
+    expected = "expected_image_resolved_test.yaml",
+    file = ":image_test",
+)
+
+k8s_container_push(
     name = "image_push_legacy",
     image = ":image",
     legacy_image_name = "test-image",
