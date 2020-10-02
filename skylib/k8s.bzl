@@ -93,6 +93,7 @@ def k8s_deploy(
         deps = [],
         deps_aliases = {},
         images = {},
+        image_digest_tag = False,
         image_registry = "docker.io",  # registry to push container to. jenkins will need an access configured for gitops to work. Ignored for mynamespace.
         image_repository = None,  # repository (registry path) to push container to. Generated from the image bazel path if empty.
         image_repository_prefix = None,  # Mutually exclusive with 'image_repository'. Add a prefix to the repository name generated from the image bazel path
@@ -132,6 +133,7 @@ def k8s_deploy(
                 k8s_container_push(
                     name = imgname + "_mynamespace_push",
                     image = img,
+                    image_digest_tag = image_digest_tag,
                     legacy_image_name = imgname,
                     registry = image_registry,
                     repository = image_repository,
@@ -196,6 +198,7 @@ def k8s_deploy(
                 k8s_container_push(
                     name = imgname + "_push",
                     image = img,
+                    image_digest_tag = image_digest_tag,
                     legacy_image_name = imgname,
                     registry = image_registry,
                     repository = image_repository,
