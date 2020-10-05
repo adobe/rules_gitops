@@ -93,7 +93,7 @@ def _impl(ctx):
     )
 
     if ctx.attr.image_digest_tag:
-        tag = "$(cat {} | sed 's/sha256://')".format(ctx.outputs.digest.path.replace("_push", ""))
+        tag = "$(cat {} | sed 's/sha256://')".format(ctx.outputs.digest.path)
 
     pusher_args.append("--format={}".format(ctx.attr.format))
     pusher_args.append("--dst={registry}/{repository}:{tag}".format(
