@@ -68,6 +68,7 @@ k8s_deploy(
     name = "canary",
     cluster = CLUSTER,
     deployment_branch = "helloworld-canary",
+    image_digest_tag = True,  # test optional image tagging
     image_registry = REGISTRY,  # override the default registry for production
     image_repository_prefix = "k8s",
     images = {
@@ -87,6 +88,7 @@ k8s_deploy(
     name = "release",
     cluster = CLUSTER,
     deployment_branch = "helloworld-prod",
+    image_digest_tag = True,  # test optional image tagging
     image_registry = REGISTRY,  # override the default registry host for production
     image_repository_prefix = "k8s",
     images = {
