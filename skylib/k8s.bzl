@@ -83,7 +83,7 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_r
             rule_name_parts.append(image_repository)
         rule_name_parts.append(image_name)
         rule_name = "-".join(rule_name_parts)
-        rule_name = rule_name.replace("/", "-")
+        rule_name = rule_name.replace("/", "-").replace(":", "-")
         image_pushes.append(rule_name + name_suffix)
         if not native.existing_rule(rule_name + name_suffix):
             k8s_container_push(
