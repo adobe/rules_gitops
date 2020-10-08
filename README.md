@@ -31,6 +31,7 @@ Add the following to your `WORKSPACE` file to add the necessary external depende
 rev=$(git rev-parse HEAD) && sha265=$(curl -Ls https://github.com/adobe/rules_gitops/archive/${rev}.zip | shasum -a 256 - | cut -d ' ' -f1) && cat <<EOF
 # copy/paste following snippet into README.md
 rules_gitops_version = "${rev}"
+
 http_archive(
     name = "com_adobe_rules_gitops",
     sha256 = "${sha265}",
@@ -43,11 +44,11 @@ EOF
 ```python
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-rules_gitops_version = "9e6d1f9b2bf78eca17b3137710ea7498c87466e6"
+rules_gitops_version = "d5eb2b90c7b107eb6c91134fa4f21ea97ac15981"
 
 http_archive(
     name = "com_adobe_rules_gitops",
-    sha256 = "653671c8ba9058607cc20e799a08474c33f1415ab4be08be1d84ec75d1a793f7",
+    sha256 = "9bf38e9ae41dd8d7527452655f47586c33cac213ee39a81d7a6304cbb88e98ec",
     strip_prefix = "rules_gitops-%s" % rules_gitops_version,
     urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
 )
