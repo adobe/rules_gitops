@@ -79,6 +79,7 @@ def _impl(ctx):
     digester_img_args, digester_img_inputs = _gen_img_args(ctx, image)
     digester_input += digester_img_inputs
     digester_args += digester_img_args
+    pusher_runfiles = [ctx.executable._pusher] + pusher_input
 
     if ctx.attr.skip_unchanged_digest:
         pusher_args += ["-skip-unchanged-digest"]
@@ -93,7 +94,8 @@ def _impl(ctx):
     )
 
     if ctx.attr.image_digest_tag:
-        tag = "$(cat {} | sed 's/sha256://')".format(image["digest"].path)
+        tag = "$(cat {} | cut -d ':' -f 2 | cut -c 1-7)".format(ctx.outputs.digest.path)
+        pusher_runfiles += [ctx.outputs.digest]
 
     pusher_args.append("--format={}".format(ctx.attr.format))
     pusher_args.append("--dst={registry}/{repository}:{tag}".format(
@@ -108,10 +110,6 @@ def _impl(ctx):
     if toolchain_info.client_config != "":
         pusher_args += ["-client-config-dir", str(toolchain_info.client_config)]
 
-    pusher_runfiles = [ctx.executable._pusher] + pusher_input
-    runfiles = ctx.runfiles(files = pusher_runfiles)
-    runfiles = runfiles.merge(ctx.attr._pusher[DefaultInfo].default_runfiles)
-
     ctx.actions.expand_template(
         template = ctx.file._tag_tpl,
         substitutions = {
@@ -121,6 +119,9 @@ def _impl(ctx):
         output = ctx.outputs.executable,
         is_executable = True,
     )
+
+    runfiles = ctx.runfiles(files = pusher_runfiles)
+    runfiles = runfiles.merge(ctx.attr._pusher[DefaultInfo].default_runfiles)
 
     return [
         DefaultInfo(
