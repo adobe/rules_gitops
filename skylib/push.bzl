@@ -94,7 +94,7 @@ def _impl(ctx):
     )
 
     if ctx.attr.image_digest_tag:
-        tag = "$(cat {} | cut -d ':' -f 2 | cut -c 1-7)".format(ctx.outputs.digest.path)
+        tag = "$(cat {} | cut -d ':' -f 2 | cut -c 1-7)".format(_get_runfile_path(ctx, ctx.outputs.digest))
         pusher_runfiles += [ctx.outputs.digest]
 
     pusher_args.append("--format={}".format(ctx.attr.format))
