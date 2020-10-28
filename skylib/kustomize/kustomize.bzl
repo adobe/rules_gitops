@@ -468,6 +468,7 @@ gitops = rule(
 
 def _kubectl_impl(ctx):
     files = [] + ctx.files.srcs
+    transitive = depset([])
 
     cluster_arg = ctx.attr.cluster
     cluster_arg = ctx.expand_make_variables("cluster", cluster_arg, {})
@@ -479,36 +480,45 @@ def _kubectl_impl(ctx):
     if "{" in ctx.attr.user:
         user_arg = stamp(ctx, user_arg, files, ctx.label.name + ".user-name", True)
 
+    kubectl = "kubectl"
+    if ctx.executable.kubectl:
+        kubectl = "./" + ctx.executable.kubectl.short_path
+        files.append(ctx.executable.kubectl)
+        transitive = depset(transitive = [transitive, ctx.attr.kubectl.default_runfiles.files])
+
     kubectl_command_arg = ctx.attr.command
     kubectl_command_arg = ctx.expand_make_variables("kubectl_command", kubectl_command_arg, {})
 
-    statements = ""
-    transitive = None
+    statements = []
 
     if ctx.attr.push:
         trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
-        statements += "\n".join([
-            "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
+        statements += [
+            """echo pushing {}/{}:{}""".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
             for exe in trans_img_pushes
-        ]) + "\n"
-        statements += "\n".join([
-            "async \"${RUNFILES}/%s\"" % _get_runfile_path(ctx, exe.files_to_run.executable)
+        ]
+        statements += [
+            """async \"${{RUNFILES}}/{}\"""".format(_get_runfile_path(ctx, exe.files_to_run.executable))
             for exe in trans_img_pushes
-        ]) + "\nwaitpids\n"
+        ]
+        statements.append("waitpids")
         files += [obj.files_to_run.executable for obj in trans_img_pushes]
-        transitive = depset(transitive = [obj.default_runfiles.files for obj in trans_img_pushes])
+        transitive = depset(transitive = [transitive] + [obj.default_runfiles.files for obj in trans_img_pushes])
 
     namespace = ctx.attr.namespace
     for inattr in ctx.attr.srcs:
         for infile in inattr.files.to_list():
-            statements += "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} | kubectl --cluster=\"{cluster}\" --user=\"{user}\" {kubectl_command} -f -\n".format(
-                infile = infile.short_path,
-                cluster = cluster_arg,
-                user = user_arg,
-                kubectl_command = kubectl_command_arg,
-                template_engine = "${RUNFILES}/%s" % _get_runfile_path(ctx, ctx.executable._template_engine),
-                namespace = namespace,
-                info_file = ctx.file._info_file.short_path,
+            statements.append(
+                """{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} | {kubectl} --cluster=\"{cluster}\" --user=\"{user}\" {kubectl_command} -f -""".format(
+                    infile = infile.short_path,
+                    cluster = cluster_arg,
+                    user = user_arg,
+                    kubectl_command = kubectl_command_arg,
+                    template_engine = "${{RUNFILES}}/{}".format(_get_runfile_path(ctx, ctx.executable._template_engine)),
+                    namespace = namespace,
+                    info_file = ctx.file._info_file.short_path,
+                    kubectl = kubectl,
+                )
             )
 
     files += [ctx.executable._template_engine, ctx.file._info_file]
@@ -516,12 +526,15 @@ def _kubectl_impl(ctx):
     ctx.actions.expand_template(
         template = ctx.file._template,
         substitutions = {
-            "%{statements}": statements,
+            "%{statements}": "\n".join(statements),
         },
         output = ctx.outputs.executable,
     )
     return [
-        DefaultInfo(runfiles = ctx.runfiles(files = files, transitive_files = transitive)),
+        DefaultInfo(
+            executable = ctx.outputs.executable,
+            runfiles = ctx.runfiles(files = files, transitive_files = transitive),
+        ),
     ]
 
 kubectl = rule(
@@ -532,6 +545,11 @@ kubectl = rule(
         "command": attr.string(default = "apply"),
         "user": attr.string(default = "{BUILD_USER}"),
         "push": attr.bool(default = True),
+        "kubectl" : attr.label(
+            default = None,
+            cfg = "host",
+            executable = True,
+        ),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
             allow_single_file = True,
