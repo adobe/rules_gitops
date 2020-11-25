@@ -5,15 +5,20 @@ go_library(
     srcs = [
         "terminal.go",
         "util.go",
+        "util_aix.go",
         "util_bsd.go",
         "util_linux.go",
         "util_plan9.go",
         "util_solaris.go",
+        "util_windows.go",
     ],
     importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/crypto/ssh/terminal",
     importpath = "golang.org/x/crypto/ssh/terminal",
     visibility = ["//visibility:public"],
     deps = select({
+        "@io_bazel_rules_go//go/platform:aix": [
+            "//vendor/golang.org/x/sys/unix:go_default_library",
+        ],
         "@io_bazel_rules_go//go/platform:android": [
             "//vendor/golang.org/x/sys/unix:go_default_library",
         ],
@@ -40,6 +45,9 @@ go_library(
         ],
         "@io_bazel_rules_go//go/platform:solaris": [
             "//vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/golang.org/x/sys/windows:go_default_library",
         ],
         "//conditions:default": [],
     }),

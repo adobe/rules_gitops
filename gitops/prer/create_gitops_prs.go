@@ -14,6 +14,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/adobe/rules_gitops/gitops/vcs/github"
 	"io"
 	"io/ioutil"
 	"log"
@@ -24,7 +25,8 @@ import (
 
 	"github.com/adobe/rules_gitops/gitops/analysis"
 	"github.com/adobe/rules_gitops/gitops/bazel"
-	"github.com/adobe/rules_gitops/gitops/bitbucket"
+	"github.com/adobe/rules_gitops/gitops/vcs/bitbucket"
+	"github.com/adobe/rules_gitops/gitops/vcs"
 	"github.com/adobe/rules_gitops/gitops/commitmsg"
 	"github.com/adobe/rules_gitops/gitops/exec"
 	"github.com/adobe/rules_gitops/gitops/git"
@@ -45,6 +47,7 @@ var (
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
+	vcsHost                = flag.String("vcs_host", "bitbucket", "the version control host api to use. 'bitbucket' or 'github'")
 )
 
 func bazelQuery(query string) *analysis.CqueryResult {
@@ -78,6 +81,17 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+
+	//TODO decide VCS based on argument
+	var gitHost vcs.VCS
+	if *vcsHost == "github" {
+		gitHost = vcs.VCSFunc(github.CreatePR)
+	} else if *vcsHost == "bitbucket" {
+		gitHost = vcs.VCSFunc(bitbucket.CreatePR)
+	} else {
+		log.Fatalf("unknown vcs host: %s", *vcsHost)
+	}
+
 	q := fmt.Sprintf("attr(deployment_branch, \".+\", attr(release_branch_prefix, \"%s\", kind(gitops, %s)))", *releaseBranch, *target)
 	qr := bazelQuery(q)
 	releaseTrains := make(map[string][]string)
@@ -174,7 +188,7 @@ func main() {
 	workdir.Push(updatedGitopsBranches)
 
 	for _, branch := range updatedGitopsBranches {
-		err := bitbucket.CreatePR(branch, *prInto, fmt.Sprintf("GitOps deployment %s", branch))
+		err := gitHost.CreatePR(branch, *prInto, fmt.Sprintf("GitOps deployment %s", branch))
 		if err != nil {
 			log.Fatal("unable to create PR: ", err)
 		}
