@@ -14,7 +14,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["git.go"],
+    srcs = [
+        "git.go",
+        "server.go",
+    ],
     importpath = "github.com/adobe/rules_gitops/gitops/git",
     visibility = ["//visibility:public"],
     deps = ["//gitops/exec:go_default_library"],

@@ -14,7 +14,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/adobe/rules_gitops/gitops/vcs/github"
 	"io"
 	"io/ioutil"
 	"log"
@@ -28,8 +27,8 @@ import (
 	"github.com/adobe/rules_gitops/gitops/commitmsg"
 	"github.com/adobe/rules_gitops/gitops/exec"
 	"github.com/adobe/rules_gitops/gitops/git"
-	"github.com/adobe/rules_gitops/gitops/vcs"
-	"github.com/adobe/rules_gitops/gitops/vcs/bitbucket"
+	"github.com/adobe/rules_gitops/gitops/git/bitbucket"
+	"github.com/adobe/rules_gitops/gitops/git/github"
 
 	proto "github.com/golang/protobuf/proto"
 )
@@ -82,11 +81,11 @@ func main() {
 	//todo delete this
 	_ = os.Setenv("GIT_SSH_COMMAND", fmt.Sprintf("ssh -q -o UserKnownHostsFile=%s -i %s", "/Users/michaelschiff/.ssh/known_hosts", "/Users/michaelschiff/.ssh/michaelschiff_github"))
 
-	var gitHost vcs.VCS
+	var gitHost git.Server
 	if *vcsHost == "github" {
-		gitHost = vcs.VCSFunc(github.CreatePR)
+		gitHost = git.ServerFunc(github.CreatePR)
 	} else if *vcsHost == "bitbucket" {
-		gitHost = vcs.VCSFunc(bitbucket.CreatePR)
+		gitHost = git.ServerFunc(bitbucket.CreatePR)
 	} else {
 		log.Fatalf("unknown vcs host: %s", *vcsHost)
 	}
