@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"golang.org/x/oauth2"
 	"github.com/google/go-github/v32/github"
+	"golang.org/x/oauth2"
+	"os"
 )
 
 var (
 	repoOwner = flag.String("github_repo_owner", "", "the owner user/organization to use for github api requests")
 	repo = flag.String("github_repo", "", "the repo to use for github api requests")
-	pat = flag.String("github_access_token", "", "the access token to authenticate requests")
+	pat = flag.String("github_access_token", os.Getenv("GITHUB_TOKEN"), "the access token to authenticate requests")
 )
 
 func CreatePR(from, to, title string) error {

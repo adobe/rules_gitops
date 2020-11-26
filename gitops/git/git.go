@@ -36,7 +36,11 @@ func Clone(repo, dir, mirrorDir string) (*Repo, error) {
 	if err := os.RemoveAll(dir); err != nil {
 		return nil, fmt.Errorf("Unable to clone repo: %w", err)
 	}
-	exec.Mustex("", "git", "clone", "-n", "--reference", mirrorDir, repo, dir)
+	if mirrorDir != "" {
+		exec.Mustex("", "git", "clone", "-n", "--reference", mirrorDir, repo, dir)
+	} else {
+		exec.Mustex("", "git", "clone", "-n", repo, dir)
+	}
 	exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
 	if err := ioutil.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte("cloud/\n"), 0644); err != nil {
 		return nil, fmt.Errorf("Unable to create .git/info/sparse-checkout: %w", err)
@@ -62,10 +66,10 @@ func (r *Repo) Clean() error {
 
 // SwitchToBranch switch the repo to specified branch and checkout master files over it.
 // if branch does not exist it will be created
-func (r *Repo) SwitchToBranch(branch string) (new bool) {
+func (r *Repo) SwitchToBranch(branch, primaryBranch string) (new bool) {
 	if _, err := exec.Ex(r.Dir, "git", "checkout", branch); err != nil {
 		// error checking out, create new
-		exec.Mustex(r.Dir, "git", "branch", branch, "master")
+		exec.Mustex(r.Dir, "git", "branch", branch, primaryBranch)
 		exec.Mustex(r.Dir, "git", "checkout", branch)
 		return true
 	}
@@ -73,9 +77,9 @@ func (r *Repo) SwitchToBranch(branch string) (new bool) {
 }
 
 // RecreateBranch discards a branch content and reset it from master.
-func (r *Repo) RecreateBranch(branch string) {
-	exec.Mustex(r.Dir, "git", "checkout", "master")
-	exec.Mustex(r.Dir, "git", "branch", "-f", branch, "master")
+func (r *Repo) RecreateBranch(branch, primaryBranch string) {
+	exec.Mustex(r.Dir, "git", "checkout", primaryBranch)
+	exec.Mustex(r.Dir, "git", "branch", "-f", branch, primaryBranch)
 	exec.Mustex(r.Dir, "git", "checkout", branch)
 }
 

@@ -25,11 +25,11 @@ import (
 
 	"github.com/adobe/rules_gitops/gitops/analysis"
 	"github.com/adobe/rules_gitops/gitops/bazel"
-	"github.com/adobe/rules_gitops/gitops/vcs/bitbucket"
-	"github.com/adobe/rules_gitops/gitops/vcs"
 	"github.com/adobe/rules_gitops/gitops/commitmsg"
 	"github.com/adobe/rules_gitops/gitops/exec"
 	"github.com/adobe/rules_gitops/gitops/git"
+	"github.com/adobe/rules_gitops/gitops/vcs"
+	"github.com/adobe/rules_gitops/gitops/vcs/bitbucket"
 
 	proto "github.com/golang/protobuf/proto"
 )
@@ -43,7 +43,7 @@ var (
 	gitopsTmpDir           = flag.String("gitops_tmpdir", os.TempDir(), "location to check out git tree with /cloud.")
 	target                 = flag.String("target", "//... except //experimental/...", "target to scan. Useful for debugging only")
 	pushParallelism        = flag.Int("push_parallelism", 5, "Number of image pushes to perform concurrently")
-	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as a target for deployment PR")
+	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as the source branch and target for deployment PR")
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
@@ -73,16 +73,15 @@ func bazelQuery(query string) *analysis.CqueryResult {
 
 func main() {
 	flag.Parse()
-	if *gitMirror == "" {
-		log.Fatal("git_mirror must be defined")
-	}
 	if *workspace != "" {
 		if err := os.Chdir(*workspace); err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	//TODO decide VCS based on argument
+	//todo delete this
+	_ = os.Setenv("GIT_SSH_COMMAND", fmt.Sprintf("ssh -q -o UserKnownHostsFile=%s -i %s", "/Users/michaelschiff/.ssh/known_hosts", "/Users/michaelschiff/.ssh/michaelschiff_github"))
+
 	var gitHost vcs.VCS
 	if *vcsHost == "github" {
 		gitHost = vcs.VCSFunc(github.CreatePR)
@@ -132,7 +131,7 @@ func main() {
 	for train, targets := range releaseTrains {
 		log.Println("train", train)
 		branch := fmt.Sprintf("deploy/%s%s", train, *deploymentBranchSuffix)
-		newBranch := workdir.SwitchToBranch(branch)
+		newBranch := workdir.SwitchToBranch(branch, *prInto)
 		if !newBranch {
 			// Find if we need to recreate the branch because target was deleted
 			msg := workdir.GetLastCommitMessage()
@@ -144,7 +143,7 @@ func main() {
 			for _, t := range oldtargets {
 				if !targetset[t] {
 					// target t is not present in a new list
-					workdir.RecreateBranch(branch)
+					workdir.RecreateBranch(branch, *prInto)
 					break
 				}
 			}
