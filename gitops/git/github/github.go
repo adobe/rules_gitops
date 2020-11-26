@@ -6,6 +6,8 @@ import (
 	"flag"
 	"github.com/google/go-github/v32/github"
 	"golang.org/x/oauth2"
+	"io/ioutil"
+	"log"
 	"os"
 )
 
@@ -42,7 +44,14 @@ func CreatePR(from, to, title string) error {
 		MaintainerCanModify: new(bool),
 		Draft:               new(bool),
 	}
-	_, _, err := gh.PullRequests.Create(ctx, *repoOwner, *repo, pr)
+	_, resp, err := gh.PullRequests.Create(ctx, *repoOwner, *repo, pr)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	log.Print("bitbucket response: ", string(body))
+	if 422 == resp.StatusCode {
+		log.Print("Reusing existing PR")
+		return nil
+	}
 	return err
 }
 
