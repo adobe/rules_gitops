@@ -47,7 +47,7 @@ func CreatePR(from, to, title string) error {
 	_, resp, err := gh.PullRequests.Create(ctx, *repoOwner, *repo, pr)
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	log.Print("bitbucket response: ", string(body))
+	log.Print("github response: ", string(body))
 	if 422 == resp.StatusCode {
 		log.Print("Reusing existing PR")
 		return nil
