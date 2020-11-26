@@ -28,11 +28,11 @@ var (
 
 // Clone clones a repository. Pass the full repository name, such as
 // "https://aleksey.pesternikov@bitbucket.tubemogul.info/scm/tm/repo.git" as the repo.
-// Cloned directory will be clean of local changes with master branch checked out.
+// Cloned directory will be clean of local changes with primaryBranch branch checked out.
 // repo: https://aleksey.pesternikov@bitbucket.tubemogul.info/scm/tm/repo.git
 // dir: /tmp/cloudrepo
 // mirrorDir: optional (if not empty) local mirror of the repository
-func Clone(repo, dir, mirrorDir string) (*Repo, error) {
+func Clone(repo, dir, mirrorDir, primaryBranch string) (*Repo, error) {
 	if err := os.RemoveAll(dir); err != nil {
 		return nil, fmt.Errorf("Unable to clone repo: %w", err)
 	}
@@ -45,7 +45,7 @@ func Clone(repo, dir, mirrorDir string) (*Repo, error) {
 	if err := ioutil.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte("cloud/\n"), 0644); err != nil {
 		return nil, fmt.Errorf("Unable to create .git/info/sparse-checkout: %w", err)
 	}
-	exec.Mustex(dir, "git", "checkout", "master")
+	exec.Mustex(dir, "git", "checkout", primaryBranch)
 
 	return &Repo{
 		Dir: dir,
@@ -64,7 +64,7 @@ func (r *Repo) Clean() error {
 	return os.RemoveAll(r.Dir)
 }
 
-// SwitchToBranch switch the repo to specified branch and checkout master files over it.
+// SwitchToBranch switch the repo to specified branch and checkout primaryBranch files over it.
 // if branch does not exist it will be created
 func (r *Repo) SwitchToBranch(branch, primaryBranch string) (new bool) {
 	if _, err := exec.Ex(r.Dir, "git", "checkout", branch); err != nil {
@@ -76,7 +76,7 @@ func (r *Repo) SwitchToBranch(branch, primaryBranch string) (new bool) {
 	return false
 }
 
-// RecreateBranch discards a branch content and reset it from master.
+// RecreateBranch discards a branch content and reset it from primaryBranch.
 func (r *Repo) RecreateBranch(branch, primaryBranch string) {
 	exec.Mustex(r.Dir, "git", "checkout", primaryBranch)
 	exec.Mustex(r.Dir, "git", "branch", "-f", branch, primaryBranch)

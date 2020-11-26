@@ -116,7 +116,7 @@ func main() {
 		log.Fatalf("Unable to create tempdir in %s: %v", *gitopsTmpDir, err)
 	}
 	defer os.RemoveAll(gitopsdir)
-	workdir, err := git.Clone(*repo, gitopsdir, *gitMirror)
+	workdir, err := git.Clone(*repo, gitopsdir, *gitMirror, *prInto)
 	if err != nil {
 		log.Fatalf("Unable to clone repo: %v", err)
 	}
