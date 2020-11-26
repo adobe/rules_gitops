@@ -78,9 +78,6 @@ func main() {
 		}
 	}
 
-	//todo delete this
-	_ = os.Setenv("GIT_SSH_COMMAND", fmt.Sprintf("ssh -q -o UserKnownHostsFile=%s -i %s", "/Users/michaelschiff/.ssh/known_hosts", "/Users/michaelschiff/.ssh/michaelschiff_github"))
-
 	var gitHost git.Server
 	if *vcsHost == "github" {
 		gitHost = git.ServerFunc(github.CreatePR)
