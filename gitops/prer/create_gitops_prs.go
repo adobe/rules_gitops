@@ -46,7 +46,7 @@ var (
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
-	vcsHost                = flag.String("vcs_host", "bitbucket", "the version control host api to use. 'bitbucket' or 'github'")
+	gitHost                = flag.String("git_server", "bitbucket", "the git server api to use. 'bitbucket' or 'github'")
 )
 
 func bazelQuery(query string) *analysis.CqueryResult {
@@ -78,13 +78,13 @@ func main() {
 		}
 	}
 
-	var gitHost git.Server
-	if *vcsHost == "github" {
-		gitHost = git.ServerFunc(github.CreatePR)
-	} else if *vcsHost == "bitbucket" {
-		gitHost = git.ServerFunc(bitbucket.CreatePR)
+	var gitServer git.Server
+	if *gitHost == "github" {
+		gitServer = git.ServerFunc(github.CreatePR)
+	} else if *gitHost == "bitbucket" {
+		gitServer = git.ServerFunc(bitbucket.CreatePR)
 	} else {
-		log.Fatalf("unknown vcs host: %s", *vcsHost)
+		log.Fatalf("unknown vcs host: %s", *gitHost)
 	}
 
 	q := fmt.Sprintf("attr(deployment_branch, \".+\", attr(release_branch_prefix, \"%s\", kind(gitops, %s)))", *releaseBranch, *target)
@@ -183,7 +183,7 @@ func main() {
 	workdir.Push(updatedGitopsBranches)
 
 	for _, branch := range updatedGitopsBranches {
-		err := gitHost.CreatePR(branch, *prInto, fmt.Sprintf("GitOps deployment %s", branch))
+		err := gitServer.CreatePR(branch, *prInto, fmt.Sprintf("GitOps deployment %s", branch))
 		if err != nil {
 			log.Fatal("unable to create PR: ", err)
 		}
