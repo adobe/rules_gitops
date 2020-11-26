@@ -10,8 +10,8 @@ go_library(
     importpath = "k8s.io/apimachinery/pkg/util/intstr",
     visibility = ["//visibility:public"],
     deps = [
+        "//vendor/github.com/gogo/protobuf/proto:go_default_library",
         "//vendor/github.com/google/gofuzz:go_default_library",
         "//vendor/k8s.io/klog:go_default_library",
-        "@com_github_gogo_protobuf//proto:go_default_library",
     ],
 )
