@@ -225,6 +225,18 @@ def _kustomize_impl(ctx):
             "--imports=%s=%s" % (k, d[str(ctx.label.relative(ctx.attr.deps_aliases[k]))])
             for k in ctx.attr.deps_aliases
         ])
+
+        # Image name substitutions
+        if ctx.attr.images:
+            for i, img in enumerate(ctx.attr.images):
+                kpi = img[K8sPushInfo]
+                regrepo = kpi.registry + "/" + kpi.repository
+                if "{" in regrepo:
+                    regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
+                template_part += " --variable={}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
+                if kpi.legacy_image_name:
+                    template_part += " --variable={}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
+
         template_part += " "
 
     script = ctx.actions.declare_file("%s-kustomize" % ctx.label.name)

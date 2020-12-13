@@ -119,13 +119,15 @@ func (pt *imageTagTransformer) updateContainers(obj map[string]interface{}, path
 		if !found {
 			continue
 		}
-		imagename := image.(string)
-		if newname, ok := pt.images[imagename]; ok {
-			container["image"] = newname
-			continue
-		}
-		if strings.HasPrefix(imagename, "//") {
-			return fmt.Errorf("Unresolved image found: %s", imagename)
+		imagename, imagenameOk := image.(string)
+		if imagenameOk {
+			if newname, ok := pt.images[imagename]; ok {
+				container["image"] = newname
+				continue
+			}
+			if strings.HasPrefix(imagename, "//") {
+				return fmt.Errorf("Unresolved image found: %s", imagename)
+			}
 		}
 	}
 	return nil
@@ -135,12 +137,14 @@ func (pt *imageTagTransformer) updateContainer(obj map[string]interface{}, path 
 	container := obj[path].(map[string]interface{})
 	image, found := container["image"]
 	if found {
-		imagename := image.(string)
-		if strings.HasPrefix(imagename, "//") {
-			return fmt.Errorf("unresolved image found: %s", imagename)
-		}
-		if newname, ok := pt.images[imagename]; ok {
-			container["image"] = newname
+		imagename, imagenameOk := image.(string)
+		if imagenameOk {
+			if strings.HasPrefix(imagename, "//") {
+				return fmt.Errorf("unresolved image found: %s", imagename)
+			}
+			if newname, ok := pt.images[imagename]; ok {
+				container["image"] = newname
+			}
 		}
 	}
 	return nil
