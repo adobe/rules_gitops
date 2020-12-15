@@ -37,6 +37,9 @@ func TestNoError(t *testing.T) {
 		{"flinkapp", map[string]string{
 			"flinkapp-image": "docker.io/kube/flink/image:tag",
 		}},
+		{"zk", map[string]string{
+			"zk-image": "dummy",
+		}},
 	}
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {

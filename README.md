@@ -285,6 +285,25 @@ spec:
     - name: java_container
       image: registry.example.com/examples/image@sha256:c94d75d68f4c1b436f545729bbce82774fda07
 ```
+Image substitutions for Custom Resource Definitions (CRD) resources could also use target references directly. For example,
+```yaml
+apiVersion: v1
+kind: MyCrd
+metadata:
+  name: my_crd
+spec:
+  image: "{{//example:my_image}}"
+```
+would become 
+```yaml
+apiVersion: v1
+kind: MyCrd
+metadata:
+  name: my_crd
+spec:
+  image: registry.example.com/examples/my_image@sha256:e6d465223da74519ba3e2b38179d1268b71a72f
+```
+
 That URL points to the "some_java_image" in the private Docker registry. The image is uploaded to the registry before any `.apply` or `.gitops` target is executed.
 
 As with the rest of the dependency graph, Bazel understands the dependencies `k8s_deploy` has on the
