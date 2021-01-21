@@ -234,6 +234,11 @@ def _kustomize_impl(ctx):
                 if "{" in regrepo:
                     regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
                 template_part += " --variable={}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
+
+                # Image hash
+                template_part += " --variable={}=$(cat {} | awk '{{print substr($1,8)}}')".format(str(kpi.image_label)+"__HASH", kpi.digestfile.path)
+                template_part += " --variable={}=$(cat {} | awk '{{print substr($1,8,13)}}')".format(str(kpi.image_label)+"__SHORT_HASH", kpi.digestfile.path)
+
                 if kpi.legacy_image_name:
                     template_part += " --variable={}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
 
