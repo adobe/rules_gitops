@@ -235,9 +235,9 @@ def _kustomize_impl(ctx):
                     regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
                 template_part += " --variable={}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
 
-                # Image hash
-                template_part += " --variable={}=$(cat {} | awk '{{print substr($1,8)}}')".format(str(kpi.image_label)+"__HASH", kpi.digestfile.path)
-                template_part += " --variable={}=$(cat {} | awk '{{print substr($1,8,13)}}')".format(str(kpi.image_label)+"__SHORT_HASH", kpi.digestfile.path)
+                # Image digest
+                template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(kpi.image_label)+".digest", kpi.digestfile.path)
+                template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(kpi.image_label)+".short-digest", kpi.digestfile.path)
 
                 if kpi.legacy_image_name:
                     template_part += " --variable={}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
@@ -253,6 +253,8 @@ def _kustomize_impl(ctx):
         out = ctx.outputs.yaml.path,
     )
     ctx.actions.write(script, script_content, is_executable = True)
+
+    print(script_content)
 
     ctx.actions.run(
         outputs = [ctx.outputs.yaml],

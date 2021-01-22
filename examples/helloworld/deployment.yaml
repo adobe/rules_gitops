@@ -11,8 +11,8 @@ spec:
     metadata:
       labels:
         app: helloworld
-        app_label_unique_hash: "{{//helloworld:image__HASH}}"
-        app_label_unique_short_hash: "{{//helloworld:image__SHORT_HASH}}"
+        app_label_image_digest: "{{//helloworld:image.digest}}"
+        app_label_image_short_digest: "{{//helloworld:image.short-digest}}"
     spec:
       containers:
       - name: helloworld
