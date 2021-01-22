@@ -285,12 +285,15 @@ spec:
     - name: java_container
       image: registry.example.com/examples/image@sha256:c94d75d68f4c1b436f545729bbce82774fda07
 ```
-Image substitutions for Custom Resource Definitions (CRD) resources could also use target references directly. For example,
+Image substitutions for Custom Resource Definitions (CRD) resources could also use target references directly. Their digests are availabe through string substitution. For example, 
 ```yaml
 apiVersion: v1
 kind: MyCrd
 metadata:
   name: my_crd
+  labels:
+    app_label_image_digest: "{{//example:my_image.digest}}"
+    app_label_image_short_digest: "{{//example:my_image.short-digest}}"
 spec:
   image: "{{//example:my_image}}"
 ```
@@ -300,11 +303,13 @@ apiVersion: v1
 kind: MyCrd
 metadata:
   name: my_crd
+  labels:
+    app_label_image_digest: "e6d465223da74519ba3e2b38179d1268b71a72f"
+    app_label_image_short_digest: "e6d465223d"
 spec:
   image: registry.example.com/examples/my_image@sha256:e6d465223da74519ba3e2b38179d1268b71a72f
 ```
-
-That URL points to the "some_java_image" in the private Docker registry. The image is uploaded to the registry before any `.apply` or `.gitops` target is executed.
+That URL points to the "some_java_image" in the private Docker registry. The image is uploaded to the registry before any `.apply` or `.gitops` target is executed. See [helloworld](examples/helloworld/deployment.yaml) for a complete example.
 
 As with the rest of the dependency graph, Bazel understands the dependencies `k8s_deploy` has on the
 Docker image and the files in the image. So for example, here's what will happen if someone makes a change to one of the Java files in "some_java_image" and then runs `bazel run //:example.apply`:
