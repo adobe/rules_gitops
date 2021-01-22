@@ -317,27 +317,6 @@ Docker image and the files in the image. So for example, here's what will happen
 1. A new "my_pod" manifest will be rendered using the new image
 1. The new "my_pod" will be deployed
 
-<a name="String substitutions"></a>
-### String substitutions
-The substitutions parameter accepts a dictionary. 
-Does parameter substitution in all the manifests (including configmaps). This should generally be limited to "CLUSTER" and "NAMESPACE" only. Any other replacements should be done with overlays.
-
-```yaml
-kind: MyCrd
-metadata:
-  name: my_crd_{{SERVICE_NAME}}
-```
-would become 
-```yaml
-apiVersion: v1
-kind: MyCrd
-metadata:
-  name: my_crd
-spec:
-  image: registry.example.com/examples/my_image@sha256:e6d465223da74519ba3e2b38179d1268b71a72f
-```
-
-
 
 <a name="adding-dependencies"></a>
 ### Adding Dependencies

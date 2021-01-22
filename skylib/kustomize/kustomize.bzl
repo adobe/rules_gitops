@@ -254,8 +254,6 @@ def _kustomize_impl(ctx):
     )
     ctx.actions.write(script, script_content, is_executable = True)
 
-    print(script_content)
-
     ctx.actions.run(
         outputs = [ctx.outputs.yaml],
         inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
