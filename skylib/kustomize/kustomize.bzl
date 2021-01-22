@@ -92,7 +92,6 @@ _script_template = """\
 set -euo pipefail
 {kustomize} build --load_restrictor none --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
-
 KustomizeInfo = provider(fields = [
     "image_pushes",
 ])
@@ -236,8 +235,8 @@ def _kustomize_impl(ctx):
                 template_part += " --variable={}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
 
                 # Image digest
-                template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(kpi.image_label)+".digest", kpi.digestfile.path)
-                template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(kpi.image_label)+".short-digest", kpi.digestfile.path)
+                template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(kpi.image_label) + ".digest", kpi.digestfile.path)
+                template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(kpi.image_label) + ".short-digest", kpi.digestfile.path)
 
                 if kpi.legacy_image_name:
                     template_part += " --variable={}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
