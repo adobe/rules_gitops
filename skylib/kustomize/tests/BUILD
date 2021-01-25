@@ -52,6 +52,7 @@ file_compare_test(
     name = "raw_file",
     expected = "expected_raw_test.yaml",
     file = ":raw_test",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -95,6 +96,7 @@ file_compare_test(
     name = "raw2_file",
     expected = "expected_raw_test.yaml",
     file = ":raw2_test",
+    ignore_all_space = True,
 )
 
 container_image(
@@ -126,6 +128,7 @@ file_compare_test(
     name = "image_resolved_file",
     expected = "expected_image_resolved_test.yaml",
     file = ":image_test",
+    ignore_all_space = True,
 )
 
 k8s_container_push(
@@ -152,6 +155,7 @@ file_compare_test(
     name = "image_digest_resolved_file",
     expected = "expected_image_resolved_test.yaml",
     file = ":image_test",
+    ignore_all_space = True,
 )
 
 k8s_container_push(
@@ -178,6 +182,7 @@ file_compare_test(
     name = "logacy_image_resolved_file",
     expected = "expected_image_resolved_test.yaml",
     file = ":legacy_image_test",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -191,6 +196,7 @@ file_compare_test(
     name = "configmap_test_file",
     expected = "expected_configmap_test.yaml",
     file = ":configmap_test",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -204,6 +210,7 @@ file_compare_test(
     name = "secret_test_file",
     expected = "expected_secret_test.yaml",
     file = ":secret_test",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -271,6 +278,7 @@ file_compare_test(
     name = "name_suffix_test",
     expected = "expected_name_suffix.yaml",
     file = ":name_suffix",
+    ignore_all_space = True,
 )
 
 #-------------------
@@ -289,6 +297,7 @@ file_compare_test(
     name = "patch_test",
     expected = "expected_patch.yaml",
     file = ":patch",
+    ignore_all_space = True,
 )
 
 #-------------------
@@ -304,6 +313,7 @@ file_compare_test(
     name = "deployment_prefix_compat_test",
     expected = "expected_deployment_prefix_compat.yaml",
     file = ":deployment_prefix_compat",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -317,6 +327,7 @@ file_compare_test(
     name = "deployment_suffix_compat_test",
     expected = "expected_deployment_suffix_compat.yaml",
     file = ":deployment_suffix_compat",
+    ignore_all_space = True,
 )
 
 #-------------------
@@ -333,6 +344,7 @@ file_compare_test(
     name = "deployment_prefix_test",
     expected = "expected_deployment_prefix.yaml",
     file = ":deployment_prefix",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -347,6 +359,7 @@ file_compare_test(
     name = "deployment_suffix_test",
     expected = "expected_deployment_suffix.yaml",
     file = ":deployment_suffix",
+    ignore_all_space = True,
 )
 
 #-------------------
@@ -366,4 +379,5 @@ file_compare_test(
     name = "common_labels_test",
     expected = "expected_common_labels.yaml",
     file = ":common_labels",
+    ignore_all_space = True,
 )
