@@ -148,7 +148,7 @@ manifests
 ```
 Here we see that `aws` and `onprem` clouds have different persistence configurations `aws/pvc.yaml` and `onprem/pvc.yaml`.
 
-The patches list `(2)` requires more granular configuration that introduces 3 levels of customization: CLOUND, NAMESPACE, and CLUSTER. Each manifest fragment in the overlays subtree applied as [strategic merge patch](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md) update operation.
+The patches list `(2)` requires more granular configuration that introduces 3 levels of customization: CLOUD, NAMESPACE, and CLUSTER. Each manifest fragment in the overlays subtree applied as [strategic merge patch](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md) update operation.
 ```
 overlays
 ├── aws
