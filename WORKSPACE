@@ -19,16 +19,6 @@ load("@com_adobe_rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
 
 rules_gitops_dependencies()
 
-load(
-    "@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
-    docker_toolchain_configure = "toolchain_configure",
-)
-
-docker_toolchain_configure(
-    name = "docker_config",
-    gzip_target = "@io_bazel_rules_docker//container/go/cmd/zipper",
-)
-
 load("@com_adobe_rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
 
 rules_gitops_repositories()
