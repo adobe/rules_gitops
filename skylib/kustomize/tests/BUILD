@@ -124,9 +124,27 @@ kustomize(
     namespace = "",
 )
 
+genrule(
+    name = "expected_image_resolved_test_yaml",
+    srcs = [
+        ":expected_image_resolved_test.tpl.yaml",
+        ":image.digest",
+    ],
+    outs = ["expected_image_resolved_test.yaml"],
+    cmd = " ".join([
+        "./$(location //templating:fast_template_engine)",
+        "--template=$(location expected_image_resolved_test.tpl.yaml)",
+        "--variable=IMAGE_DIGEST=$$(cat $(location :image.digest))",
+        "--output=$@",
+    ]),
+    tools = [
+        "//templating:fast_template_engine",
+    ],
+)
+
 file_compare_test(
     name = "image_resolved_file",
-    expected = "expected_image_resolved_test.yaml",
+    expected = ":expected_image_resolved_test_yaml",
     file = ":image_test",
     ignore_all_space = True,
 )
@@ -293,9 +311,27 @@ kustomize(
     patches = ["overlay/deployment.yaml"],
 )
 
+genrule(
+    name = "expected_patch_yaml",
+    srcs = [
+        ":expected_patch.tpl.yaml",
+        ":image.digest",
+    ],
+    outs = ["expected_patch.yaml"],
+    cmd = " ".join([
+        "./$(location //templating:fast_template_engine)",
+        "--template=$(location expected_patch.tpl.yaml)",
+        "--variable=IMAGE_DIGEST=$$(cat $(location :image.digest))",
+        "--output=$@",
+    ]),
+    tools = [
+        "//templating:fast_template_engine",
+    ],
+)
+
 file_compare_test(
     name = "patch_test",
-    expected = "expected_patch.yaml",
+    expected = ":expected_patch_yaml",
     file = ":patch",
     ignore_all_space = True,
 )
