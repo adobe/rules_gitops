@@ -261,18 +261,24 @@ def _kustomize_impl(ctx):
         tools = [ctx.executable._kustomize_bin],
     )
 
-    transitive = [m[KustomizeInfo].image_pushes for m in ctx.attr.manifests if KustomizeInfo in m]
-    transitive += [obj[KustomizeInfo].image_pushes for obj in ctx.attr.objects]
+    transitive_files = [m[DefaultInfo].files for m in ctx.attr.manifests if KustomizeInfo in m]
+    transitive_files += [obj[DefaultInfo].files for obj in ctx.attr.objects]
 
-    trans_imgs = depset(ctx.attr.images, transitive = transitive)
+    transitive_image_pushes = [m[KustomizeInfo].image_pushes for m in ctx.attr.manifests if KustomizeInfo in m]
+    transitive_image_pushes += [obj[KustomizeInfo].image_pushes for obj in ctx.attr.objects]
 
     return [
-        DefaultInfo(files = depset(
-            [ctx.outputs.yaml],
-            transitive = [m[DefaultInfo].files for m in ctx.attr.manifests if KustomizeInfo in m] + [obj[DefaultInfo].files for obj in ctx.attr.objects],
-        )),
+        DefaultInfo(
+            files = depset(
+                [ctx.outputs.yaml],
+                transitive = transitive_files,
+            ),
+        ),
         KustomizeInfo(
-            image_pushes = trans_imgs,
+            image_pushes = depset(
+                ctx.attr.images,
+                transitive = transitive_image_pushes,
+            ),
         ),
     ]
 

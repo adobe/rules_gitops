@@ -25,7 +25,7 @@ fi
 reg_ip="$(docker inspect -f '{{.NetworkSettings.IPAddress}}' "${reg_name}")"
 
 # create a cluster with the local registry enabled in containerd
-cat <<EOF | kind create cluster --name "${KIND_CLUSTER_NAME}" --config=-
+cat <<EOF | kind create cluster --name "${KIND_CLUSTER_NAME}" --image "kindest/node:v1.18.15" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 containerdConfigPatches:

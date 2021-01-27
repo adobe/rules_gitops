@@ -6,8 +6,8 @@ roleRef:
   kind: ClusterRole
   name: cluster-admin
 subjects:
-- kind: Group
-  name: crb-subject
+  - kind: Group
+    name: crb-subject
 ---
 apiVersion: v1
 kind: Service
@@ -15,9 +15,9 @@ metadata:
   name: myapp
 spec:
   ports:
-  - name: web
-    port: 80
-    targetPort: 8080
+    - name: web
+      port: 80
+      targetPort: 8080
   selector:
     app: myapp
 ---
@@ -35,5 +35,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: docker.io/skylib/kustomize/tests/image@sha256:fe5183fe769efa21a26c11bdd2356d2058eb61c4d9c9db9febf90e0680417ae3
-        name: myapp
+        - image: docker.io/skylib/kustomize/tests/image@{{IMAGE_DIGEST}}
+          name: myapp
