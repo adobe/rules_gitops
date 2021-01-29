@@ -88,7 +88,7 @@ def _is_ignored_src(src):
     return basename.startswith(".")
 
 _script_template = """\
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 {kustomize} build --load_restrictor none --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """

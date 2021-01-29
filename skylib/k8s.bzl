@@ -29,7 +29,7 @@ def _python_runfiles(ctx, f):
     return "PYTHON_RUNFILES=${RUNFILES} %s" % _runfiles(ctx, f)
 
 def _show_impl(ctx):
-    script_content = "#!/bin/bash\nset -e\n"
+    script_content = "#!/usr/bin/env bash\nset -e\n"
 
     kustomize_outputs = []
     script_template = "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file}\n"
