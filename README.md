@@ -89,6 +89,7 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***name_prefix***         | `None`         | Adds prefix to the names of all resources defined in manifests.
 | ***name_suffix***         | `None`         | Adds suffix to the names of all resources defined in manifests.
 | ***patches***             | `None`         | A list of patch files to overlay the base manifests. See [Base Manifests and Overlays](#base-manifests-and-overlays).
+| ***crds***                | `None`         | A list of custom resource definitions (CRDs) files. The presence of this field is to allow kustomize be aware of CRDs and apply proper transformation for any objects in those types.
 | ***substitutions***       | `None`         | Does parameter substitution in all the manifests (including configmaps). This should generally be limited to "CLUSTER" and "NAMESPACE" only. Any other replacements should be done with overlays.
 | ***configurations***      | `[]`           | A list of files with [kustomize configurations](https://github.com/kubernetes-sigs/kustomize/blob/master/examples/transformerconfigs/README.md).
 | ***prefix_suffix_app_labels*** | `False`   | Add the bundled configuration file allowing adding suffix and prefix to labels `app` and `app.kubernetes.io/name` and respective selector in Deployment.

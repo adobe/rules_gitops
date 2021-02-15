@@ -130,6 +130,11 @@ def _kustomize_impl(ctx):
         for _, f in enumerate(ctx.files.patches):
             kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
 
+    if ctx.files.crds:
+        kustomization_yaml += "crds:\n"
+        for _, f in enumerate(ctx.files.crds):
+            kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
+
     if ctx.attr.common_labels:
         kustomization_yaml += "commonLabels:\n"
         for k in ctx.attr.common_labels:
@@ -255,7 +260,7 @@ def _kustomize_impl(ctx):
 
     ctx.actions.run(
         outputs = [ctx.outputs.yaml],
-        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
+        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps + ctx.files.crds,
         executable = script,
         mnemonic = "Kustomize",
         tools = [ctx.executable._kustomize_bin],
@@ -297,6 +302,7 @@ kustomize = rule(
         "namespace": attr.string(),
         "objects": attr.label_list(doc = "a list of dependent kustomize objects", providers = (KustomizeInfo,)),
         "patches": attr.label_list(allow_files = True),
+        "crds": attr.label_list(allow_files = True),
         "start_tag": attr.string(default = "{{"),
         "substitutions": attr.string_dict(default = {}),
         "deps": attr.label_list(default = [], allow_files = True),

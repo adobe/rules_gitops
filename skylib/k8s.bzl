@@ -110,6 +110,7 @@ def k8s_deploy(
         name_suffix = None,
         prefix_suffix_app_labels = False,  # apply kustomize configuration to modify "app" labels in Deployments when name prefix or suffix applied
         patches = None,
+        crds = None,
         substitutions = {},  # dict of template parameter substitutions. CLUSTER and NAMESPACE parameters are added automatically.
         configurations = [],  # additional kustomize configuration files. rules_gitops provides
         common_labels = {},  # list of common labels to apply to all objects see commonLabels kustomize docs
@@ -178,6 +179,7 @@ def k8s_deploy(
             common_labels = common_labels,
             common_annotations = common_annotations,
             patches = patches,
+            crds = crds,
             objects = objects,
             visibility = visibility,
         )
@@ -238,6 +240,7 @@ def k8s_deploy(
             common_labels = common_labels,
             common_annotations = common_annotations,
             patches = patches,
+            crds = crds,
         )
         kubectl(
             name = name + ".apply",
