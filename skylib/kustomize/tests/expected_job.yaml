@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello
+spec:
+  template:
+    spec:
+      containers:
+      - command:
+        - sh
+        - -c
+        - echo "Hello, Kubernetes!" && sleep 3600
+        image: alpine:3
+        name: hello
+      - command:
+        - sh
+        - -c
+        - echo "Hello, Kubernetes!" && sleep 3600
+        image: ubuntu:latest
+        name: hello2
+      restartPolicy: OnFailure

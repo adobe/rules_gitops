@@ -417,3 +417,27 @@ file_compare_test(
     file = ":common_labels",
     ignore_all_space = True,
 )
+
+#-------------------
+# patch images
+
+kustomize(
+    name = "patch_images",
+    image_name_patches = {
+        "busybox": "alpine",
+        "debian": "ubuntu",
+    },
+    image_tag_patches = {
+        "busybox": "3",
+    },
+    manifests = [
+        "job.yaml",
+    ],
+)
+
+file_compare_test(
+    name = "patch_images_test",
+    expected = "expected_job.yaml",
+    file = ":patch_images",
+    ignore_all_space = True,
+)
