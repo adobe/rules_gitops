@@ -89,6 +89,8 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***name_prefix***         | `None`         | Adds prefix to the names of all resources defined in manifests.
 | ***name_suffix***         | `None`         | Adds suffix to the names of all resources defined in manifests.
 | ***patches***             | `None`         | A list of patch files to overlay the base manifests. See [Base Manifests and Overlays](#base-manifests-and-overlays).
+| ***image_name_patches***  | `None`         | A dict of image names that will be replaced with new ones. See [kustomization images]([#base-manifests-and-overlays](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/images/)).
+| ***image_tag_patches***  | `None`         | A dict of image names which tags be replaced with new ones. See [kustomization images]([#base-manifests-and-overlays](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/images/)).
 | ***substitutions***       | `None`         | Does parameter substitution in all the manifests (including configmaps). This should generally be limited to "CLUSTER" and "NAMESPACE" only. Any other replacements should be done with overlays.
 | ***configurations***      | `[]`           | A list of files with [kustomize configurations](https://github.com/kubernetes-sigs/kustomize/blob/master/examples/transformerconfigs/README.md).
 | ***prefix_suffix_app_labels*** | `False`   | Add the bundled configuration file allowing adding suffix and prefix to labels `app` and `app.kubernetes.io/name` and respective selector in Deployment.

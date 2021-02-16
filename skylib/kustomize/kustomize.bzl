@@ -130,6 +130,19 @@ def _kustomize_impl(ctx):
         for _, f in enumerate(ctx.files.patches):
             kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
 
+    if ctx.attr.image_name_patches or ctx.attr.image_tag_patches:
+        kustomization_yaml += "images:\n"
+        for image, new_tag in ctx.attr.image_tag_patches.items():
+            new_name = ctx.attr.image_name_patches.get(image, default = None)
+            kustomization_yaml += "- name: \"{}\"\n".format(image)
+            kustomization_yaml += "  newTag: \"{}\"\n".format(new_tag)
+            if new_name != None:
+                kustomization_yaml += "  newName: \"{}\"\n".format(new_name)
+        for image, new_name in ctx.attr.image_name_patches.items():
+            if ctx.attr.image_tag_patches.get(image, default = None) == None:
+                kustomization_yaml += "- name: \"{}\"\n".format(image)
+                kustomization_yaml += "  newName: \"{}\"\n".format(new_name)
+
     if ctx.attr.common_labels:
         kustomization_yaml += "commonLabels:\n"
         for k in ctx.attr.common_labels:
@@ -297,6 +310,8 @@ kustomize = rule(
         "namespace": attr.string(),
         "objects": attr.label_list(doc = "a list of dependent kustomize objects", providers = (KustomizeInfo,)),
         "patches": attr.label_list(allow_files = True),
+        "image_name_patches": attr.string_dict(default = {}, doc = "set new names for selected images"),
+        "image_tag_patches": attr.string_dict(default = {}, doc = "set new tags for selected images"),
         "start_tag": attr.string(default = "{{"),
         "substitutions": attr.string_dict(default = {}),
         "deps": attr.label_list(default = [], allow_files = True),
