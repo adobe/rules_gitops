@@ -11,8 +11,6 @@
 Defines a repository rule for configuring the Kubernetes tools.
 """
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
 _K8S_CONFIGURE_BUILD = """
 # DO NOT EDIT: This BUILD file is auto-generated.
 
@@ -21,11 +19,7 @@ package(default_visibility = ["//visibility:public"])
 load("@com_adobe_rules_gitops//toolchains/k8s:k8s_toolchain.bzl", "k8s_toolchain")
 
 k8s_toolchain(
-    name = "osx_toolchain",
-    {kubectl_attr} = "{kubectl}",
-)
-k8s_toolchain(
-    name = "linix_toolchain",
+    name = "toolchain",
     {kubectl_attr} = "{kubectl}",
 )
 
@@ -34,11 +28,11 @@ k8s_toolchain(
 def _k8s_configure_impl(repository_ctx):
     substitutions = {}
     if repository_ctx.attr.kubectl_path != None:
-        substitutions["kubectl_attr"] = "kubectl_path";
-        substitutions["kubectl"] = repository_ctx.attr.kubectl_path;
+        substitutions["kubectl_attr"] = "kubectl_path"
+        substitutions["kubectl"] = repository_ctx.attr.kubectl_path
     else:
-        substitutions["kubectl_attr"] = "kubectl_target";
-        substitutions["kubectl"] = repository_ctx.attr.kubectl_target;
+        substitutions["kubectl_attr"] = "kubectl_target"
+        substitutions["kubectl"] = repository_ctx.attr.kubectl_target
 
     repository_ctx.file(
         "BUILD",
@@ -90,10 +84,10 @@ def _ensure_all_provided(func_name, attrs, kwargs):
             ", ".join(provided),
         ))
 
-def k8s_configure(name,
-    kubectl_path = None,
-    kubectl_target = None
-    ):
+def k8s_configure(
+        name,
+        kubectl_path = None,
+        kubectl_target = None):
     """
     Creates an external repository with a configured kubectl_toolchain target.
 
@@ -103,10 +97,10 @@ def k8s_configure(name,
         kubectl_target: Optional. Use the kubectl binary at the given label.
 
     """
-    if "build_srcs" in kwargs and "kubectl_path" in kwargs:
-        fail("Attributes 'build_srcs' and 'kubectl_path' can't be specified at" +
+    if "kubectl_path" in kwargs and "kubectl_target" in kwargs:
+        fail("Attributes 'kubectl_path' and 'kubectl_target' can't be specified at" +
              " the same time")
     _k8s_configure(
         name = name,
-        kubectl_path = kwargs["kubectl_path"]
+        kubectl_path = kwargs["kubectl_path"],
     )

@@ -67,11 +67,11 @@ k8s_toolchain = rule(
             mandatory = False,
         ),
         "kubeconfig_path": attr.string(
-            doc = "Absolute path to a pre-installed kubeconfig binary.",
+            doc = "Absolute path to a kubeconfig file.",
             mandatory = False,
         ),
         "kubeconfig_target": attr.label(
-            doc = "Target to downloaded kubeconfig binary.",
+            doc = "A kubeconfig file target.",
             mandatory = False,
         ),
         "kubeconfig_cluster": attr.string(
