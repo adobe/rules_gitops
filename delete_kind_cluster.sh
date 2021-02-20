@@ -10,39 +10,17 @@
 # governing permissions and limitations under the License.
 
 set -o errexit
-set -o nounset
-set -o xtrace
+# desired cluster name; default is "kind"
+KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-kind}"
 
-bindir=$(cd `dirname "$0"` && pwd)
-repo_path=$bindir
-cd $repo_path
+# delete kind cluster
+kind delete cluster --name "${KIND_CLUSTER_NAME}" || true
 
-#check installs
-bazel version
-docker version
-which kubectl
-go version
+# deete registry container
+echo "Deleting kind-registry..."
+docker container rm --force "kind-registry" || true
 
-go get sigs.k8s.io/kind@v0.10.0
+# delete kind cluster network
+echo "Deleting kind network..."
+docker network rm "kind" || true
 
-cluster_running="$(docker inspect -f '{{.State.Running}}' kind-control-plane 2>/dev/null || true)"
-if [ "${cluster_running}" != 'true' ]; then
-  ./create_kind_cluster.sh
-fi
-
-delete() {
-  echo "Cleanup..."
-  ./delete_kind_cluster.sh
-}
-
-# Setup a trap to delete the namespace on error
-set +o xtrace
-trap "echo FAILED ; delete" EXIT
-set -o xtrace
-
-./examples/e2e-test.sh
-
-delete
-
-# Replace the exit trap with a pass message
-trap "echo PASS" EXIT
