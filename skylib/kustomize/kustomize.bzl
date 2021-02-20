@@ -408,30 +408,42 @@ def _remove_prefixes(s, prefixes):
 def _python_runfiles(ctx, f):
     return "PYTHON_RUNFILES=${RUNFILES} %s" % _runfiles(ctx, f)
 
-def imagePushStatements(
+def image_push_statements(
         ctx,
-        kustomize_objs,
-        files = []):
-    statements = ""
-    trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
-    statements += "\n".join([
-        "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
-        for exe in trans_img_pushes
-    ]) + "\n"
-    statements += "\n".join([
-        "async \"${RUNFILES}/%s\"" % _get_runfile_path(ctx, exe.files_to_run.executable)
-        for exe in trans_img_pushes
-    ]) + "\nwaitpids\n"
-    files += [obj.files_to_run.executable for obj in trans_img_pushes]
-    dep_runfiles = [obj[DefaultInfo].default_runfiles for obj in trans_img_pushes]
-    return statements, files, dep_runfiles
+        kustomize_objs):
+    """Generates image push statements
+
+    Args:
+        ctx: The rule context
+        kustomize_objs: The list of KustomizeInfo objects
+
+    Returns:
+        push statements, push executable files, push executable runfiles
+    """
+
+    # collect and deduplicate all image pushes
+    image_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
+    statements = "\n".join(
+        [
+            "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
+            for exe in image_pushes
+        ] + [
+            "async \"${RUNFILES}/%s\"" % _get_runfile_path(ctx, exe.files_to_run.executable)
+            for exe in image_pushes
+        ] + [
+            "waitpids",
+        ] + [
+            "",
+        ],
+    )
+    files = [obj.files_to_run.executable for obj in image_pushes]
+    default_runfiles = [obj[DefaultInfo].default_runfiles for obj in image_pushes]
+    return statements, files, default_runfiles
 
 def _gitops_impl(ctx):
     cluster = ctx.attr.cluster
     strip_prefixes = ctx.attr.strip_prefixes
-    files = []
-
-    push_statements, files, pushes_runfiles = imagePushStatements(ctx, ctx.attr.srcs, files)
+    push_statements, pushes_files, pushes_runfiles = image_push_statements(ctx, ctx.attr.srcs)
     statements = """if [ "$PERFORM_PUSH" == "1" ]; then
 {}
 fi
@@ -465,14 +477,16 @@ fi
         },
         output = ctx.outputs.executable,
     )
-    runfiles = files + ctx.files.srcs + [ctx.executable._template_engine, ctx.file._info_file]
-    transitive = depset(transitive = [obj.default_runfiles.files for obj in ctx.attr.srcs])
 
-    rf = ctx.runfiles(files = runfiles, transitive_files = transitive)
-    for dep_rf in pushes_runfiles:
-        rf = rf.merge(dep_rf)
+    runfiles = ctx.runfiles(
+        files = pushes_files + ctx.files.srcs + [ctx.executable._template_engine, ctx.file._info_file],
+        transitive_files = depset(transitive = [obj.default_runfiles.files for obj in ctx.attr.srcs]),
+    )
+    for rf in pushes_runfiles:
+        runfiles = runfiles.merge(rf)
+
     return [
-        DefaultInfo(runfiles = rf),
+        DefaultInfo(runfiles = runfiles),
         KustomizeInfo(
             image_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]),
         ),

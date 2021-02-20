@@ -15,7 +15,7 @@ load(
 load(
     "@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl",
     "KustomizeInfo",
-    "imagePushStatements",
+    "image_push_statements",
     "kubectl",
     "kustomize",
     kustomize_gitops = "gitops",
@@ -360,7 +360,8 @@ def _k8s_test_setup_impl(ctx):
     # add kubeconfig transitive runfiles
     transitive.append(ctx.attr.kubeconfig.default_runfiles.files)
 
-    push_statements, files, pushes_runfiles = imagePushStatements(ctx, [o for o in ctx.attr.objects if KustomizeInfo in o], files)
+    push_statements, pushes_files, pushes_runfiles = image_push_statements(ctx, [o for o in ctx.attr.objects if KustomizeInfo in o])
+    files += pushes_files
 
     # execute all objects targets
     for obj in ctx.attr.objects:
