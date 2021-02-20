@@ -20,14 +20,15 @@ reg_port='5000'
 running="$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true)"
 if [ "${running}" != 'true' ]; then
   docker run \
-    -d --restart=always -p "${reg_port}:5000" --name "${reg_name}" \
+    -d --restart=always -p "127.0.0.1:${reg_port}:5000" --name "${reg_name}" \
     registry:2
 fi
 
 # create a cluster with the local registry enabled in containerd
+# --image "kindest/node:v1.19.7" \
 cat <<EOF | kind create cluster \
   --name "${KIND_CLUSTER_NAME}" \
-  --image "kindest/node:v1.19.7" \
+  --image "kindest/node:v1.18.15" \
   --config=-
 ---
 kind: Cluster
