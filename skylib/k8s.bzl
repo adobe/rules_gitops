@@ -125,6 +125,7 @@ def k8s_deploy(
         image_repository_prefix = None,  # Mutually exclusive with 'image_repository'. Add a prefix to the repository name generated from the image bazel path
         objects = [],
         gitops = True,  # make sure to use gitops = False to work with individual namespace. This option will be turned False if namespace is '{BUILD_USER}'
+        gitops_path = "cloud",
         deployment_branch = None,
         release_branch_prefix = "master",
         flatten_manifest_directories = False,
@@ -258,6 +259,7 @@ def k8s_deploy(
             srcs = [name],
             cluster = cluster,
             namespace = namespace,
+            gitops_path = gitops_path,
             strip_prefixes = [
                 namespace + "-",
                 cluster + "-",
