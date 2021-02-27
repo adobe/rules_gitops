@@ -32,3 +32,13 @@ load(
 )
 
 go_image_repositories()
+
+#
+# Kubeconfig repository that will be used in k8s_test_setup
+#
+load("@com_adobe_rules_gitops//gitops:defs.bzl", "kubeconfig")
+
+kubeconfig(
+    name = "k8s_test",
+    cluster = "kind-kind",
+)

@@ -12,7 +12,13 @@
 GitOps rules public interface
 """
 
-load("@com_adobe_rules_gitops//skylib:k8s.bzl", _k8s_deploy = "k8s_deploy", _k8s_test_setup = "k8s_test_setup")
+load(
+    "@com_adobe_rules_gitops//skylib:k8s.bzl",
+    _k8s_deploy = "k8s_deploy",
+    _k8s_test_setup = "k8s_test_setup",
+    _kubeconfig = "kubeconfig",
+)
 
 k8s_deploy = _k8s_deploy
 k8s_test_setup = _k8s_test_setup
+kubeconfig = _kubeconfig

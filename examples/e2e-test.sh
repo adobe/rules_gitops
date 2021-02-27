@@ -19,7 +19,7 @@ bindir=$(cd `dirname "$0"` && pwd)
 repo_path=$bindir
 cd $repo_path
 
-#verify interactive workflow
+# verify interactive workflow
 MYNAMESPACE=$USER
 
 # kubectl config use-context kind-kind
@@ -32,9 +32,10 @@ kubectl -n $MYNAMESPACE wait --timeout=60s --for=condition=Available deployment/
 
 bazel run //helloworld:mynamespace.delete
 
-#TODO: verity it is deleted
-#kubectl -n $MYNAMESPACE wait --timeout=30s --for=delete deployment/helloworld
+# TODO: verity it is deleted
+# kubectl -n $MYNAMESPACE wait --timeout=30s --for=delete deployment/helloworld
 
+# verify gitops
 rm -rf cloud
 
 bazel run //helloworld:canary.gitops
@@ -50,3 +51,9 @@ kubectl apply -f custom_cloud -R
 
 #wait for readiness
 kubectl -n hwteam wait --timeout=60s --for=condition=Available deployment/helloworld deployment/helloworld-canary deployment/helloworld-gitops-custom-path
+
+# verify test setup
+# bazel run //helloworld:service_it.setup &
+# SETUP_PID=$!
+# kubectl -n $MYNAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld
+# kill $SETUP_PID

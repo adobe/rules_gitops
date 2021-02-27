@@ -22,20 +22,27 @@ function guess_runfiles() {
 RUNFILES=${TEST_SRCDIR:-$(guess_runfiles)}
 TEST_UNDECLARED_OUTPUTS_DIR=${TEST_UNDECLARED_OUTPUTS_DIR:-.}
 
-KUBECTL=%{kubectl}
-KUBECONFIG=%{kubeconfig}
-SET_NAMESPACE=%{set_namespace}
-IT_MANIFEST_FILTER=%{it_manifest_filter}
+KUBECTL="%{kubectl}"
+KUBECONFIG="%{kubeconfig}"
+CLUSTER="%{cluster}"
+# TODO: SERVER="%{server}"
+BUILD_USER="%{build_user}"
 
+SET_NAMESPACE="%{set_namespace}"
+IT_MANIFEST_FILTER="%{it_manifest_filter}"
 
 NAMESPACE_NAME_FILE=${TEST_UNDECLARED_OUTPUTS_DIR}/namespace
 KUBECONFIG_FILE=${TEST_UNDECLARED_OUTPUTS_DIR}/kubeconfig
 
-# get cluster and username from provided configuration
-CLUSTER=$(${KUBECTL} --kubeconfig=${KUBECONFIG} config view -o jsonpath='{.clusters[0].name}')
-USER=$(${KUBECTL} --kubeconfig=${KUBECONFIG} config view -o jsonpath='{.users[0].name}')
-
 echo "Cluster: ${CLUSTER}" >&2
+
+# get kubernetes username from provided configuration
+USER=$(${KUBECTL} --kubeconfig=${KUBECONFIG} config view -o jsonpath='{.users[?(@.name == '"\"${CLUSTER}\")].name}")
+if [ -z "${USER}"]; then
+    echo "Unable to find user configuration for cluster ${CLUSTER}"
+    exit 1
+fi
+
 echo "User: ${USER}" >&2
 
 set +e
@@ -53,7 +60,7 @@ else
     DELETE_NAMESPACE_FLAG="-delete_namespace"
     COUNT="0"
     while true; do
-        NAMESPACE=${USER}-$(( (RANDOM) + 32767 ))
+        NAMESPACE=${BUILD_USER}-$(( (RANDOM) + 32767 ))
         ${KUBECTL} --kubeconfig=${KUBECONFIG} --cluster=${CLUSTER} --user=${USER} create namespace ${NAMESPACE} && break
         COUNT=$[$COUNT + 1]
         if [ $COUNT -ge 10 ]; then
