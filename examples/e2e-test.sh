@@ -19,16 +19,19 @@ bindir=$(cd `dirname "$0"` && pwd)
 repo_path=$bindir
 cd $repo_path
 
+# enable kubectl logging
+KUBECTL_OPTS="--logtostderr=true -v=5"
+
 # verify interactive workflow
 MYNAMESPACE=$USER
 
 # kubectl config use-context kind-kind
 
-kubectl create namespace $MYNAMESPACE || true
-kubectl create namespace hwteam || true
+kubectl $KUBECTL_OPTS create namespace $MYNAMESPACE || true
+kubectl $KUBECTL_OPTS create namespace hwteam || true
 
 bazel run //helloworld:mynamespace.apply
-kubectl -n $MYNAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld
+kubectl $KUBECTL_OPTS -n $MYNAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld
 
 bazel run //helloworld:mynamespace.delete
 

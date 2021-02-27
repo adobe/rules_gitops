@@ -10,6 +10,8 @@
 # governing permissions and limitations under the License.
 
 set -o errexit
+set -o xtrace
+
 # desired cluster name; default is "kind"
 KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-kind}"
 
@@ -19,12 +21,11 @@ reg_port='5000'
 running="$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true)"
 if [ "${running}" != 'true' ]; then
   docker run \
-    -d --restart=always -p "127.0.0.1:${reg_port}:5000" --name "${reg_name}" \
+    -d --restart=always -p "${reg_port}:5000" --name "${reg_name}" \
     registry:2
 fi
 
-# create a cluster with the local registry enabled in containerd
-# --image "kindest/node:v1.19.7" \
+# create a cluster with the local registry enabled in container
 cat <<EOF | kind create cluster \
   --name "${KIND_CLUSTER_NAME}" \
   --image "kindest/node:v1.18.15" \
