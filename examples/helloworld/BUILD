@@ -145,4 +145,5 @@ k8s_test_setup(
     objects = [
         ":mynamespace",
     ],
+    setup_timeout = "60s",
 )

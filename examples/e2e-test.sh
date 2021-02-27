@@ -52,8 +52,10 @@ kubectl apply -f custom_cloud -R
 #wait for readiness
 kubectl -n hwteam wait --timeout=60s --for=condition=Available deployment/helloworld deployment/helloworld-canary deployment/helloworld-gitops-custom-path
 
+
 # verify test setup
+# test timeout is set up in the rule
+# TODO: not working
 # bazel run //helloworld:service_it.setup &
-# SETUP_PID=$!
-# kubectl -n $MYNAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld
-# kill $SETUP_PID
+# kubectl -n $TEST_NAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld
+# kill %1
