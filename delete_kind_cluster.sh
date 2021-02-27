@@ -10,7 +10,6 @@
 # governing permissions and limitations under the License.
 
 set -o errexit
-set -o xtrace
 
 # desired cluster name; default is "kind"
 KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-kind}"
