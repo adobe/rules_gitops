@@ -51,7 +51,7 @@ k8s_toolchain = rule(
     implementation = _k8s_toolchain_impl,
     attrs = {
         "kubectl_path": attr.string(
-            doc = "Absolute path to a pre-installed kubectl binary.",
+            doc = "A path to a pre-installed kubectl binary.",
             mandatory = False,
         ),
         "kubectl_target": attr.label(
@@ -59,7 +59,7 @@ k8s_toolchain = rule(
             mandatory = False,
         ),
         "kustomize_path": attr.string(
-            doc = "Absolute path to a pre-installed kustomize binary.",
+            doc = "A path to a pre-installed kustomize binary.",
             mandatory = False,
         ),
         "kustomize_target": attr.label(
@@ -67,7 +67,7 @@ k8s_toolchain = rule(
             mandatory = False,
         ),
         "kubeconfig_path": attr.string(
-            doc = "Absolute path to a kubeconfig file.",
+            doc = "A path to a kubeconfig file.",
             mandatory = False,
         ),
         "kubeconfig_target": attr.label(
