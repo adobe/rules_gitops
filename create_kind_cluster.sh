@@ -43,5 +43,5 @@ EOF
 # connect the registry to the cluster network
 # (the network may already be connected)
 docker network list
-docker network connect "kind" "${reg_name}" || true
+docker network connect "${KIND_CLUSTER_NAME}" "${reg_name}" || true
 
