@@ -11,17 +11,19 @@
 
 set +x
 
-if [ "$1" == "" ]; then
+if [ "$2" == "" ]; then
     echo usage:
-    echo $0 'namespace <in.yaml >out.yaml'
+    echo $0 'kustomize_bin namespace <in.yaml >out.yaml'
     exit 1
 fi
 set -euo pipefail
+kustomize_bin=$1
+namespace=$2
 dir=$(mktemp -d)
 cat >${dir}/in.yaml
 cat >${dir}/kustomization.yaml <<EOF
-namespace: $1
+namespace: ${namespace}
 resources:
 - in.yaml
 EOF
-exec external/kustomize_bin/kustomize build ${dir}
+exec "${kustomize_bin}" build ${dir}

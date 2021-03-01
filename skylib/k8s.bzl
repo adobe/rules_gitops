@@ -571,10 +571,10 @@ def _k8s_test_setup_impl(ctx):
             transitive.append(obj.default_runfiles.files)
 
             # add object' execution command
-            commands += [_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -"]
+            commands += [_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} " + ctx.executable._kustomize.short_path + " $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -"]
         else:
             files += obj.files.to_list()
-            commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
+            commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} " + ctx.executable._kustomize.short_path + " $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
 
     files += [ctx.executable._template_engine]
 
