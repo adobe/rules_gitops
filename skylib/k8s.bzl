@@ -278,7 +278,7 @@ def k8s_deploy(
 KubeconfigInfo = provider(fields = [
     "server",
     "cluster",
-    "build_user",
+    "user",
 ])
 
 def _kubeconfig_file_impl(ctx):
@@ -291,7 +291,7 @@ def _kubeconfig_file_impl(ctx):
         KubeconfigInfo(
             server = ctx.attr.server,
             cluster = ctx.attr.cluster,
-            build_user = ctx.attr.build_user,
+            user = ctx.attr.user,
         ),
     ]
 
@@ -304,15 +304,15 @@ kubeconfig_file = rule(
             mandatory = True,
         ),
         "server": attr.string(
-            doc = "Kubernetes server url.",
-            mandatory = True,
+            doc = "Optional Kubernetes server url.",
+            mandatory = False,
         ),
         "cluster": attr.string(
-            doc = "Kubernetes cluster name.",
-            mandatory = True,
+            doc = "Optional Kubernetes cluster name.",
+            mandatory = False,
         ),
-        "build_user": attr.string(
-            doc = "Build user name.",
+        "user": attr.string(
+            doc = "Optional Kubernetes user name.",
             mandatory = True,
         ),
     },
@@ -330,7 +330,7 @@ kubeconfig_file(
     config = ":config",
     server = "{server}",
     cluster = "{cluster}",
-    build_user = "{build_user}",
+    user = "{user}",
     visibility = ["//visibility:public"],
 )
 """
@@ -360,7 +360,11 @@ def _kubeconfig_impl(repository_ctx):
     repository_ctx.symlink(kubectl, "kubectl")
 
     home = repository_ctx.path(repository_ctx.os.environ["HOME"])
-    if "USER" in repository_ctx.os.environ:
+
+    # use provided user name or fall back to current os user name
+    if repository_ctx.attr.user:
+        user = repository_ctx.attr.user
+    elif "USER" in repository_ctx.os.environ:
         user = repository_ctx.os.environ["USER"]
     else:
         exec_result = repository_ctx.execute(["whoami"])
@@ -431,7 +435,7 @@ def _kubeconfig_impl(repository_ctx):
                 token,
             ])
 
-        # config set-credentials {user} --client-certificate=... --embed-certs",
+        # config set-credentials {user} --client-certificate=...",
         if kubecert_cert and kubecert_cert.exists:
             _kubectl_config(repository_ctx, [
                 "set-credentials",
@@ -440,7 +444,7 @@ def _kubeconfig_impl(repository_ctx):
                 kubecert_cert.realpath,
             ])
 
-        # config set-credentials {user} --client-key=... --embed-certs",
+        # config set-credentials {user} --client-key=...",
         if kubecert_key and kubecert_key.exists:
             _kubectl_config(repository_ctx, [
                 "set-credentials",
@@ -453,19 +457,26 @@ def _kubeconfig_impl(repository_ctx):
     repository_ctx.file("BUILD", _KUBECONFIG_BUILD_TEMPLATE.format(
         cluster = repository_ctx.attr.cluster,
         server = repository_ctx.attr.server,
-        build_user = user,
+        user = user,
     ), False)
 
     return {
         "cluster": repository_ctx.attr.cluster,
         "server": repository_ctx.attr.server,
-        "build_user": user,
+        "user": user,
     }
 
 kubeconfig = repository_rule(
     attrs = {
-        "cluster": attr.string(),
-        "server": attr.string(),
+        "cluster": attr.string(
+            mandatory = True,
+        ),
+        "server": attr.string(
+            mandatory = False,
+        ),
+        "user": attr.string(
+            mandatory = False,
+        ),
     },
     environ = [
         "HOME",
@@ -555,7 +566,7 @@ def _k8s_test_setup_impl(ctx):
     commands = []  # the list of commands to execute
 
     # add files referenced by rule attributes to runfiles
-    files = [ctx.executable._stamper, ctx.file.kubeconfig, ctx.file.kubectl, ctx.executable._kustomize, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
+    files = [ctx.executable._stamper, ctx.file.kubeconfig, ctx.file.kubectl, ctx.executable._kustomize, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter, ctx.file._build_user_value]
     files += ctx.files._set_namespace
 
     # add kubeconfig transitive runfiles
@@ -589,7 +600,8 @@ def _k8s_test_setup_impl(ctx):
             "%{kubectl}": ctx.file.kubectl.short_path,
             "%{cluster}": kubeconfig_info.cluster,
             "%{server}": kubeconfig_info.server,
-            "%{build_user}": kubeconfig_info.build_user,
+            "%{user}": kubeconfig_info.user,
+            "%{build_user}": "$(cat %s)" % ctx.file._build_user_value.short_path,
             "%{portforwards}": " ".join(["-portforward=" + p for p in ctx.attr.portforward_services]),
             "%{push_statements}": push_statements,
             "%{set_namespace}": ctx.executable._set_namespace.short_path,
@@ -658,6 +670,10 @@ k8s_test_setup = rule(
             cfg = "host",
             executable = True,
             allow_files = True,
+        ),
+        "_build_user_value": attr.label(
+            default = Label("//skylib:build_user_value.txt"),
+            allow_single_file = True,
         ),
         "_template_engine": attr.label(
             default = Label("//templating:fast_template_engine"),

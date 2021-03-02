@@ -41,4 +41,5 @@ load("@com_adobe_rules_gitops//gitops:defs.bzl", "kubeconfig")
 kubeconfig(
     name = "k8s_test",
     cluster = "kind-kind",
+    user = "kind-kind",  # kind cluster user name
 )

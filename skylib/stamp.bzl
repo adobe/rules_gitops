@@ -30,7 +30,6 @@ def stamp(ctx, string, files, tmpfilename, in_runtime = False):
         string = string.format(
             BUILD_USER = "$(cat %s)" % file_path(ctx, ctx.file._build_user_value, in_runtime),
         )
-
         files.append(ctx.files._build_user_value[0])
         return string
 

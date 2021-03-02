@@ -24,7 +24,8 @@ TEST_UNDECLARED_OUTPUTS_DIR=${TEST_UNDECLARED_OUTPUTS_DIR:-.}
 KUBECTL="%{kubectl}"
 KUBECONFIG="%{kubeconfig}"
 CLUSTER="%{cluster}"
-# TODO: SERVER="%{server}"
+SERVER="%{server}"
+USER="%{user}"
 BUILD_USER="%{build_user}"
 
 SET_NAMESPACE="%{set_namespace}"
@@ -35,10 +36,13 @@ KUBECONFIG_FILE=${TEST_UNDECLARED_OUTPUTS_DIR}/kubeconfig
 
 echo "Cluster: ${CLUSTER}" >&2
 
-# get kubernetes username from provided configuration
-USER=$(${KUBECTL} --kubeconfig=${KUBECONFIG} config view -o jsonpath='{.users[?(@.name == '"\"${CLUSTER}\")].name}")
-if [ -z "${USER}"]; then
-    echo "Unable to find user configuration for cluster ${CLUSTER}"
+# use BUILD_USER by defalt
+USER=${USER:-$BUILD_USER}
+
+# check if username from provided configuration exists
+KUBECONFIG_USER=$(${KUBECTL} --kubeconfig=${KUBECONFIG} config view -o jsonpath='{.users[?(@.name == '"\"${USER}\")].name}")
+if [ -z "${KUBECONFIG_USER}" ]; then
+    echo "Unable to find user configuration ${USER} for cluster ${CLUSTER}" >&2
     exit 1
 fi
 
@@ -48,7 +52,7 @@ set +e
 if [ -n "${K8S_MYNAMESPACE:-}" ]
 then
     # do not create random namesspace
-    NAMESPACE=${USER}
+    NAMESPACE=${BUILD_USER}
     # do not delete namespace after the test is complete
     DELETE_NAMESPACE_FLAG=""
     # do not perform manifest transformations
@@ -60,7 +64,7 @@ else
     COUNT="0"
     while true; do
         NAMESPACE=${BUILD_USER}-$(( (RANDOM) + 32767 ))
-        ${KUBECTL} --kubeconfig=${KUBECONFIG} --cluster=${CLUSTER} --user=${USER} create namespace ${NAMESPACE} && break
+        ${KUBECTL} --kubeconfig=${KUBECONFIG} --cluster=${CLUSTER} --server=${SERVER} --user=${USER} create namespace ${NAMESPACE} && break
         COUNT=$[$COUNT + 1]
         if [ $COUNT -ge 10 ]; then
             echo "Unable to create namespace in $COUNT attempts!" >&2
@@ -75,13 +79,21 @@ set -e
 mkdir -p $(dirname $NAMESPACE_NAME_FILE)
 echo $NAMESPACE > $NAMESPACE_NAME_FILE
 
-# create kubectl configuration copy with default context set to use newly created namespace
+# create miniified self-contained kubectl configuration with the default context set to use newly created namespace
 mkdir -p $(dirname $KUBECONFIG_FILE)
-cat ${KUBECONFIG} > $KUBECONFIG_FILE
-export KUBECONFIG=$KUBECONFIG_FILE
+
+# create context partion of new kubeconfig file from scratch
+# use --kubeconfig parameter to prevent any merging
+rm -f $KUBECONFIG_FILE-context
 CONTEXT=$CLUSTER-$NAMESPACE
-${KUBECTL} --cluster=$CLUSTER --user=$USER --namespace=$NAMESPACE config set-context $CONTEXT >&2
-${KUBECTL} config use-context $CONTEXT >&2
+kubectl --kubeconfig=$KUBECONFIG_FILE-context --cluster=$CLUSTER --server=${SERVER} --user=$USER --namespace=$NAMESPACE config  set-context $CONTEXT >&2
+kubectl --kubeconfig=$KUBECONFIG_FILE-context config use-context $CONTEXT >&2
+
+# merge newly generated context with system kubeconfig, flatten and minify the result
+KUBECONFIG=$KUBECONFIG_FILE-context:$KUBECONFIG kubectl config view --merge=true --minify=true --flatten=true --raw >$KUBECONFIG_FILE
+
+# set generated kubeconfig for all following kubectl commands
+export KUBECONFIG=$KUBECONFIG_FILE
 
 # set runfiles for STMTS
 export PYTHON_RUNFILES=${RUNFILES}
