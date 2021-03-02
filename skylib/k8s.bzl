@@ -627,7 +627,6 @@ k8s_test_setup = rule(
             default = Label("@k8s_test//:kubeconfig"),
             providers = [KubeconfigInfo],
             allow_single_file = True,
-            mandatory = True,
         ),
         "kubectl": attr.label(
             default = Label("@k8s_test//:kubectl"),
