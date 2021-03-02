@@ -32,7 +32,7 @@ var (
 // repo: https://aleksey.pesternikov@bitbucket.tubemogul.info/scm/tm/repo.git
 // dir: /tmp/cloudrepo
 // mirrorDir: optional (if not empty) local mirror of the repository
-func Clone(repo, dir, mirrorDir, primaryBranch string) (*Repo, error) {
+func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error) {
 	if err := os.RemoveAll(dir); err != nil {
 		return nil, fmt.Errorf("Unable to clone repo: %w", err)
 	}
@@ -42,7 +42,8 @@ func Clone(repo, dir, mirrorDir, primaryBranch string) (*Repo, error) {
 		exec.Mustex("", "git", "clone", "-n", repo, dir)
 	}
 	exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
-	if err := ioutil.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte("cloud/\n"), 0644); err != nil {
+	genPath := fmt.Sprintf("%s/\n", gitopsPath)
+	if err := ioutil.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
 		return nil, fmt.Errorf("Unable to create .git/info/sparse-checkout: %w", err)
 	}
 	exec.Mustex(dir, "git", "checkout", primaryBranch)
@@ -93,8 +94,8 @@ func (r *Repo) GetLastCommitMessage() (msg string) {
 }
 
 // Commit all changes to the current branch. returns true if there were any changes
-func (r *Repo) Commit(message string) bool {
-	exec.Mustex(r.Dir, "git", "add", "cloud")
+func (r *Repo) Commit(message, gitopsPath string) bool {
+	exec.Mustex(r.Dir, "git", "add", gitopsPath)
 	if r.IsClean() {
 		return false
 	}
