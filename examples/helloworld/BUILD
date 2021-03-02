@@ -102,6 +102,26 @@ k8s_deploy(
     user = USER,
 )
 
+k8s_deploy(
+    name = "gitops_custom_path",
+    cluster = CLUSTER,
+    deployment_branch = "helloworld-gitops-custom-path",
+    gitops_path = "custom_cloud",
+    image_digest_tag = True,  # test optional image tagging
+    image_registry = REGISTRY,  # override the default registry host for production
+    image_repository_prefix = "k8s",
+    images = {
+        "helloworld-image": ":image",
+    },
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+    ],
+    name_suffix = "-gitops-custom-path",
+    namespace = NAMESPACE,
+    user = USER,
+)
+
 sh_test(
     name = "k8s_deploy_test",
     srcs = ["k8s_deploy_test.sh"],

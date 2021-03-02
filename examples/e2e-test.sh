@@ -39,9 +39,14 @@ rm -rf cloud
 
 bazel run //helloworld:canary.gitops
 bazel run //helloworld:release.gitops
+bazel run //helloworld:gitops_custom_path.gitops
 #the result of .gitops operation goes into /cloud directory and should be submitted back to the repo
 
 #apply everything generated
 kubectl apply -f cloud -R
+
+#apply gitops_custom_path gen
+kubectl apply -f custom_cloud -R
+
 #wait for readiness
-kubectl -n hwteam wait --timeout=60s --for=condition=Available deployment/helloworld deployment/helloworld-canary
+kubectl -n hwteam wait --timeout=60s --for=condition=Available deployment/helloworld deployment/helloworld-canary deployment/helloworld-gitops-custom-path
