@@ -236,7 +236,7 @@ def _kubeconfig_configure_impl(repository_ctx):
 
     if can_symlink and host_kubeconfig and host_kubeconfig.exists:
         # symlink ~/.kube/config if this file exists
-        repository_ctx.symlink(config, repository_ctx.path("config"))
+        repository_ctx.symlink(host_kubeconfig, repository_ctx.path("config"))
     else:
         # crete new config file service account token or certificates
         kubeconfig = repository_ctx.path("config")
