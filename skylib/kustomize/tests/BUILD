@@ -27,6 +27,7 @@ sh_test(
         "test.yaml",
         "test_expected.yaml",
         "//skylib/kustomize:set_namespace",
+        "@kustomize_bin//:kustomize",
     ],
 )
 
