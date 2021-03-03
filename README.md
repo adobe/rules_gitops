@@ -103,7 +103,7 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***objects***             | `[]`           | A list of other instances of `k8s_deploy` that this one depends on. See [Adding Dependencies](#adding-dependencies).
 | ***images***              | `{}`           | A dict of labels of Docker images. See [Injecting Docker Images](#injecting-docker-images).
 | ***image_digest_tag***    | `False`        | A flag for whether or not to tag the image with the container digest.
-| ***image_registry***      | `docker.io`    | The registry to push images to. 
+| ***image_registry***      | `docker.io`    | The registry to push images to.
 | ***image_repository***    | `None`         | The repository to push images to. By default, this is generated from the current package path.
 | ***image_repository_prefix*** | `None`     | Add a prefix to the image_repository. Can be used to upload the images in
 | ***release_branch_prefix*** | `master`     | A git branch name/prefix. Automatically run GitOps while building this branch. See [GitOps and Deployment](#gitops_and_deployment).
@@ -288,7 +288,7 @@ spec:
     - name: java_container
       image: registry.example.com/examples/image@sha256:c94d75d68f4c1b436f545729bbce82774fda07
 ```
-Image substitutions for Custom Resource Definitions (CRD) resources could also use target references directly. Their digests are availabe through string substitution. For example, 
+Image substitutions for Custom Resource Definitions (CRD) resources could also use target references directly. Their digests are availabe through string substitution. For example,
 ```yaml
 apiVersion: v1
 kind: MyCrd
@@ -300,7 +300,7 @@ metadata:
 spec:
   image: "{{//example:my_image}}"
 ```
-would become 
+would become
 ```yaml
 apiVersion: v1
 kind: MyCrd
@@ -381,7 +381,7 @@ The `k8s_test_setup` rule produces a shell script which creates a temporary name
 
 The output of the `k8s_test_setup` rule (a shell script) is referenced in the `java_test` rule. It's listed under the `data` attribute, which declares the target as a dependency, and is included in the jvm flags in this clause: `$(location :service_it.setup)`. The "location" function is specific to Bazel: given a target, it returns the path to the file produced by that target. In this case, it returns the path to the shell script created by our `k8s_test_setup` rule.
 
-The test code launches the script to perform the test setup. The tes code should also monitor the script console output to listen to the pod readiness events.
+The test code launches the script to perform the test setup. The test code should also monitor the script console output to listen to the pod readiness events.
 
 
 ## Building & Testing
