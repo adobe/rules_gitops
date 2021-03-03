@@ -340,12 +340,15 @@ def _kubeconfig_configure_impl(repository_ctx):
 kubeconfig_configure = repository_rule(
     attrs = {
         "cluster": attr.string(
+            doc = "The Kubernetes cluster name as defined in the host kubectl configuration.",
             mandatory = True,
         ),
         "server": attr.string(
+            doc = "Kubernetes server endpoint.",
             mandatory = False,
         ),
         "user": attr.string(
+            doc = "Kubernetes configuration user name.",
             mandatory = False,
         ),
     },

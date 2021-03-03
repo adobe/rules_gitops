@@ -349,7 +349,7 @@ Please note that the `objects` attribute is ignored by `.gitops` targets.
 
 
 <a name="k8s_test_setup"></a>
-## k8s_test_setup
+## Integration Testing Support
 
 Integration tests are defined in `BUILD` files like this:
 ```python
@@ -383,6 +383,47 @@ The output of the `k8s_test_setup` rule (a shell script) is referenced in the `j
 
 The test code launches the script to perform the test setup. The test code should also monitor the script console output to listen to the pod readiness events.
 
+The `@k8s_test//:kubeconfig` target referenced from `k8s_test_setup` rule serves the purpose of making Kubernetes configuration available in the test sandbox. The `kubeconfig_configure` repository rule in the `WORKSPACE` file will need, at minimum, provide the cluster name.
+
+```python
+load("@com_adobe_rules_gitops//gitops:defs.bzl", "kubeconfig_configure")
+
+kubeconfig_configure(
+    name = "k8s_test",
+    cluster = "dev",
+)
+```
+
+### k8s_test_setup
+
+**Note:** the `k8s_test_setup` rule is an experimental feature and is subject to change.
+
+An executable that performs Kubernetes test setup:
+
+- creates temporary namespace
+- creates kubectl configuration with the default context set to the created namespace
+- deploys all dependent ***objects***
+- forwards service ports
+
+| Parameter                  | Default        | Description
+| -------------------------- | -------------- | -----------
+| ***kubeconfig***           | `@k8s_test//:kubeconfig` | The Kubernetes configuration file target.
+| ***kubectl***              | `@k8s_test//:kubectl` | The Kubectl executable target.
+| ***objects***              | `None` | A list of other instances of `k8s_deploy` that test depends on. See [Adding Dependencies](#adding-dependencies)
+| ***setup_timeout***        | `10m`  | The time to wait until all required services become ready. The timeout duration should be lower that Bazel test timeout.
+| ***portforward_services*** | `None` | The list of Kubernetes service names to port forward. The setup will wait for at least one service endpoint to become ready.
+
+### kubeconfig_configure
+
+**Note:** the `kubeconfig_configure` repository rule is an experimental feature and is subject to change.
+
+Configures Kubernetes tools for testing.
+
+| Parameter                 | Default        | Description
+| ------------------------- | -------------- | -----------
+| ***cluster***             | `None`         | The Kubernetes cluster name as defined in the host `kubectl` configuration.
+| ***server***              | `None`         | Optional Kubernetes server endpoint to override automatically detected server endpoint. By default, the server endpoint is automatically detected based on the environment. When running inside the Kubernetes cluster (the service account is present), the server endpoint is derived from `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` environment variables. If environment variable are nto defined the server name is set to `https://kubernetes.default`. Otherwise the host `kubectl` configuration file is used.
+| ***user***                | `None` | Optional Kubernetes configuration user name. Default value is the current build user.
 
 ## Building & Testing
 
