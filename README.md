@@ -433,16 +433,16 @@ In the situation when the trunk based branching model in not suitable teh `creat
 
 Both trunk and release branch workflow could coexists in the same repository.
 
-For example let's assume the CI build pipeline described above is running the build for `https://github.com/example/repo.git`. We are using release branch branching model. Feature request are merged into multiple target release branches. The release brach name conventions is `release/team-<YYYYMMDD>`. The *Create GitOps PRs* step is running on the release branch change. GitOps deployments source files are located in the same repository `/cloud` directory in the `master` branch.
+For example, let's assume the CI build pipeline described above is running the build for `https://github.com/example/repo.git`. We are using release branch branching model. Feature request are merged into multiple target release branches. The release brach name convention is `release/team-<YYYYMMDD>`. The *Create GitOps PRs* step is running on the release branch change. GitOps deployments source files are located in the same repository `/cloud` directory in the `master` branch.
 
 The *Create GitOps PRs* pipeline step shell command will look like following:
 ```bash
 GIT_ROOT_DIR=$(git rev-parse --show-toplevel)
 GIT_COMMIT_ID=$(git rev-parse HEAD)
 GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)          # => release/team-20200101
-RELEASE_BRANCH_SUFFIX=${GIT_BRANCH_NAME#'release/team'}     # => -20200101
+RELEASE_BRANCH_SUFFIX=${GIT_BRANCH_NAME#"release/team"}     # => -20200101
 RELEASE_BRANCH=${GIT_BRANCH_NAME%${RELEASE_BRANCH_SUFFIX}}  # => release/team
-if [ "${GIT_BRANCH_NAME}" == "master"]; then
+if [ "${RELEASE_BRANCH}" == "release/team"]; then
     bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs -- \
         --workspace $GIT_ROOT_DIR \
         --git_repo https://github.com/example/repo.git \
@@ -457,9 +457,9 @@ fi
 ```
 
 The meaning of the parameters is the same as with [trunk based workflow](#trunk_based_gitops_workflow).
-The `--release_branch` parameter takes values of `release/team`. The additional parameter `--deployment_branch_suffix` will add the suffix value the target deployment branch name.
+The `--release_branch` parameter takes the value of `release/team`. The additional parameter `--deployment_branch_suffix` will add the release branch suffix to the target deployment branch name.
 
-If we modify previous examlple:
+If we modify previous example:
 ```python
 [
     k8s_deploy(
@@ -489,7 +489,7 @@ If we modify previous examlple:
 ]
 ```
 
-As a result of the setup above the `create_gitops_prs` tool will open up to 2 potential deployment pull requests per release branch. Assuming release branch name is `release/team-20200101`:
+The result of the setup above the `create_gitops_prs` tool will open up to 2 potential deployment pull requests per release branch. Assuming release branch name is `release/team-20200101`:
 * from `deploy/monitoring-stage-20200101` to `master` including manifests for `stage-grafana` and `stage-prometheus`
 * from `deploy/monitoring-prod-20200101` to `master` including manifests for `prod-grafana` and `prod-prometheus`
 
