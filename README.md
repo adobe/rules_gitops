@@ -13,11 +13,12 @@ Bazel GitOps Rules is an alternative to [rules_k8s](https://github.com/bazelbuil
 * Speeds up deployments iterations:
   * The results manifests are rendered without pushing containers.
   * Pushes all the images in parallel.
-
+* Provides a utility that creates GitOps pull requests.
 
 ## Rules
 
 * [k8s_deploy](#k8s_deploy)
+* [kubeconfig_configure](#kubeconfig_configure)
 * [k8s_test_setup](#k8s_test_setup)
 
 
@@ -183,7 +184,8 @@ That looks like a lot. But lets try to decode what is happening here:
 Configmaps are a special case of manifests. They can be rendered from a collection of files of any kind (.yaml, .properties, .xml, .sh, whatever). Let's use hypothetical Grafana deployment as an example:
 
 ```python
-[k8s_deploy(
+[
+    k8s_deploy(
         name = NAME,
         cluster = CLUSTER,
         configmaps_srcs = glob([                 # (1)
@@ -343,12 +345,155 @@ Please note that the `objects` attribute is ignored by `.gitops` targets.
 
 
 <a name="gitops_and_deployment"></a>
-### GitOps and Deployment
+## GitOps and Deployment
 
-<!-- TODO(KZ): document gitops and deployment -->
+The GitOps tool is a command line utility that usually runs as a last step of CI pipeline.
+
+For the full list of `create_gitops_prs` command line options, run:
+```bash
+bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs
+```
+
+The simplified CI pipeline will look like this:
+```
+[Checkout Code] -> [Bazel Build & Test] -> (if GitOps source branch) -> [Create GitOps PRs]
+```
+
+<a name="trunk_based_gitops_workflow"></a>
+## Trunk Based GitOps Workflow
+
+For example let's assume the CI build pipeline described above is running the build for `https://github.com/example/repo.git`. We are using trunk based branching model. All feature branches are merged into the `master` branch first. The *Create GitOps PRs* step runs on a `master` branch change. The GitOps deployments source files are located in the same repository under the `/cloud` directory.
+
+The *Create GitOps PRs* pipeline step shell command will look like following:
+```bash
+GIT_ROOT_DIR=$(git rev-parse --show-toplevel)
+GIT_COMMIT_ID=$(git rev-parse HEAD)
+GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+if [ "${GIT_BRANCH_NAME}" == "master"]; then
+    bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs -- \
+        --workspace $GIT_ROOT_DIR \
+        --git_repo https://github.com/example/repo.git \
+        --git_mirror $GIT_ROOT_DIR/.git \
+        --git_server github \
+        --release_branch master \
+        --gitops_pr_into master \
+        --branch_name ${GIT_BRANCH_NAME} \
+        --git_commit ${GIT_COMMIT_ID} \
+fi
+```
+
+The `GIT_*` variables describe the current state of the Git repository.
+
+The `--git_repo` parameter defines the remote repository URL. In this case remote repository matches the repository of the working copy. The `--git_mirror` parameter is an optimization used to speed up the target repository clone process using reference repository (see `git clone --reference`). The `--git-server` parameter selects the type of Git server.
+
+The `--release_branch` specifies the value of the ***release_branch_prefix*** attribute of `gitops` targets (see [k8s_deploy](#k8s_deploy)). The `--gitops_pr_into` defines the target branch for newly created pull requests. The `--branch_name` and `--git_commit` are the values used in the pull request commit message.
+
+The `create_gitops_prs` tool will query all `gitops` targets which have set the ***deploy_branch*** attribute (see [k8s_deploy](#k8s_deploy)) and the ***release_branch_prefix*** attribute value that matches the `release_branch` parameter.
+
+The all discovered `gitops` targets are grouped by the value of ***deploy_branch*** attribute. The one deployment branch will accumulate the output of all corresponding `gitops` targets.
+
+For example, we define two deployments: grafana and prometheus. Both deployments share the same namespace. The desired deployment granularity is per namespace.
+```python
+[
+    k8s_deploy(
+        name = NAME,
+        deploy_branch = NAMESPACE,
+        ...
+    )
+    for NAME, CLUSTER, NAMESPACE in [
+        ...
+        ("stage-grafana", "stage", "monitoring-stage"),
+        ("prod-grafana", "prod", "monitoring-prod"),
+    ]
+]
+[
+    k8s_deploy(
+        name = NAME,
+        deploy_branch = NAMESPACE,
+        ...
+    )
+    for NAME, CLUSTER, NAMESPACE in [
+        ...
+        ("stage-prometheus", "stage", "monitoring-stage"),
+        ("prod-prometheus", "prod", "monitoring-prod"),
+    ]
+]
+```
+
+As a result of the setup above the `create_gitops_prs` tool will open up to 2 potential deployment pull requests:
+* from `deploy/monitoring-stage` to `master` including manifests for `stage-grafana` and `stage-prometheus`
+* from `deploy/monitoring-prod` to `master` including manifests for `prod-grafana` and `prod-prometheus`
+
+The GitOps pull request is only created (or new commits added) if the `gitops` target changes the state for the target deployment branch. The source pull request will remain open (and keep accumulation GitOps results) until the pull request is merged and source branch is deleted.
+
+<a name="multiple_release_branches_gitops_workflow"></a>
+## Multiple Release Branches GitOps Workflow
+
+In the situation when the trunk based branching model in not suitable teh `create_gitops_prs` tool supports creating GitOps pull requests before the code is merged to `master` branch.
+
+Both trunk and release branch workflow could coexists in the same repository.
+
+For example let's assume the CI build pipeline described above is running the build for `https://github.com/example/repo.git`. We are using release branch branching model. Feature request are merged into multiple target release branches. The release brach name conventions is `release/team-<YYYYMMDD>`. The *Create GitOps PRs* step is running on the release branch change. GitOps deployments source files are located in the same repository `/cloud` directory in the `master` branch.
+
+The *Create GitOps PRs* pipeline step shell command will look like following:
+```bash
+GIT_ROOT_DIR=$(git rev-parse --show-toplevel)
+GIT_COMMIT_ID=$(git rev-parse HEAD)
+GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)          # => release/team-20200101
+RELEASE_BRANCH_SUFFIX=${GIT_BRANCH_NAME#'release/team'}     # => -20200101
+RELEASE_BRANCH=${GIT_BRANCH_NAME%${RELEASE_BRANCH_SUFFIX}}  # => release/team
+if [ "${GIT_BRANCH_NAME}" == "master"]; then
+    bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs -- \
+        --workspace $GIT_ROOT_DIR \
+        --git_repo https://github.com/example/repo.git \
+        --git_mirror $GIT_ROOT_DIR/.git \
+        --git_server github \
+        --release_branch ${RELEASE_BRANCH} \
+        --deployment_branch_suffix=${RELEASE_BRANCH_SUFFIX} \
+        --gitops_pr_into master \
+        --branch_name ${GIT_BRANCH_NAME} \
+        --git_commit ${GIT_COMMIT_ID} \
+fi
+```
+
+The meaning of the parameters is the same as with [trunk based workflow](#trunk_based_gitops_workflow).
+The `--release_branch` parameter takes values of `release/team`. The additional parameter `--deployment_branch_suffix` will add the suffix value the target deployment branch name.
+
+If we modify previous examlple:
+```python
+[
+    k8s_deploy(
+        name = NAME,
+        deploy_branch = NAMESPACE,
+        release_branch_prefix = "release/team",  # will be selected only when --release_branch=release/team
+        ...
+    )
+    for NAME, CLUSTER, NAMESPACE in [
+        ...
+        ("stage-grafana", "stage", "monitoring-stage"),
+        ("prod-grafana", "prod", "monitoring-prod"),
+    ]
+]
+[
+    k8s_deploy(
+        name = NAME,
+        deploy_branch = NAMESPACE,
+        release_branch_prefix = "release/team",  # will be selected only when --release_branch=release/team
+        ...
+    )
+    for NAME, CLUSTER, NAMESPACE in [
+        ...
+        ("stage-prometheus", "stage", "monitoring-stage"),
+        ("prod-prometheus", "prod", "monitoring-prod"),
+    ]
+]
+```
+
+As a result of the setup above the `create_gitops_prs` tool will open up to 2 potential deployment pull requests per release branch. Assuming release branch name is `release/team-20200101`:
+* from `deploy/monitoring-stage-20200101` to `master` including manifests for `stage-grafana` and `stage-prometheus`
+* from `deploy/monitoring-prod-20200101` to `master` including manifests for `prod-grafana` and `prod-prometheus`
 
 
-<a name="k8s_test_setup"></a>
 ## Integration Testing Support
 
 Integration tests are defined in `BUILD` files like this:
@@ -394,6 +539,7 @@ kubeconfig_configure(
 )
 ```
 
+<a name="k8s_test_setup"></a>
 ### k8s_test_setup
 
 **Note:** the `k8s_test_setup` rule is an experimental feature and is subject to change.
@@ -413,6 +559,7 @@ An executable that performs Kubernetes test setup:
 | ***setup_timeout***        | `10m`  | The time to wait until all required services become ready. The timeout duration should be lower that Bazel test timeout.
 | ***portforward_services*** | `None` | The list of Kubernetes service names to port forward. The setup will wait for at least one service endpoint to become ready.
 
+<a name="kubeconfig_configure"></a>
 ### kubeconfig_configure
 
 **Note:** the `kubeconfig_configure` repository rule is an experimental feature and is subject to change.
