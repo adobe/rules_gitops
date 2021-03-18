@@ -400,6 +400,11 @@ bazel test //...
 ```
 
 
+## Have a Question
+
+Find the `rules_gitops` contributors in the [#gitops](https://bazelbuild.slack.com/archives/C01SF68MTFS) channel on the [Bazel Slack](https://slack.bazel.build/).
+
+
 ## Contributing
 
 Contributions are welcomed! Read the [Contributing Guide](./.github/CONTRIBUTING.md) for more information.
