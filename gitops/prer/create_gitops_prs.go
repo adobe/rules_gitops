@@ -33,6 +33,10 @@ import (
 	proto "github.com/golang/protobuf/proto"
 )
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
+
 var (
 	releaseBranch          = flag.String("release_branch", "master", "filter gitops targets by release branch")
 	bazelCmd               = flag.String("bazel_cmd", "tools/bazel", "bazel binary to use")
@@ -148,6 +152,7 @@ func main() {
 		for _, target := range targets {
 			log.Println("train", train, "target", target)
 			bin := bazel.TargetToExecutable(target)
+			exec.Mustex("", "bazel", "build", target)
 			exec.Mustex("", bin, "--nopush", "--nobazel", "--deployment_root", gitopsdir)
 		}
 		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets)), *gitopsPath) {
