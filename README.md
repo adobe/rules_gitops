@@ -44,11 +44,11 @@ EOF
 ```python
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-rules_gitops_version = "4b31f0dfd0ed329cdaabc02d78c2203c0f0035ec"
+rules_gitops_version = "ef7a846a58e3baeaceb7067c05f17fc3e8a821fd"
 
 http_archive(
     name = "com_adobe_rules_gitops",
-    sha256 = "763e0157c0536c4173c2f6809a29e36ea401fe54377d05c6534d09d47d202441",
+    sha256 = "19a394fe36cd0ac21d0df1357a5e9affbd45c61c66f76fca366d3899b2f1f2d6",
     strip_prefix = "rules_gitops-%s" % rules_gitops_version,
     urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
 )
