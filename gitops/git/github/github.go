@@ -60,7 +60,6 @@ func CreatePR(from, to, title string) error {
 	}
 	createdPr, resp, err := gh.PullRequests.Create(ctx, *repoOwner, *repo, pr)
 	if err == nil {
-		// PR created
 		log.Println("Created PR: ", *createdPr.URL)
 	} else if 422 == resp.StatusCode {
 		// Handle the case: "Create PR" request fails because it already exists
@@ -72,8 +71,9 @@ func CreatePR(from, to, title string) error {
 		body, readingErr := ioutil.ReadAll(resp.Body)
 		if readingErr != nil {
 			log.Println("cannot read response body")
+		} else {
+			log.Println("github response: ", string(body))
 		}
-		log.Println("github response: ", string(body))
 	}
 
 	return err
