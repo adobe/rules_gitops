@@ -15,7 +15,7 @@ var (
 	repoOwner = flag.String("github_repo_owner", "", "the owner user/organization to use for github api requests")
 	repo = flag.String("github_repo", "", "the repo to use for github api requests")
 	pat = flag.String("github_access_token", os.Getenv("GITHUB_TOKEN"), "the access token to authenticate requests")
-	githubHost = flag.String("github_host", "", "The host name of the private enterprise github, e.g. git.corp.adobe.com")
+	githubEnterpriseHost = flag.String("github_enterprise_host", "", "The host name of the private enterprise github, e.g. git.corp.adobe.com")
 )
 
 func CreatePR(from, to, title string) error {
@@ -34,16 +34,19 @@ func CreatePR(from, to, title string) error {
 		&oauth2.Token{AccessToken: *pat},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-	gh := github.NewClient(tc)
-	if *githubHost != "" {
-		baseUrl := "https://" + *githubHost + "/api/v3/"
-		uploadUrl := "https://" + *githubHost + "/api/uploads/"
+
+	var gh *github.Client
+	if *githubEnterpriseHost != "" {
+		baseUrl := "https://" + *githubEnterpriseHost + "/api/v3/"
+		uploadUrl := "https://" + *githubEnterpriseHost + "/api/uploads/"
 		var err error
 		gh, err = github.NewEnterpriseClient(baseUrl, uploadUrl, tc)
 		if err != nil {
 			log.Println("Error in creating github client", err)
 			return nil
 		}
+	} else {
+		gh = github.NewClient(tc)
 	}
 
 	pr := &github.NewPullRequest{
