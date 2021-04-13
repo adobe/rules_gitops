@@ -152,7 +152,6 @@ func main() {
 		for _, target := range targets {
 			log.Println("train", train, "target", target)
 			bin := bazel.TargetToExecutable(target)
-			exec.Mustex("", "bazel", "build", target)
 			exec.Mustex("", bin, "--nopush", "--nobazel", "--deployment_root", gitopsdir)
 		}
 		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets)), *gitopsPath) {
