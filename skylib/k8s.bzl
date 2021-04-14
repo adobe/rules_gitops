@@ -20,6 +20,7 @@ load(
     "kustomize",
     kustomize_gitops = "gitops",
 )
+load("//skylib:kubeconfig.bzl", "KubeconfigInfo")
 load("//skylib:push.bzl", "k8s_container_push")
 
 def _runfiles(ctx, f):
@@ -275,134 +276,6 @@ def k8s_deploy(
             visibility = visibility,
         )
 
-# kubectl template
-def _kubectl_config(repository_ctx, args):
-    kubectl = repository_ctx.path("kubectl")
-    kubeconfig_yaml = repository_ctx.path("kubeconfig")
-    exec_result = repository_ctx.execute(
-        [kubectl, "--kubeconfig", kubeconfig_yaml, "config"] + args,
-        environment = {
-            # prevent kubectl config to stumble on shared .kube/config.lock file
-            "HOME": str(repository_ctx.path(".")),
-        },
-        quiet = True,
-    )
-    if exec_result.return_code != 0:
-        fail("Error executing kubectl config %s" % " ".join(args))
-
-def _kubeconfig_impl(repository_ctx):
-    """Find local kubernetes certificates"""
-
-    # find and symlink kubectl
-    kubectl = repository_ctx.which("kubectl")
-    if not kubectl:
-        fail("Unable to find kubectl executable. PATH=%s" % repository_ctx.path)
-    repository_ctx.symlink(kubectl, "kubectl")
-
-    # TODO: figure out how to use BUILD_USER
-    if "USER" in repository_ctx.os.environ:
-        user = repository_ctx.os.environ["USER"]
-    else:
-        exec_result = repository_ctx.execute(["whoami"])
-        if exec_result.return_code != 0:
-            fail("Error detecting current user")
-        user = exec_result.stdout.rstrip()
-    token = None
-    ca_crt = None
-    kubecert_cert = None
-    kubecert_key = None
-    server = repository_ctx.attr.server
-
-    # check service account first
-    serviceaccount = repository_ctx.path("/var/run/secrets/kubernetes.io/serviceaccount")
-    if serviceaccount.exists:
-        ca_crt = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-        token_file = serviceaccount.get_child("token")
-        if token_file.exists:
-            exec_result = repository_ctx.execute(["cat", token_file.realpath])
-            if exec_result.return_code != 0:
-                fail("Error reading user token")
-            token = exec_result.stdout.rstrip()
-
-        # use master url from the environemnt
-        if "KUBERNETES_SERVICE_HOST" in repository_ctx.os.environ:
-            server = "https://%s:%s" % (
-                repository_ctx.os.environ["KUBERNETES_SERVICE_HOST"],
-                repository_ctx.os.environ["KUBERNETES_SERVICE_PORT"],
-            )
-        else:
-            # fall back to the default
-            server = "https://kubernetes.default"
-    else:
-        home = repository_ctx.path(repository_ctx.os.environ["HOME"])
-        certs = home.get_child(".kube").get_child("certs")
-        ca_crt = certs.get_child("ca.crt").realpath
-        kubecert_cert = certs.get_child("kubecert.cert")
-        kubecert_key = certs.get_child("kubecert.key")
-
-    # config set-cluster {cluster} \
-    #     --certificate-authority=... \
-    #     --server=https://dev3.k8s.tubemogul.info:443 \
-    #     --embed-certs",
-    _kubectl_config(repository_ctx, [
-        "set-cluster",
-        repository_ctx.attr.cluster,
-        "--server",
-        server,
-        "--certificate-authority",
-        ca_crt,
-    ])
-
-    # config set-credentials {user} --token=...",
-    if token:
-        _kubectl_config(repository_ctx, [
-            "set-credentials",
-            user,
-            "--token",
-            token,
-        ])
-
-    # config set-credentials {user} --client-certificate=... --embed-certs",
-    if kubecert_cert and kubecert_cert.exists:
-        _kubectl_config(repository_ctx, [
-            "set-credentials",
-            user,
-            "--client-certificate",
-            kubecert_cert.realpath,
-        ])
-
-    # config set-credentials {user} --client-key=... --embed-certs",
-    if kubecert_key and kubecert_key.exists:
-        _kubectl_config(repository_ctx, [
-            "set-credentials",
-            user,
-            "--client-key",
-            kubecert_key.realpath,
-        ])
-
-    # export repostory contents
-    repository_ctx.file("BUILD", """exports_files(["kubeconfig", "kubectl"])""", False)
-
-    return {
-        "cluster": repository_ctx.attr.cluster,
-        "server": repository_ctx.attr.server,
-    }
-
-kubeconfig = repository_rule(
-    attrs = {
-        "cluster": attr.string(),
-        "server": attr.string(),
-    },
-    environ = [
-        "HOME",
-        "USER",
-        "KUBERNETES_SERVICE_HOST",
-        "KUBERNETES_SERVICE_PORT",
-    ],
-    local = True,
-    implementation = _kubeconfig_impl,
-)
-
 def _stamp(ctx, string, output):
     stamps = [ctx.file._info_file]
     stamp_args = [
@@ -475,57 +348,17 @@ _k8s_cmd = rule(
     implementation = _k8s_cmd_impl,
 )
 
-def _k8s_test_namespace_impl(ctx):
-    files = []  # runfiles list
-
-    # add files referenced by rule attributes to runfiles
-    files = [ctx.file.kubectl, ctx.file.kubeconfig]
-
-    # create namespace reservation script
-    namespace_create = ctx.actions.declare_file(ctx.label.name + ".create")
-    ctx.actions.expand_template(
-        template = ctx.file._namespace_template,
-        substitutions = {
-            "%{kubeconfig}": ctx.file.kubeconfig.path,
-            "%{kubectl}": ctx.file.kubectl.path,
-        },
-        output = namespace_create,
-        is_executable = True,
-    )
-    files += [namespace_create]
-
-    return [DefaultInfo(
-        executable = namespace_create,
-        runfiles = ctx.runfiles(files = files),
-    )]
-
-k8s_test_namespace = rule(
-    attrs = {
-        "kubeconfig": attr.label(
-            allow_single_file = True,
-        ),
-        "kubectl": attr.label(
-            cfg = "host",
-            executable = True,
-            allow_single_file = True,
-        ),
-        "_namespace_template": attr.label(
-            default = Label("//skylib:k8s_test_namespace.sh.tpl"),
-            allow_single_file = True,
-        ),
-    },
-    executable = True,
-    implementation = _k8s_test_namespace_impl,
-)
-
 def _k8s_test_setup_impl(ctx):
     files = []  # runfiles list
     transitive = []
     commands = []  # the list of commands to execute
 
     # add files referenced by rule attributes to runfiles
-    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, ctx.executable._kustomize, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
+    files = [ctx.executable._stamper, ctx.file.kubeconfig, ctx.file.kubectl, ctx.executable._kustomize, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter, ctx.file._build_user_value]
     files += ctx.files._set_namespace
+
+    # add kubeconfig transitive runfiles
+    transitive.append(ctx.attr.kubeconfig.default_runfiles.files)
 
     push_statements, files, pushes_runfiles = imagePushStatements(ctx, [o for o in ctx.attr.objects if KustomizeInfo in o], files)
 
@@ -537,20 +370,26 @@ def _k8s_test_setup_impl(ctx):
             transitive.append(obj.default_runfiles.files)
 
             # add object' execution command
-            commands += [_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -"]
+            commands += [_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} " + ctx.executable._kustomize.short_path + " $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -"]
         else:
             files += obj.files.to_list()
-            commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
+            commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} " + ctx.executable._kustomize.short_path + " $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
 
     files += [ctx.executable._template_engine]
+
+    kubeconfig_info = ctx.attr.kubeconfig[KubeconfigInfo]
 
     # create namespace script
     ctx.actions.expand_template(
         template = ctx.file._namespace_template,
         substitutions = {
             "%{it_sidecar}": ctx.executable._it_sidecar.short_path,
-            "%{kubeconfig}": ctx.file.kubeconfig.path,
-            "%{kubectl}": ctx.file.kubectl.path,
+            "%{kubeconfig}": ctx.file.kubeconfig.short_path,
+            "%{kubectl}": ctx.file.kubectl.short_path,
+            "%{cluster}": kubeconfig_info.cluster,
+            "%{server}": kubeconfig_info.server,
+            "%{user}": kubeconfig_info.user,
+            "%{build_user}": "$(cat %s)" % ctx.file._build_user_value.short_path,
             "%{portforwards}": " ".join(["-portforward=" + p for p in ctx.attr.portforward_services]),
             "%{push_statements}": push_statements,
             "%{set_namespace}": ctx.executable._set_namespace.short_path,
@@ -574,6 +413,7 @@ k8s_test_setup = rule(
     attrs = {
         "kubeconfig": attr.label(
             default = Label("@k8s_test//:kubeconfig"),
+            providers = [KubeconfigInfo],
             allow_single_file = True,
         ),
         "kubectl": attr.label(
@@ -617,6 +457,10 @@ k8s_test_setup = rule(
             cfg = "host",
             executable = True,
             allow_files = True,
+        ),
+        "_build_user_value": attr.label(
+            default = Label("//skylib:build_user_value.txt"),
+            allow_single_file = True,
         ),
         "_template_engine": attr.label(
             default = Label("//templating:fast_template_engine"),

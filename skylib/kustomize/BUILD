@@ -17,6 +17,9 @@ exports_files([
 sh_binary(
     name = "set_namespace",
     srcs = ["set_namespace.sh"],
+    args = [
+        "$(location @kustomize_bin//:kustomize)",
+    ],
     data = [
         "@kustomize_bin//:kustomize",
     ],

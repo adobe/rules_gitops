@@ -10,6 +10,7 @@
 # governing permissions and limitations under the License.
 
 set -o errexit
+
 # desired cluster name; default is "kind"
 KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-kind}"
 
@@ -22,16 +23,22 @@ if [ "${running}" != 'true' ]; then
     -d --restart=always -p "${reg_port}:5000" --name "${reg_name}" \
     registry:2
 fi
-reg_ip="$(docker inspect -f '{{.NetworkSettings.IPAddress}}' "${reg_name}")"
 
-# create a cluster with the local registry enabled in containerd
-cat <<EOF | kind create cluster --name "${KIND_CLUSTER_NAME}" --image "kindest/node:v1.18.15" --config=-
+# create a cluster with the local registry enabled in container
+cat <<EOF | kind create cluster \
+  --name "${KIND_CLUSTER_NAME}" \
+  --image "kindest/node:v1.18.15" \
+  --config=-
+---
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:${reg_port}"]
-    endpoint = ["http://${reg_ip}:${reg_port}"]
+    endpoint = ["http://${reg_name}:${reg_port}"]
 EOF
 
+# connect the registry to the cluster network
+# (the network may already be connected)
+docker network connect "${KIND_CLUSTER_NAME}" "${reg_name}" || true
 

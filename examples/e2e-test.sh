@@ -19,22 +19,26 @@ bindir=$(cd `dirname "$0"` && pwd)
 repo_path=$bindir
 cd $repo_path
 
-#verify interactive workflow
+# enable kubectl logging
+KUBECTL_OPTS="--logtostderr=true -v=5"
+
+# verify interactive workflow
 MYNAMESPACE=$USER
 
 # kubectl config use-context kind-kind
 
-kubectl create namespace $MYNAMESPACE || true
-kubectl create namespace hwteam || true
+kubectl $KUBECTL_OPTS create namespace $MYNAMESPACE || true
+kubectl $KUBECTL_OPTS create namespace hwteam || true
 
 bazel run //helloworld:mynamespace.apply
-kubectl -n $MYNAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld
+kubectl $KUBECTL_OPTS -n $MYNAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld
 
 bazel run //helloworld:mynamespace.delete
 
-#TODO: verity it is deleted
-#kubectl -n $MYNAMESPACE wait --timeout=30s --for=delete deployment/helloworld
+# TODO: verity it is deleted
+# kubectl -n $MYNAMESPACE wait --timeout=30s --for=delete deployment/helloworld
 
+# verify gitops
 rm -rf cloud
 
 bazel run //helloworld:canary.gitops
@@ -50,3 +54,11 @@ kubectl apply -f custom_cloud -R
 
 #wait for readiness
 kubectl -n hwteam wait --timeout=60s --for=condition=Available deployment/helloworld deployment/helloworld-canary deployment/helloworld-gitops-custom-path
+
+
+# verify test setup
+# test timeout is set up in the rule
+# TODO: not working
+# bazel run //helloworld:service_it.setup &
+# kubectl -n $TEST_NAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld
+# kill %1
