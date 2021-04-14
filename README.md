@@ -404,7 +404,7 @@ The `create_gitops_prs` tool will query all `gitops` targets which have set the 
 
 The all discovered `gitops` targets are grouped by the value of ***deploy_branch*** attribute. The one deployment branch will accumulate the output of all corresponding `gitops` targets.
 
-For example, we define two deployments: grafana and prometheus. Both deployments share the same namespace. The desired deployment granularity is per namespace.
+For example, we define two deployments: grafana and prometheus. Both deployments share the same namespace. The deployments a grouped by namespace.
 ```python
 [
     k8s_deploy(
@@ -441,7 +441,7 @@ The GitOps pull request is only created (or new commits added) if the `gitops` t
 <a name="multiple-release-branches-gitops-workflow"></a>
 ## Multiple Release Branches GitOps Workflow
 
-In the situation when the trunk based branching model in not suitable teh `create_gitops_prs` tool supports creating GitOps pull requests before the code is merged to `master` branch.
+In the situation when the trunk based branching model in not suitable the `create_gitops_prs` tool supports creating GitOps pull requests before the code is merged to `master` branch.
 
 Both trunk and release branch workflow could coexists in the same repository.
 
@@ -601,6 +601,10 @@ bazel test //...
 cd examples
 bazel test //...
 ```
+
+## Have a Question
+
+Find the `rules_gitops` contributors in the [#gitops](https://bazelbuild.slack.com/archives/C01SF68MTFS) channel on the [Bazel Slack](https://slack.bazel.build/).
 
 
 ## Contributing
