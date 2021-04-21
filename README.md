@@ -265,54 +265,68 @@ spec:
 
 Third-party Docker images can be referenced directly in K8s manifests, but for most apps, we need to run our own images. The images are built in the Bazel build pipeline using [rules_docker](https://github.com/bazelbuild/rules_docker). For example, the `java_image` rule creates an image of a Java application from Java source code, dependencies, and configuration.
 
-Here's a (very contrived) example of how this ties in with `k8s_deploy`. Here's the BUILD file:
+Here's a (very contrived) example of how this ties in with `k8s_deploy`. Here's the `BUILD` file located in the package `//examples`:
 ```python
 java_image(
-    name = "some_java_image",
+    name = "helloworld_image",
     srcs = glob(["*.java"]),
     ...
 )
 k8s_deploy(
-    name = "example",
-    manifests = ["my_pod.yaml"],
+    name = "helloworld",
+    manifests = ["helloworld.yaml"],
     images = {
-        "my_pod_image": ":some_java_image",
+        "helloworld_image": ":helloworld_image",  # (1)
     }
 )
 ```
-And here's "my_pod.yaml":
+And here's `helloworld.yaml`:
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: my_pod
+  name: helloworld
 spec:
   containers:
-    - name: java_container
-      image: my_pod_image
+    - image: //examples:helloworld_image  # (2)
 ```
+There `images` attribute dictionary `(1)` defines the images available for the substitution. The manifest file references the fully qualified image target path `//examples:helloworld_image` `(2)`.
+
+The `image` key value in the dictionary is used as an image push identifier. The best practice (as provided in the example) is to use image key that matches the [label name](https://docs.bazel.build/versions/master/skylark/lib/Label.html#name) of the image target.
+
 When we `bazel build` the example, the rendered manifest will look something like this:
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: my_pod
+  name: helloworld
 spec:
   containers:
-    - name: java_container
-      image: registry.example.com/examples/image@sha256:c94d75d68f4c1b436f545729bbce82774fda07
+    - image: registry.example.com/examples/helloworld_image@sha256:c94d75d68f4c1b436f545729bbce82774fda07
 ```
-Image substitutions for Custom Resource Definitions (CRD) resources could also use target references directly. Their digests are availabe through string substitution. For example,
+
+The image substitution using an `images` key is supported, but ***not recommended*** (this functionality might be removed in the future). For example, `helloworld.yaml` can reference `helloworld_image`:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: helloworld
+spec:
+  containers:
+    - image: helloworld_image
+```
+
+Image substitutions for Custom Resource Definitions (CRD) resources could also use target references directly. Their digests are available through string substitution. For example,
 ```yaml
 apiVersion: v1
 kind: MyCrd
 metadata:
   name: my_crd
   labels:
-    app_label_image_digest: "{{//example:my_image.digest}}"
-    app_label_image_short_digest: "{{//example:my_image.short-digest}}"
+    app_label_image_digest: "{{//examples:helloworld_image.digest}}"
+    app_label_image_short_digest: "{{//examples:helloworld_image.short-digest}}"
 spec:
-  image: "{{//example:my_image}}"
+  image: "{{//examples:helloworld_image}}"
 ```
 would become
 ```yaml
@@ -324,15 +338,16 @@ metadata:
     app_label_image_digest: "e6d465223da74519ba3e2b38179d1268b71a72f"
     app_label_image_short_digest: "e6d465223d"
 spec:
-  image: registry.example.com/examples/my_image@sha256:e6d465223da74519ba3e2b38179d1268b71a72f
+  image: registry.example.com/examples/helloworld_image@sha256:e6d465223da74519ba3e2b38179d1268b71a72f
 ```
-That URL points to the "some_java_image" in the private Docker registry. The image is uploaded to the registry before any `.apply` or `.gitops` target is executed. See [helloworld](examples/helloworld/deployment.yaml) for a complete example.
+
+An all examples above the `image:` URL points to the `helloworld_image` in the private Docker registry. The image is uploaded to the registry before any `.apply` or `.gitops` target is executed. See [helloworld](examples/helloworld/deployment.yaml) for a complete example.
 
 As with the rest of the dependency graph, Bazel understands the dependencies `k8s_deploy` has on the
-Docker image and the files in the image. So for example, here's what will happen if someone makes a change to one of the Java files in "some_java_image" and then runs `bazel run //:example.apply`:
-1. The "some_java_image" will be rebuilt with the new code and uploaded to the registry
-1. A new "my_pod" manifest will be rendered using the new image
-1. The new "my_pod" will be deployed
+Docker image and the files in the image. So for example, here's what will happen if someone makes a change to one of the Java files in `helloworld_image` and then runs `bazel run //examples:helloworld.apply`:
+1. The `helloworld_image` will be rebuilt with the new code and uploaded to the registry
+1. A new `helloworld` manifest will be rendered using the new image
+1. The new `helloworld` pod will be deployed
 
 
 <a name="adding-dependencies"></a>
