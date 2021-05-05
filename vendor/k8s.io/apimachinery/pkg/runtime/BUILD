@@ -28,7 +28,6 @@ go_library(
     importpath = "k8s.io/apimachinery/pkg/runtime",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/gogo/protobuf/proto:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/conversion:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/conversion/queryparams:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/runtime/schema:go_default_library",
@@ -37,6 +36,8 @@ go_library(
         "//vendor/k8s.io/apimachinery/pkg/util/naming:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/util/runtime:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/util/sets:go_default_library",
-        "//vendor/k8s.io/klog:go_default_library",
+        "//vendor/k8s.io/klog/v2:go_default_library",
+        "//vendor/sigs.k8s.io/structured-merge-diff/v4/value:go_default_library",
+        "@com_github_gogo_protobuf//proto:go_default_library",
     ],
 )

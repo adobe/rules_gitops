@@ -10,5 +10,5 @@ go_library(
     importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/runtime/schema",
     importpath = "k8s.io/apimachinery/pkg/runtime/schema",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/gogo/protobuf/proto:go_default_library"],
+    deps = ["@com_github_gogo_protobuf//proto:go_default_library"],
 )
