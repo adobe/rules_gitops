@@ -29,6 +29,7 @@ import (
 	"github.com/adobe/rules_gitops/gitops/git"
 	"github.com/adobe/rules_gitops/gitops/git/bitbucket"
 	"github.com/adobe/rules_gitops/gitops/git/github"
+	"github.com/adobe/rules_gitops/gitops/git/gitlab"
 
 	proto "github.com/golang/protobuf/proto"
 )
@@ -51,7 +52,7 @@ var (
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
-	gitHost                = flag.String("git_server", "bitbucket", "the git server api to use. 'bitbucket' or 'github'")
+	gitHost                = flag.String("git_server", "bitbucket", "the git server api to use. 'bitbucket', 'github' or 'gitlab'")
 )
 
 func bazelQuery(query string) *analysis.CqueryResult {
@@ -84,11 +85,14 @@ func main() {
 	}
 
 	var gitServer git.Server
-	if *gitHost == "github" {
+	switch *gitHost {
+	case "github":
 		gitServer = git.ServerFunc(github.CreatePR)
-	} else if *gitHost == "bitbucket" {
+	case "gitlab":
+		gitServer = git.ServerFunc(gitlab.CreatePR)
+	case "bitbucket":
 		gitServer = git.ServerFunc(bitbucket.CreatePR)
-	} else {
+	default:
 		log.Fatalf("unknown vcs host: %s", *gitHost)
 	}
 
