@@ -13,6 +13,7 @@ GtiOps rules dependencies
 """
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 def rules_gitops_dependencies():
     """Declares workspaces the GitOps rules depend on.
@@ -22,7 +23,7 @@ def rules_gitops_dependencies():
     PRs updating dependencies are NOT ACCEPTED.
     """
 
-    _maybe(
+    maybe(
         http_archive,
         name = "bazel_skylib",
         urls = [
@@ -32,7 +33,7 @@ def rules_gitops_dependencies():
         sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "com_google_protobuf",
         sha256 = "9748c0d90e54ea09e5e75fb7fac16edce15d2028d4356f32211cfa3c0e956564",
@@ -40,7 +41,7 @@ def rules_gitops_dependencies():
         urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.11.4.zip"],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "io_bazel_rules_go",
         sha256 = "8663604808d2738dc615a2c3eb70eba54a9a982089dd09f6ffe5d0e75771bc4f",
@@ -51,7 +52,7 @@ def rules_gitops_dependencies():
     )
 
     # gazelle is required by go_image_repositories
-    _maybe(
+    maybe(
         http_archive,
         name = "bazel_gazelle",
         sha256 = "cdb02a887a7187ea4d5a27452311a75ed8637379a1287d8eeb952138ea485f7d",
@@ -61,14 +62,10 @@ def rules_gitops_dependencies():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "io_bazel_rules_docker",
-        sha256 = "1698624e878b0607052ae6131aa216d45ebb63871ec497f26c67455b34119c80",
-        strip_prefix = "rules_docker-0.15.0",
-        urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.15.0/rules_docker-v0.15.0.tar.gz"],
+        sha256 = "59d5b42ac315e7eadffa944e86e90c2990110a1c8075f1cd145f487e999d22b3",
+        strip_prefix = "rules_docker-0.17.0",
+        urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.17.0/rules_docker-v0.17.0.tar.gz"],
     )
-
-def _maybe(repo_rule, name, **kwargs):
-    if name not in native.existing_rules():
-        repo_rule(name = name, **kwargs)
