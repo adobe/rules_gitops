@@ -19,7 +19,7 @@ var (
 
 func CreatePR(from, to, title string) error {
 	if *accessToken == "" {
-		return errors.New("github_access_token must be set")
+		return errors.New("gitlab_access_token must be set")
 	}
 
 	opts := gitlab.CreateMergeRequestOptions{
@@ -50,7 +50,7 @@ func CreatePR(from, to, title string) error {
 	}
 
 	if resp.StatusCode == http.StatusConflict {
-		// Handle the case: "Create PR" request fails because it already exists for this source branch
+		// Handle the case: "Create MR" request fails because it already exists for this source branch
 		log.Println("Reusing existing PR")
 		return nil
 	}
