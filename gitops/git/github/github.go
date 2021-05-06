@@ -69,16 +69,16 @@ func CreatePR(from, to, title string) error {
 	if resp.StatusCode == http.StatusUnprocessableEntity {
 		// Handle the case: "Create PR" request fails because it already exists
 		log.Println("Reusing existing PR")
-		err = nil
+		return nil
+	}
+
+	// All other github responses
+	defer resp.Body.Close()
+	body, readingErr := ioutil.ReadAll(resp.Body)
+	if readingErr != nil {
+		log.Println("cannot read response body")
 	} else {
-		// All other github responses
-		defer resp.Body.Close()
-		body, readingErr := ioutil.ReadAll(resp.Body)
-		if readingErr != nil {
-			log.Println("cannot read response body")
-		} else {
-			log.Println("github response: ", string(body))
-		}
+		log.Println("github response: ", string(body))
 	}
 
 	return err
