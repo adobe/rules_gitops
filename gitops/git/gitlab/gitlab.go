@@ -51,7 +51,7 @@ func CreatePR(from, to, title string) error {
 
 	if resp.StatusCode == http.StatusConflict {
 		// Handle the case: "Create MR" request fails because it already exists for this source branch
-		log.Println("Reusing existing PR")
+		log.Println("Reusing existing MR")
 		return nil
 	}
 
