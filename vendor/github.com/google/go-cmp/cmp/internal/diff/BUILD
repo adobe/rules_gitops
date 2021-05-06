@@ -9,4 +9,5 @@ go_library(
     importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/go-cmp/cmp/internal/diff",
     importpath = "github.com/google/go-cmp/cmp/internal/diff",
     visibility = ["//vendor/github.com/google/go-cmp/cmp:__subpackages__"],
+    deps = ["//vendor/github.com/google/go-cmp/cmp/internal/flags:go_default_library"],
 )

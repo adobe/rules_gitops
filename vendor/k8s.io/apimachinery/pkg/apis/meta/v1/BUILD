@@ -14,9 +14,11 @@ go_library(
         "labels.go",
         "meta.go",
         "micro_time.go",
+        "micro_time_fuzz.go",
         "micro_time_proto.go",
         "register.go",
         "time.go",
+        "time_fuzz.go",
         "time_proto.go",
         "types.go",
         "types_swagger_doc_generated.go",
@@ -29,8 +31,6 @@ go_library(
     importpath = "k8s.io/apimachinery/pkg/apis/meta/v1",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/gogo/protobuf/proto:go_default_library",
-        "//vendor/github.com/gogo/protobuf/sortkeys:go_default_library",
         "//vendor/github.com/google/gofuzz:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/api/resource:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/conversion:go_default_library",
@@ -43,5 +43,7 @@ go_library(
         "//vendor/k8s.io/apimachinery/pkg/util/intstr:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/util/runtime:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/watch:go_default_library",
+        "@com_github_gogo_protobuf//proto:go_default_library",
+        "@com_github_gogo_protobuf//sortkeys:go_default_library",
     ],
 )

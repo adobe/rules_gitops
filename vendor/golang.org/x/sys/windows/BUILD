@@ -14,6 +14,7 @@ go_library(
         "race0.go",
         "security_windows.go",
         "service.go",
+        "setupapierrors_windows.go",
         "str.go",
         "syscall.go",
         "syscall_windows.go",
@@ -28,4 +29,10 @@ go_library(
     importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/sys/windows",
     importpath = "golang.org/x/sys/windows",
     visibility = ["//visibility:public"],
+    deps = select({
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/golang.org/x/sys/internal/unsafeheader:go_default_library",
+        ],
+        "//conditions:default": [],
+    }),
 )

@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "ingress.go",
+        "ingressclass.go",
         "interface.go",
     ],
     importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/informers/networking/v1beta1",
