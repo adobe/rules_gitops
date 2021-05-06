@@ -15,7 +15,7 @@ GtiOps rules repositories initialization
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
-load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 load("@io_bazel_rules_docker//repositories:repositories.bzl", container_repositories = "repositories")
 load("@io_bazel_rules_docker//repositories:go_repositories.bzl", container_go_deps = "go_deps")
 load("@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize_setup")
@@ -30,14 +30,6 @@ def rules_gitops_repositories():
     protobuf_deps()
     go_rules_dependencies()
     go_register_toolchains()
-
-    # keep
-    go_repository(
-        name = "com_github_google_go_containerregistry",
-        commit = "efb2d62d93a7705315b841d0544cb5b13565ff2a",
-        importpath = "github.com/google/go-containerregistry",
-    )
-
     gazelle_dependencies()
     container_repositories()
     container_go_deps()
