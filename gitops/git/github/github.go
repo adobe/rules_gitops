@@ -4,17 +4,19 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"github.com/google/go-github/v32/github"
-	"golang.org/x/oauth2"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+
+	"github.com/google/go-github/v32/github"
+	"golang.org/x/oauth2"
 )
 
 var (
-	repoOwner = flag.String("github_repo_owner", "", "the owner user/organization to use for github api requests")
-	repo = flag.String("github_repo", "", "the repo to use for github api requests")
-	pat = flag.String("github_access_token", os.Getenv("GITHUB_TOKEN"), "the access token to authenticate requests")
+	repoOwner            = flag.String("github_repo_owner", "", "the owner user/organization to use for github api requests")
+	repo                 = flag.String("github_repo", "", "the repo to use for github api requests")
+	pat                  = flag.String("github_access_token", os.Getenv("GITHUB_TOKEN"), "the access token to authenticate requests")
 	githubEnterpriseHost = flag.String("github_enterprise_host", "", "The host name of the private enterprise github, e.g. git.corp.adobe.com")
 )
 
@@ -61,21 +63,23 @@ func CreatePR(from, to, title string) error {
 	createdPr, resp, err := gh.PullRequests.Create(ctx, *repoOwner, *repo, pr)
 	if err == nil {
 		log.Println("Created PR: ", *createdPr.URL)
-	} else if 422 == resp.StatusCode {
+		return err
+	}
+
+	if resp.StatusCode == http.StatusUnprocessableEntity {
 		// Handle the case: "Create PR" request fails because it already exists
 		log.Println("Reusing existing PR")
-		err = nil
+		return nil
+	}
+
+	// All other github responses
+	defer resp.Body.Close()
+	body, readingErr := ioutil.ReadAll(resp.Body)
+	if readingErr != nil {
+		log.Println("cannot read response body")
 	} else {
-		// All other github responses
-		defer resp.Body.Close()
-		body, readingErr := ioutil.ReadAll(resp.Body)
-		if readingErr != nil {
-			log.Println("cannot read response body")
-		} else {
-			log.Println("github response: ", string(body))
-		}
+		log.Println("github response: ", string(body))
 	}
 
 	return err
 }
-

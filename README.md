@@ -386,6 +386,40 @@ The simplified CI pipeline will look like this:
 [Checkout Code] -> [Bazel Build & Test] -> (if GitOps source branch) -> [Create GitOps PRs]
 ```
 
+<a name="gitops-and-deployment-supported-git"></a>
+### supported git_server
+
+</br>
+
+`--git_server=bitbucket`
+
+| Parameter                            | Default
+| ------------------------------------ | --------------
+| ***--bitbucket_api_pr_endpoint***  | `https://bitbucket.tubemogul.info/rest/api/1.0/projects/TM/repos/repo/pull-requests`
+| ***--bitbucket_user***              | `$BITBUCKET_USER`
+| ***--bitbucket_password***          | `$BITBUCKET_PASSWORD`
+
+</br>
+
+`--git_server=github`
+
+| Parameter                            | Default
+| ------------------------------------ | --------------
+| ***--github_repo_owner***           | ``
+| ***--github_repo***                  | ``
+| ***--github_access_token***         | `$GITHUB_TOKEN`
+| ***--github_enterprise_host***      | ``
+
+</br>
+
+`--git_server=gitlab`
+
+| Parameter                            | Default
+| ------------------------------------ | --------------
+| ***--gitlab_host***                 | `https://gitlab.com`
+| ***--gitlab_repo***                 | ``
+| ***--gitlab_access_token***        | `$GITLAB_TOKEN`
+
 <a name="trunk-based-gitops-workflow"></a>
 ## Trunk Based GitOps Workflow
 
