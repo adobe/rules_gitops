@@ -55,11 +55,11 @@ EOF
 ```python
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-rules_gitops_version = "ef7a846a58e3baeaceb7067c05f17fc3e8a821fd"
+rules_gitops_version = "01b16044b3ae3384d03a75f58d45218091ad1ba5"
 
 http_archive(
     name = "com_adobe_rules_gitops",
-    sha256 = "19a394fe36cd0ac21d0df1357a5e9affbd45c61c66f76fca366d3899b2f1f2d6",
+    sha256 = "4921c8f7fab5f16240f39bc67b10a1dce9f7c63eda54ceb7b97b88251ad7bdaf",
     strip_prefix = "rules_gitops-%s" % rules_gitops_version,
     urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
 )
@@ -374,51 +374,40 @@ Please note that the `objects` attribute is ignored by `.gitops` targets.
 <a name="gitops-and-deployment"></a>
 ## GitOps and Deployment
 
-The GitOps tool is a command line utility that usually runs as a last step of CI pipeline.
+The simplified CI pipeline that incorporates GitOps will look like this:
+```
+[Checkout Code] -> [Bazel Build & Test] -> (if GitOps source branch) -> [Create GitOps PRs]
+```
+
+The *Create GitOps PRs* step usually is the last step of a CI pipeline. `rules_gitops` provides the `create_gitops_prs` command line tool that automates the process of creating pull requests.
 
 For the full list of `create_gitops_prs` command line options, run:
 ```bash
 bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs
 ```
 
-The simplified CI pipeline will look like this:
-```
-[Checkout Code] -> [Bazel Build & Test] -> (if GitOps source branch) -> [Create GitOps PRs]
-```
+<a name="gitops-and-deployment-supported-git-servers"></a>
+### Supported Git Servers
 
-<a name="gitops-and-deployment-supported-git"></a>
-### supported git_server
+The `--git_server` parameter defines that type if Git server API to use. The supported Git server types are `github`, `gitlab`, and `bitbucket`.
 
-</br>
+Depending on the Git server type the `create_gitops_prs` tool will use following command line parameters:
 
-`--git_server=bitbucket`
-
-| Parameter                            | Default
-| ------------------------------------ | --------------
-| ***--bitbucket_api_pr_endpoint***  | `https://bitbucket.tubemogul.info/rest/api/1.0/projects/TM/repos/repo/pull-requests`
-| ***--bitbucket_user***              | `$BITBUCKET_USER`
-| ***--bitbucket_password***          | `$BITBUCKET_PASSWORD`
-
-</br>
-
-`--git_server=github`
-
-| Parameter                            | Default
-| ------------------------------------ | --------------
-| ***--github_repo_owner***           | ``
-| ***--github_repo***                  | ``
-| ***--github_access_token***         | `$GITHUB_TOKEN`
-| ***--github_enterprise_host***      | ``
-
-</br>
-
-`--git_server=gitlab`
-
-| Parameter                            | Default
-| ------------------------------------ | --------------
-| ***--gitlab_host***                 | `https://gitlab.com`
-| ***--gitlab_repo***                 | ``
-| ***--gitlab_access_token***        | `$GITLAB_TOKEN`
+--git_server | Parameter                            | Default
+------------ | ------------------------------------ | --------------
+| `github`
+|            | ***--github_repo_owner***            | ``
+|            | ***--github_repo***                  | ``
+|            | ***--github_access_token***          | `$GITHUB_TOKEN`
+|            | ***--github_enterprise_host***       | ``
+| `gitlab`   |
+|            | ***--gitlab_host***                  | `https://gitlab.com`
+|            | ***--gitlab_repo***                  | ``
+|            | ***--gitlab_access_token***          | `$GITLAB_TOKEN`
+| `bitbucket`
+|            | ***--bitbucket_api_pr_endpoint***    | ``
+|            | ***--bitbucket_user***               | `$BITBUCKET_USER`
+|            | ***--bitbucket_password***           | `$BITBUCKET_PASSWORD`
 
 <a name="trunk-based-gitops-workflow"></a>
 ## Trunk Based GitOps Workflow
