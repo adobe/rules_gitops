@@ -13,6 +13,11 @@ load(
     "@io_bazel_rules_docker//skylib:path.bzl",
     _get_runfile_path = "runfile",
 )
+load(
+    "//skylib/kustomize:kustomize_nixos.bzl",
+    "copy_kustomize_bin_from_nix_store",
+    "is_running_on_nixos",
+)
 load("//skylib:push.bzl", "K8sPushInfo")
 load("//skylib:stamp.bzl", "stamp")
 
@@ -37,9 +42,11 @@ sh_binary(
     visibility = ["//visibility:public"],
 )
 """)
-
-    filename, sha256 = _binaries[platform]
-    ctx.download_and_extract(filename, "bin/", sha256 = sha256)
+    if is_running_on_nixos(ctx):
+        copy_kustomize_bin_from_nix_store(ctx, path)
+    else:
+        filename, sha256 = _binaries[platform]
+        ctx.download_and_extract(filename, "bin/", sha256 = sha256)
 
 _download_binary = repository_rule(
     _download_binary_impl,
