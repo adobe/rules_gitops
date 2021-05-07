@@ -389,7 +389,7 @@ bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs
 <a name="gitops-and-deployment-supported-git-servers"></a>
 ### Supported Git Servers
 
-The `--git_server` parameter defines that type if Git server API to use. The supported Git server types are `github`, `gitlab`, and `bitbucket`.
+The `--git_server` parameter defines the type of a Git server API to use. The supported Git server types are `github`, `gitlab`, and `bitbucket`.
 
 Depending on the Git server type the `create_gitops_prs` tool will use following command line parameters:
 
