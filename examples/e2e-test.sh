@@ -15,38 +15,55 @@ set -o errexit
 set -o nounset
 set -o xtrace
 
+KUBECTL_OPTS=""
+if [[ "$-" = *"x"* ]]; then
+    # -x is set
+    # enable kubectl logging
+    KUBECTL_OPTS="--logtostderr=true -v=5"
+fi
+
 bindir=$(cd `dirname "$0"` && pwd)
 repo_path=$bindir
 cd $repo_path
 
-#verify interactive workflow
+# verify interactive workflow
 MYNAMESPACE=$USER
 
 # kubectl config use-context kind-kind
 
-kubectl create namespace $MYNAMESPACE || true
-kubectl create namespace hwteam || true
+kubectl $KUBECTL_OPTS create namespace $MYNAMESPACE || true
+kubectl $KUBECTL_OPTS create namespace hwteam || true
 
 bazel run //helloworld:mynamespace.apply
-kubectl -n $MYNAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld
+kubectl $KUBECTL_OPTS -n $MYNAMESPACE wait --timeout=60s --for=condition=Available \
+    deployment/helloworld
 
 bazel run //helloworld:mynamespace.delete
 
-#TODO: verity it is deleted
-#kubectl -n $MYNAMESPACE wait --timeout=30s --for=delete deployment/helloworld
+# verify it is deleted
+kubectl -n $MYNAMESPACE wait --timeout=30s --for=delete \
+    deployment/helloworld \
+    || true
 
+# the result of .gitops operation goes into /cloud directory and should be submitted back to the repo
 rm -rf cloud
 
 bazel run //helloworld:canary.gitops
 bazel run //helloworld:release.gitops
 bazel run //helloworld:gitops_custom_path.gitops
-#the result of .gitops operation goes into /cloud directory and should be submitted back to the repo
 
-#apply everything generated
-kubectl apply -f cloud -R
+# apply everything generated
+kubectl $KUBECTL_OPTS apply -f cloud -R
 
-#apply gitops_custom_path gen
-kubectl apply -f custom_cloud -R
+# apply gitops_custom_path gen
+kubectl $KUBECTL_OPTS apply -f custom_cloud -R
 
-#wait for readiness
-kubectl -n hwteam wait --timeout=60s --for=condition=Available deployment/helloworld deployment/helloworld-canary deployment/helloworld-gitops-custom-path
+# wait for readiness
+kubectl $KUBECTL_OPTS -n hwteam wait --timeout=60s --for=condition=Available \
+    deployment/helloworld \
+    deployment/helloworld-canary \
+    deployment/helloworld-gitops-custom-path \
+    || false
+
+# delete
+kubectl $KUBECTL_OPTS delete namespace hwteam --now=true --ignore-not-found=true
