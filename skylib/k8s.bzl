@@ -340,10 +340,27 @@ def _kubeconfig_impl(repository_ctx):
         kubecert_cert = certs.get_child("kubecert.cert")
         kubecert_key = certs.get_child("kubecert.key")
 
+        # detect server endpoint
+        # Note: this is an ugly hack
+        if not server:
+            exec_result = repository_ctx.execute(["kubectl", "cluster-info", "--cluster=%s" % repository_ctx.attr.cluster])
+            if exec_result.return_code != 0:
+                fail("Error detecting %s cluster server endpoint" % repository_ctx.attr.cluster)
+            cluster_info = exec_result.stdout.splitlines()
+            server_start_index = cluster_info[0].find("https://")
+            if server_start_index >= 0:
+                # remove traling terminal escape sequence
+                server_part = cluster_info[0][server_start_index:]
+                server = ""
+                for i in range(len(server_part)):
+                    c = server_part[i]
+                    if not (c.isalnum() or c in "/:."):
+                        break
+                    server += c
+
     # config set-cluster {cluster} \
     #     --certificate-authority=... \
     #     --server=https://dev3.k8s.tubemogul.info:443 \
-    #     --embed-certs",
     _kubectl_config(repository_ctx, [
         "set-cluster",
         repository_ctx.attr.cluster,
@@ -353,7 +370,7 @@ def _kubeconfig_impl(repository_ctx):
         ca_crt,
     ])
 
-    # config set-credentials {user} --token=...",
+    # config set-credentials {user} --token=...
     if token:
         _kubectl_config(repository_ctx, [
             "set-credentials",
@@ -362,7 +379,7 @@ def _kubeconfig_impl(repository_ctx):
             token,
         ])
 
-    # config set-credentials {user} --client-certificate=... --embed-certs",
+    # config set-credentials {user} --client-certificate=...
     if kubecert_cert and kubecert_cert.exists:
         _kubectl_config(repository_ctx, [
             "set-credentials",
@@ -371,7 +388,7 @@ def _kubeconfig_impl(repository_ctx):
             kubecert_cert.realpath,
         ])
 
-    # config set-credentials {user} --client-key=... --embed-certs",
+    # config set-credentials {user} --client-key=...
     if kubecert_key and kubecert_key.exists:
         _kubectl_config(repository_ctx, [
             "set-credentials",
@@ -430,7 +447,7 @@ def _k8s_cmd_impl(ctx):
         command_file = ctx.actions.declare_file(ctx.label.name + ".command")
         _stamp(ctx, ctx.attr.command, command_file)
         command_arg = "source %s" % _runfiles(ctx, command_file)
-        files += [command_file]
+        files.append(command_file)
 
     ctx.actions.expand_template(
         template = ctx.file._template,
@@ -492,7 +509,7 @@ def _k8s_test_namespace_impl(ctx):
         output = namespace_create,
         is_executable = True,
     )
-    files += [namespace_create]
+    files.append(namespace_create)
 
     return [DefaultInfo(
         executable = namespace_create,
@@ -533,16 +550,16 @@ def _k8s_test_setup_impl(ctx):
     for obj in ctx.attr.objects:
         if obj.files_to_run.executable:
             # add object' targets and excutables to runfiles
-            files += [obj.files_to_run.executable]
+            files.append(obj.files_to_run.executable)
             transitive.append(obj.default_runfiles.files)
 
             # add object' execution command
-            commands += [_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -"]
+            commands.append(_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -")
         else:
             files += obj.files.to_list()
             commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
 
-    files += [ctx.executable._template_engine]
+    files.append(ctx.executable._template_engine)
 
     # create namespace script
     ctx.actions.expand_template(
