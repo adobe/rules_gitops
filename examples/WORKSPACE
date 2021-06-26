@@ -32,3 +32,20 @@ load(
 )
 
 go_image_repositories()
+
+# this is required to load the kubeconfig repository_rule
+# http_archive(
+#     name = "io_bazel_rules_k8s",
+#     sha256 = "cc75cf0d86312e1327d226e980efd3599704e01099b58b3c2fc4efe5e321fcd9",
+#     strip_prefix = "rules_k8s-0.3.1",
+#     urls = ["https://github.com/bazelbuild/rules_k8s/releases/download/v0.3.1/rules_k8s-v0.3.1.tar.gz"],
+# )
+
+load("@com_adobe_rules_gitops//skylib:k8s.bzl", "kubeconfig")
+
+kubeconfig(
+    name = "k8s_test",
+    cluster = "kind-kind",
+    # server = "https://127.0.0.1:62816",
+    # symlink = True,
+)
