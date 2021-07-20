@@ -24,13 +24,19 @@ import (
 
 	"github.com/adobe/rules_gitops/gitops/analysis"
 	"github.com/adobe/rules_gitops/gitops/bazel"
-	"github.com/adobe/rules_gitops/gitops/bitbucket"
 	"github.com/adobe/rules_gitops/gitops/commitmsg"
 	"github.com/adobe/rules_gitops/gitops/exec"
 	"github.com/adobe/rules_gitops/gitops/git"
+	"github.com/adobe/rules_gitops/gitops/git/bitbucket"
+	"github.com/adobe/rules_gitops/gitops/git/github"
+	"github.com/adobe/rules_gitops/gitops/git/gitlab"
 
 	proto "github.com/golang/protobuf/proto"
 )
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
 
 var (
 	releaseBranch          = flag.String("release_branch", "master", "filter gitops targets by release branch")
@@ -38,13 +44,15 @@ var (
 	workspace              = flag.String("workspace", "", "path to workspace root")
 	repo                   = flag.String("git_repo", "https://bitbucket.tubemogul.info/scm/tm/repo.git", "git repo location")
 	gitMirror              = flag.String("git_mirror", "", "git mirror location, like /mnt/mirror/bitbucket.tubemogul.info/tm/repo.git for jenkins")
+	gitopsPath             = flag.String("gitops_path", "cloud", "location to store files in repo.")
 	gitopsTmpDir           = flag.String("gitops_tmpdir", os.TempDir(), "location to check out git tree with /cloud.")
 	target                 = flag.String("target", "//... except //experimental/...", "target to scan. Useful for debugging only")
 	pushParallelism        = flag.Int("push_parallelism", 5, "Number of image pushes to perform concurrently")
-	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as a target for deployment PR")
+	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as the source branch and target for deployment PR")
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
+	gitHost                = flag.String("git_server", "bitbucket", "the git server api to use. 'bitbucket', 'github' or 'gitlab'")
 )
 
 func bazelQuery(query string) *analysis.CqueryResult {
@@ -70,14 +78,24 @@ func bazelQuery(query string) *analysis.CqueryResult {
 
 func main() {
 	flag.Parse()
-	if *gitMirror == "" {
-		log.Fatal("git_mirror must be defined")
-	}
 	if *workspace != "" {
 		if err := os.Chdir(*workspace); err != nil {
 			log.Fatal(err)
 		}
 	}
+
+	var gitServer git.Server
+	switch *gitHost {
+	case "github":
+		gitServer = git.ServerFunc(github.CreatePR)
+	case "gitlab":
+		gitServer = git.ServerFunc(gitlab.CreatePR)
+	case "bitbucket":
+		gitServer = git.ServerFunc(bitbucket.CreatePR)
+	default:
+		log.Fatalf("unknown vcs host: %s", *gitHost)
+	}
+
 	q := fmt.Sprintf("attr(deployment_branch, \".+\", attr(release_branch_prefix, \"%s\", kind(gitops, %s)))", *releaseBranch, *target)
 	qr := bazelQuery(q)
 	releaseTrains := make(map[string][]string)
@@ -107,7 +125,7 @@ func main() {
 		log.Fatalf("Unable to create tempdir in %s: %v", *gitopsTmpDir, err)
 	}
 	defer os.RemoveAll(gitopsdir)
-	workdir, err := git.Clone(*repo, gitopsdir, *gitMirror)
+	workdir, err := git.Clone(*repo, gitopsdir, *gitMirror, *prInto, *gitopsPath)
 	if err != nil {
 		log.Fatalf("Unable to clone repo: %v", err)
 	}
@@ -118,7 +136,7 @@ func main() {
 	for train, targets := range releaseTrains {
 		log.Println("train", train)
 		branch := fmt.Sprintf("deploy/%s%s", train, *deploymentBranchSuffix)
-		newBranch := workdir.SwitchToBranch(branch)
+		newBranch := workdir.SwitchToBranch(branch, *prInto)
 		if !newBranch {
 			// Find if we need to recreate the branch because target was deleted
 			msg := workdir.GetLastCommitMessage()
@@ -130,7 +148,7 @@ func main() {
 			for _, t := range oldtargets {
 				if !targetset[t] {
 					// target t is not present in a new list
-					workdir.RecreateBranch(branch)
+					workdir.RecreateBranch(branch, *prInto)
 					break
 				}
 			}
@@ -140,7 +158,7 @@ func main() {
 			bin := bazel.TargetToExecutable(target)
 			exec.Mustex("", bin, "--nopush", "--nobazel", "--deployment_root", gitopsdir)
 		}
-		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets))) {
+		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets)), *gitopsPath) {
 			log.Println("branch", branch, "has changes, push is required")
 			updatedGitopsTargets = append(updatedGitopsTargets, targets...)
 			updatedGitopsBranches = append(updatedGitopsBranches, branch)
@@ -174,7 +192,7 @@ func main() {
 	workdir.Push(updatedGitopsBranches)
 
 	for _, branch := range updatedGitopsBranches {
-		err := bitbucket.CreatePR(branch, *prInto, fmt.Sprintf("GitOps deployment %s", branch))
+		err := gitServer.CreatePR(branch, *prInto, fmt.Sprintf("GitOps deployment %s", branch))
 		if err != nil {
 			log.Fatal("unable to create PR: ", err)
 		}

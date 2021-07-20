@@ -244,7 +244,7 @@ func portForward(ctx context.Context, clientset *kubernetes.Clientset, config *r
 	var wg sync.WaitGroup
 	wg.Add(len(ports))
 	for _, port := range ports {
-		ep, err := clientset.CoreV1().Endpoints(*namespace).Get(serviceName, meta_v1.GetOptions{})
+		ep, err := clientset.CoreV1().Endpoints(*namespace).Get(ctx, serviceName, meta_v1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("error listing endpoints for service %s: %v", serviceName, err)
 		}
@@ -301,8 +301,7 @@ func cleanup(clientset *kubernetes.Clientset) {
 	if *deleteNamespace && *namespace != "" {
 		log.Printf("deleting namespace %s", *namespace)
 		s := meta_v1.DeletePropagationBackground
-		err := clientset.CoreV1().Namespaces().Delete(*namespace, &meta_v1.DeleteOptions{PropagationPolicy: &s})
-		if err != nil {
+		if err := clientset.CoreV1().Namespaces().Delete(context.Background(), *namespace, meta_v1.DeleteOptions{PropagationPolicy: &s}); err != nil {
 			log.Printf("Unable to delete namespace %s: %v", *namespace, err)
 		}
 	}

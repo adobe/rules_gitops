@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Debug
 # set -x
@@ -32,6 +32,7 @@ grep -F "kind: Deployment" mynamespace.show
 grep -F "kind: Service" mynamespace.show
 grep -F "name: helloworld" mynamespace.show
 grep -E "image: localhost:5000/.*/helloworld/image@sha256" mynamespace.show
+grep -E "app_label_image_short_digest" mynamespace.show | grep -v -F 'image.short-digest'
 
 $(rlocation examples/helloworld/canary.show) > canary.show
 echo "DEBUG: canary.show:"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright 2020 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License. You may obtain a copy
@@ -23,7 +23,7 @@ docker version
 which kubectl
 go version
 
-go get sigs.k8s.io/kind@v0.7.0
+go get sigs.k8s.io/kind@v0.10.0
 
 cluster_running="$(docker inspect -f '{{.State.Running}}' kind-control-plane 2>/dev/null || true)"
 if [ "${cluster_running}" != 'true' ]; then

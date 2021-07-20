@@ -13,12 +13,23 @@ Bazel GitOps Rules is an alternative to [rules_k8s](https://github.com/bazelbuil
 * Speeds up deployments iterations:
   * The results manifests are rendered without pushing containers.
   * Pushes all the images in parallel.
+* Provides an utility that creates GitOps pull requests.
 
 
 ## Rules
 
 * [k8s_deploy](#k8s_deploy)
 * [k8s_test_setup](#k8s_test_setup)
+
+
+## Guides
+
+* [Base Manifests and Overlays](#base-manifests-and-overlays)
+* [Generating Configmaps](#generating-configmaps)
+* [Injecting Docker Images](#injecting-docker-images)
+* [Adding Dependencies](#adding-dependencies)
+* [GitOps and Deployment](#gitops-and-deployment)
+* [Integration Testing Support](#integration-testing-support)
 
 
 ## Setup
@@ -31,6 +42,7 @@ Add the following to your `WORKSPACE` file to add the necessary external depende
 rev=$(git rev-parse HEAD) && sha265=$(curl -Ls https://github.com/adobe/rules_gitops/archive/${rev}.zip | shasum -a 256 - | cut -d ' ' -f1) && cat <<EOF
 # copy/paste following snippet into README.md
 rules_gitops_version = "${rev}"
+
 http_archive(
     name = "com_adobe_rules_gitops",
     sha256 = "${sha265}",
@@ -43,11 +55,11 @@ EOF
 ```python
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-rules_gitops_version = "6e6de4f29a787197738cf931be49812e8dd6dc0c"
+rules_gitops_version = "01b16044b3ae3384d03a75f58d45218091ad1ba5"
 
 http_archive(
     name = "com_adobe_rules_gitops",
-    sha256 = "4f271d73ccd837a379170d2e26b14c5595309ed28d06a9b1c3b453022fd93485",
+    sha256 = "4921c8f7fab5f16240f39bc67b10a1dce9f7c63eda54ceb7b97b88251ad7bdaf",
     strip_prefix = "rules_gitops-%s" % rules_gitops_version,
     urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
 )
@@ -88,6 +100,8 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***name_prefix***         | `None`         | Adds prefix to the names of all resources defined in manifests.
 | ***name_suffix***         | `None`         | Adds suffix to the names of all resources defined in manifests.
 | ***patches***             | `None`         | A list of patch files to overlay the base manifests. See [Base Manifests and Overlays](#base-manifests-and-overlays).
+| ***image_name_patches***  | `None`         | A dict of image names that will be replaced with new ones. See [kustomization images](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/images/).
+| ***image_tag_patches***  | `None`         | A dict of image names which tags be replaced with new ones. See [kustomization images](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/images/).
 | ***substitutions***       | `None`         | Does parameter substitution in all the manifests (including configmaps). This should generally be limited to "CLUSTER" and "NAMESPACE" only. Any other replacements should be done with overlays.
 | ***configurations***      | `[]`           | A list of files with [kustomize configurations](https://github.com/kubernetes-sigs/kustomize/blob/master/examples/transformerconfigs/README.md).
 | ***prefix_suffix_app_labels*** | `False`   | Add the bundled configuration file allowing adding suffix and prefix to labels `app` and `app.kubernetes.io/name` and respective selector in Deployment.
@@ -99,11 +113,15 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***deps_aliases***        | `{}`           | A dict of labels of file dependencies. File dependency contents are available for template expansion in manifests as `{{imports.<label>}}`. Each dependency in this dictionary should be present in the `deps` attribute.
 | ***objects***             | `[]`           | A list of other instances of `k8s_deploy` that this one depends on. See [Adding Dependencies](#adding-dependencies).
 | ***images***              | `{}`           | A dict of labels of Docker images. See [Injecting Docker Images](#injecting-docker-images).
+| ***image_digest_tag***    | `False`        | A flag for whether or not to tag the image with the container digest.
+| ***image_registry***      | `docker.io`    | The registry to push images to.
 | ***image_repository***    | `None`         | The repository to push images to. By default, this is generated from the current package path.
 | ***image_repository_prefix*** | `None`     | Add a prefix to the image_repository. Can be used to upload the images in
 | ***release_branch_prefix*** | `master`     | A git branch name/prefix. Automatically run GitOps while building this branch. See [GitOps and Deployment](#gitops_and_deployment).
 | ***deployment_branch***   | `None`         | Automatic GitOps output will appear in a branch and PR with this name. See [GitOps and Deployment](#gitops_and_deployment).
+| ***gitops_path***         | `cloud`        | Path within the git repo where gitops files get generated into
 | ***visibility***          | [Default_visibility](https://docs.bazel.build/versions/master/be/functions.html#package.default_visibility) | Changes the visibility of all rules generated by this macro. See [Bazel docs on visibility](https://docs.bazel.build/versions/master/be/common-definitions.html#common-attributes).
+
 
 <a name="base-manifests-and-overlays"></a>
 ### Base Manifests and Overlays
@@ -145,7 +163,7 @@ manifests
 ```
 Here we see that `aws` and `onprem` clouds have different persistence configurations `aws/pvc.yaml` and `onprem/pvc.yaml`.
 
-The patches list `(2)` requires more granular configuration that introduces 3 levels of customization: CLOUND, NAMESPACE, and CLUSTER. Each manifest fragment in the overlays subtree applied as [strategic merge patch](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md) update operation.
+The patches list `(2)` requires more granular configuration that introduces 3 levels of customization: CLOUD, NAMESPACE, and CLUSTER. Each manifest fragment in the overlays subtree applied as [strategic merge patch](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md) update operation.
 ```
 overlays
 ├── aws
@@ -177,7 +195,8 @@ That looks like a lot. But lets try to decode what is happening here:
 Configmaps are a special case of manifests. They can be rendered from a collection of files of any kind (.yaml, .properties, .xml, .sh, whatever). Let's use hypothetical Grafana deployment as an example:
 
 ```python
-[k8s_deploy(
+[
+    k8s_deploy(
         name = NAME,
         cluster = CLUSTER,
         configmaps_srcs = glob([                 # (1)
@@ -240,55 +259,95 @@ spec:
         name: grafana-ldap
 ```
 
+
 <a name="injecting-docker-images"></a>
 ### Injecting Docker Images
 
 Third-party Docker images can be referenced directly in K8s manifests, but for most apps, we need to run our own images. The images are built in the Bazel build pipeline using [rules_docker](https://github.com/bazelbuild/rules_docker). For example, the `java_image` rule creates an image of a Java application from Java source code, dependencies, and configuration.
 
-Here's a (very contrived) example of how this ties in with `k8s_deploy`. Here's the BUILD file:
+Here's a (very contrived) example of how this ties in with `k8s_deploy`. Here's the `BUILD` file located in the package `//examples`:
 ```python
 java_image(
-    name = "some_java_image",
+    name = "helloworld_image",
     srcs = glob(["*.java"]),
     ...
 )
 k8s_deploy(
-    name = "example",
-    manifests = ["my_pod.yaml"],
+    name = "helloworld",
+    manifests = ["helloworld.yaml"],
     images = {
-        "my_pod_image": ":some_java_image",
+        "helloworld_image": ":helloworld_image",  # (1)
     }
 )
 ```
-And here's "my_pod.yaml":
+And here's `helloworld.yaml`:
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: my_pod
+  name: helloworld
 spec:
   containers:
-    - name: java_container
-      image: my_pod_image
+    - image: //examples:helloworld_image  # (2)
 ```
+There `images` attribute dictionary `(1)` defines the images available for the substitution. The manifest file references the fully qualified image target path `//examples:helloworld_image` `(2)`.
+
+The `image` key value in the dictionary is used as an image push identifier. The best practice (as provided in the example) is to use image key that matches the [label name](https://docs.bazel.build/versions/master/skylark/lib/Label.html#name) of the image target.
+
 When we `bazel build` the example, the rendered manifest will look something like this:
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: my_pod
+  name: helloworld
 spec:
   containers:
-    - name: java_container
-      image: registry.example.com/examples/image@sha256:c94d75d68f4c1b436f545729bbce82774fda07
+    - image: registry.example.com/examples/helloworld_image@sha256:c94d75d68f4c1b436f545729bbce82774fda07
 ```
-That URL points to the "some_java_image" in the private Docker registry. The image is uploaded to the registry before any `.apply` or `.gitops` target is executed.
+
+The image substitution using an `images` key is supported, but ***not recommended*** (this functionality might be removed in the future). For example, `helloworld.yaml` can reference `helloworld_image`:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: helloworld
+spec:
+  containers:
+    - image: helloworld_image
+```
+
+Image substitutions for Custom Resource Definitions (CRD) resources could also use target references directly. Their digests are available through string substitution. For example,
+```yaml
+apiVersion: v1
+kind: MyCrd
+metadata:
+  name: my_crd
+  labels:
+    app_label_image_digest: "{{//examples:helloworld_image.digest}}"
+    app_label_image_short_digest: "{{//examples:helloworld_image.short-digest}}"
+spec:
+  image: "{{//examples:helloworld_image}}"
+```
+would become
+```yaml
+apiVersion: v1
+kind: MyCrd
+metadata:
+  name: my_crd
+  labels:
+    app_label_image_digest: "e6d465223da74519ba3e2b38179d1268b71a72f"
+    app_label_image_short_digest: "e6d465223d"
+spec:
+  image: registry.example.com/examples/helloworld_image@sha256:e6d465223da74519ba3e2b38179d1268b71a72f
+```
+
+An all examples above the `image:` URL points to the `helloworld_image` in the private Docker registry. The image is uploaded to the registry before any `.apply` or `.gitops` target is executed. See [helloworld](examples/helloworld/deployment.yaml) for a complete example.
 
 As with the rest of the dependency graph, Bazel understands the dependencies `k8s_deploy` has on the
-Docker image and the files in the image. So for example, here's what will happen if someone makes a change to one of the Java files in "some_java_image" and then runs `bazel run //:example.apply`:
-1. The "some_java_image" will be rebuilt with the new code and uploaded to the registry
-1. A new "my_pod" manifest will be rendered using the new image
-1. The new "my_pod" will be deployed
+Docker image and the files in the image. So for example, here's what will happen if someone makes a change to one of the Java files in `helloworld_image` and then runs `bazel run //examples:helloworld.apply`:
+1. The `helloworld_image` will be rebuilt with the new code and uploaded to the registry
+1. A new `helloworld` manifest will be rendered using the new image
+1. The new `helloworld` pod will be deployed
 
 
 <a name="adding-dependencies"></a>
@@ -312,14 +371,183 @@ When you run `bazel run //helloworld:mynamespace.apply`, it'll deploy a _hellowo
 Please note that the `objects` attribute is ignored by `.gitops` targets.
 
 
-<a name="gitops_and_deployment"></a>
-### GitOps and Deployment
+<a name="gitops-and-deployment"></a>
+## GitOps and Deployment
 
-<!-- TODO(KZ): document gitops and deployment -->
+The simplified CI pipeline that incorporates GitOps will look like this:
+```
+[Checkout Code] -> [Bazel Build & Test] -> (if GitOps source branch) -> [Create GitOps PRs]
+```
+
+The *Create GitOps PRs* step usually is the last step of a CI pipeline. `rules_gitops` provides the `create_gitops_prs` command line tool that automates the process of creating pull requests.
+
+For the full list of `create_gitops_prs` command line options, run:
+```bash
+bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs
+```
+
+<a name="gitops-and-deployment-supported-git-servers"></a>
+### Supported Git Servers
+
+The `--git_server` parameter defines the type of a Git server API to use. The supported Git server types are `github`, `gitlab`, and `bitbucket`.
+
+Depending on the Git server type the `create_gitops_prs` tool will use following command line parameters:
+
+--git_server | Parameter                            | Default
+------------ | ------------------------------------ | --------------
+| `github`
+|            | ***--github_repo_owner***            | ``
+|            | ***--github_repo***                  | ``
+|            | ***--github_access_token***          | `$GITHUB_TOKEN`
+|            | ***--github_enterprise_host***       | ``
+| `gitlab`   |
+|            | ***--gitlab_host***                  | `https://gitlab.com`
+|            | ***--gitlab_repo***                  | ``
+|            | ***--gitlab_access_token***          | `$GITLAB_TOKEN`
+| `bitbucket`
+|            | ***--bitbucket_api_pr_endpoint***    | ``
+|            | ***--bitbucket_user***               | `$BITBUCKET_USER`
+|            | ***--bitbucket_password***           | `$BITBUCKET_PASSWORD`
+
+<a name="trunk-based-gitops-workflow"></a>
+## Trunk Based GitOps Workflow
+
+For example let's assume the CI build pipeline described above is running the build for `https://github.com/example/repo.git`. We are using trunk based branching model. All feature branches are merged into the `master` branch first. The *Create GitOps PRs* step runs on a `master` branch change. The GitOps deployments source files are located in the same repository under the `/cloud` directory.
+
+The *Create GitOps PRs* pipeline step shell command will look like following:
+```bash
+GIT_ROOT_DIR=$(git rev-parse --show-toplevel)
+GIT_COMMIT_ID=$(git rev-parse HEAD)
+GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+if [ "${GIT_BRANCH_NAME}" == "master"]; then
+    bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs -- \
+        --workspace $GIT_ROOT_DIR \
+        --git_repo https://github.com/example/repo.git \
+        --git_mirror $GIT_ROOT_DIR/.git \
+        --git_server github \
+        --release_branch master \
+        --gitops_pr_into master \
+        --branch_name ${GIT_BRANCH_NAME} \
+        --git_commit ${GIT_COMMIT_ID} \
+fi
+```
+
+The `GIT_*` variables describe the current state of the Git repository.
+
+The `--git_repo` parameter defines the remote repository URL. In this case remote repository matches the repository of the working copy. The `--git_mirror` parameter is an optimization used to speed up the target repository clone process using reference repository (see `git clone --reference`). The `--git-server` parameter selects the type of Git server.
+
+The `--release_branch` specifies the value of the ***release_branch_prefix*** attribute of `gitops` targets (see [k8s_deploy](#k8s_deploy)). The `--gitops_pr_into` defines the target branch for newly created pull requests. The `--branch_name` and `--git_commit` are the values used in the pull request commit message.
+
+The `create_gitops_prs` tool will query all `gitops` targets which have set the ***deploy_branch*** attribute (see [k8s_deploy](#k8s_deploy)) and the ***release_branch_prefix*** attribute value that matches the `release_branch` parameter.
+
+The all discovered `gitops` targets are grouped by the value of ***deploy_branch*** attribute. The one deployment branch will accumulate the output of all corresponding `gitops` targets.
+
+For example, we define two deployments: grafana and prometheus. Both deployments share the same namespace. The deployments a grouped by namespace.
+```python
+[
+    k8s_deploy(
+        name = NAME,
+        deploy_branch = NAMESPACE,
+        ...
+    )
+    for NAME, CLUSTER, NAMESPACE in [
+        ...
+        ("stage-grafana", "stage", "monitoring-stage"),
+        ("prod-grafana", "prod", "monitoring-prod"),
+    ]
+]
+[
+    k8s_deploy(
+        name = NAME,
+        deploy_branch = NAMESPACE,
+        ...
+    )
+    for NAME, CLUSTER, NAMESPACE in [
+        ...
+        ("stage-prometheus", "stage", "monitoring-stage"),
+        ("prod-prometheus", "prod", "monitoring-prod"),
+    ]
+]
+```
+
+As a result of the setup above the `create_gitops_prs` tool will open up to 2 potential deployment pull requests:
+* from `deploy/monitoring-stage` to `master` including manifests for `stage-grafana` and `stage-prometheus`
+* from `deploy/monitoring-prod` to `master` including manifests for `prod-grafana` and `prod-prometheus`
+
+The GitOps pull request is only created (or new commits added) if the `gitops` target changes the state for the target deployment branch. The source pull request will remain open (and keep accumulation GitOps results) until the pull request is merged and source branch is deleted.
+
+<a name="multiple-release-branches-gitops-workflow"></a>
+## Multiple Release Branches GitOps Workflow
+
+In the situation when the trunk based branching model in not suitable the `create_gitops_prs` tool supports creating GitOps pull requests before the code is merged to `master` branch.
+
+Both trunk and release branch workflow could coexists in the same repository.
+
+For example, let's assume the CI build pipeline described above is running the build for `https://github.com/example/repo.git`. We are using release branch branching model. Feature request are merged into multiple target release branches. The release brach name convention is `release/team-<YYYYMMDD>`. The *Create GitOps PRs* step is running on the release branch change. GitOps deployments source files are located in the same repository `/cloud` directory in the `master` branch.
+
+The *Create GitOps PRs* pipeline step shell command will look like following:
+```bash
+GIT_ROOT_DIR=$(git rev-parse --show-toplevel)
+GIT_COMMIT_ID=$(git rev-parse HEAD)
+GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)          # => release/team-20200101
+RELEASE_BRANCH_SUFFIX=${GIT_BRANCH_NAME#"release/team"}     # => -20200101
+RELEASE_BRANCH=${GIT_BRANCH_NAME%${RELEASE_BRANCH_SUFFIX}}  # => release/team
+if [ "${RELEASE_BRANCH}" == "release/team"]; then
+    bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs -- \
+        --workspace $GIT_ROOT_DIR \
+        --git_repo https://github.com/example/repo.git \
+        --git_mirror $GIT_ROOT_DIR/.git \
+        --git_server github \
+        --release_branch ${RELEASE_BRANCH} \
+        --deployment_branch_suffix=${RELEASE_BRANCH_SUFFIX} \
+        --gitops_pr_into master \
+        --branch_name ${GIT_BRANCH_NAME} \
+        --git_commit ${GIT_COMMIT_ID} \
+fi
+```
+
+The meaning of the parameters is the same as with [trunk based workflow](#trunk_based_gitops_workflow).
+The `--release_branch` parameter takes the value of `release/team`. The additional parameter `--deployment_branch_suffix` will add the release branch suffix to the target deployment branch name.
+
+If we modify previous example:
+```python
+[
+    k8s_deploy(
+        name = NAME,
+        deploy_branch = NAMESPACE,
+        release_branch_prefix = "release/team",  # will be selected only when --release_branch=release/team
+        ...
+    )
+    for NAME, CLUSTER, NAMESPACE in [
+        ...
+        ("stage-grafana", "stage", "monitoring-stage"),
+        ("prod-grafana", "prod", "monitoring-prod"),
+    ]
+]
+[
+    k8s_deploy(
+        name = NAME,
+        deploy_branch = NAMESPACE,
+        release_branch_prefix = "release/team",  # will be selected only when --release_branch=release/team
+        ...
+    )
+    for NAME, CLUSTER, NAMESPACE in [
+        ...
+        ("stage-prometheus", "stage", "monitoring-stage"),
+        ("prod-prometheus", "prod", "monitoring-prod"),
+    ]
+]
+```
+
+The result of the setup above the `create_gitops_prs` tool will open up to 2 potential deployment pull requests per release branch. Assuming release branch name is `release/team-20200101`:
+* from `deploy/monitoring-stage-20200101` to `master` including manifests for `stage-grafana` and `stage-prometheus`
+* from `deploy/monitoring-prod-20200101` to `master` including manifests for `prod-grafana` and `prod-prometheus`
 
 
-<a name="k8s_test_setup"></a>
-## k8s_test_setup
+<a name="integration-testing-support"></a>
+## Integration Testing Support
+
+**Note:** the Integration testing support has known limitations and should be considered **experimental**. The public API is subject to change.
 
 Integration tests are defined in `BUILD` files like this:
 ```python
@@ -351,8 +579,51 @@ The `k8s_test_setup` rule produces a shell script which creates a temporary name
 
 The output of the `k8s_test_setup` rule (a shell script) is referenced in the `java_test` rule. It's listed under the `data` attribute, which declares the target as a dependency, and is included in the jvm flags in this clause: `$(location :service_it.setup)`. The "location" function is specific to Bazel: given a target, it returns the path to the file produced by that target. In this case, it returns the path to the shell script created by our `k8s_test_setup` rule.
 
-The test code launches the script to perform the test setup. The tes code should also monitor the script console output to listen to the pod readiness events.
+The test code launches the script to perform the test setup. The test code should also monitor the script console output to listen to the pod readiness events.
 
+The `@k8s_test//:kubeconfig` target referenced from `k8s_test_setup` rule serves the purpose of making Kubernetes configuration available in the test sandbox. The `kubeconfig` repository rule in the `WORKSPACE` file will need, at minimum, provide the cluster name.
+
+```python
+load("@com_adobe_rules_gitops//gitops:defs.bzl", "kubeconfig")
+
+kubeconfig(
+    name = "k8s_test",
+    cluster = "dev",
+)
+```
+
+<a name="k8s_test_setup"></a>
+### k8s_test_setup
+
+**Note:** the `k8s_test_setup` rule is an **experimental** feature and is subject to change.
+
+An executable that performs Kubernetes test setup:
+
+- creates temporary namespace
+- creates kubectl configuration with the default context set to the created namespace
+- deploys all dependent ***objects***
+- forwards service ports
+
+| Parameter                  | Default        | Description
+| -------------------------- | -------------- | -----------
+| ***kubeconfig***           | `@k8s_test//:kubeconfig` | The Kubernetes configuration file target.
+| ***kubectl***              | `@k8s_test//:kubectl` | The Kubectl executable target.
+| ***objects***              | `None` | A list of other instances of `k8s_deploy` that test depends on. See [Adding Dependencies](#adding-dependencies)
+| ***setup_timeout***        | `10m`  | The time to wait until all required services become ready. The timeout duration should be lower that Bazel test timeout.
+| ***portforward_services*** | `None` | The list of Kubernetes service names to port forward. The setup will wait for at least one service endpoint to become ready.
+
+<a name="kubeconfig"></a>
+### kubeconfig
+
+**Note:** the `kubeconfig` repository rule is an **experimental** feature and is subject to change.
+
+Configures Kubernetes tools for testing.
+
+| Parameter                 | Default        | Description
+| ------------------------- | -------------- | -----------
+| ***cluster***             | `None`         | The Kubernetes cluster name as defined in the host `kubectl` configuration.
+| ***server***              | `None`         | Optional Kubernetes server endpoint to override automatically detected server endpoint. By default, the server endpoint is automatically detected based on the environment. When running inside the Kubernetes cluster (the service account is present), the server endpoint is derived from `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` environment variables. If environment variable are nto defined the server name is set to `https://kubernetes.default`. Otherwise the host `kubectl` configuration file is used.
+| ***user***                | `None` | Optional Kubernetes configuration user name. Default value is the current build user.
 
 ## Building & Testing
 
@@ -368,6 +639,10 @@ bazel test //...
 cd examples
 bazel test //...
 ```
+
+## Have a Question
+
+Find the `rules_gitops` contributors in the [#gitops](https://bazelbuild.slack.com/archives/C01SF68MTFS) channel on the [Bazel Slack](https://slack.bazel.build/).
 
 
 ## Contributing

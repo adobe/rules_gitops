@@ -9,6 +9,7 @@ go_library(
         "types.go",
         "types_swagger_doc_generated.go",
         "zz_generated.deepcopy.go",
+        "zz_generated.prerelease-lifecycle.go",
     ],
     importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/api/admissionregistration/v1beta1",
     importpath = "k8s.io/api/admissionregistration/v1beta1",

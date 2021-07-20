@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright 2020 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License. You may obtain a copy
@@ -39,9 +39,14 @@ rm -rf cloud
 
 bazel run //helloworld:canary.gitops
 bazel run //helloworld:release.gitops
+bazel run //helloworld:gitops_custom_path.gitops
 #the result of .gitops operation goes into /cloud directory and should be submitted back to the repo
 
 #apply everything generated
 kubectl apply -f cloud -R
+
+#apply gitops_custom_path gen
+kubectl apply -f custom_cloud -R
+
 #wait for readiness
-kubectl -n hwteam wait --timeout=60s --for=condition=Available deployment/helloworld deployment/helloworld-canary
+kubectl -n hwteam wait --timeout=60s --for=condition=Available deployment/helloworld deployment/helloworld-canary deployment/helloworld-gitops-custom-path

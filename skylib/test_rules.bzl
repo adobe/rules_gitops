@@ -15,7 +15,11 @@ def _file_compare_test_impl(ctx):
     expected_ = ctx.file.expected
     ctx.actions.write(
         output = exe,
-        content = "diff -u %s %s" % (expected_.short_path, file_.short_path),
+        content = "diff %s -u %s %s" % (
+            "--ignore-all-space" if ctx.attr.ignore_all_space else "",
+            expected_.short_path,
+            file_.short_path,
+        ),
         is_executable = True,
     )
     return [
@@ -31,6 +35,10 @@ file_compare_test = rule(
         "file": attr.label(
             mandatory = True,
             allow_single_file = True,
+        ),
+        "ignore_all_space": attr.bool(
+            mandatory = False,
+            default = False,
         ),
     },
     executable = True,

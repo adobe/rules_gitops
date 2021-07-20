@@ -52,6 +52,7 @@ file_compare_test(
     name = "raw_file",
     expected = "expected_raw_test.yaml",
     file = ":raw_test",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -95,6 +96,7 @@ file_compare_test(
     name = "raw2_file",
     expected = "expected_raw_test.yaml",
     file = ":raw2_test",
+    ignore_all_space = True,
 )
 
 container_image(
@@ -122,10 +124,56 @@ kustomize(
     namespace = "",
 )
 
+genrule(
+    name = "expected_image_resolved_test_yaml",
+    srcs = [
+        ":expected_image_resolved_test.tpl.yaml",
+        ":image.digest",
+    ],
+    outs = ["expected_image_resolved_test.yaml"],
+    cmd = " ".join([
+        "./$(location //templating:fast_template_engine)",
+        "--template=$(location expected_image_resolved_test.tpl.yaml)",
+        "--variable=IMAGE_DIGEST=$$(cat $(location :image.digest))",
+        "--output=$@",
+    ]),
+    tools = [
+        "//templating:fast_template_engine",
+    ],
+)
+
 file_compare_test(
     name = "image_resolved_file",
+    expected = ":expected_image_resolved_test_yaml",
+    file = ":image_test",
+    ignore_all_space = True,
+)
+
+k8s_container_push(
+    name = "image_digest_push",
+    image = ":image",
+    image_digest_tag = True,
+)
+
+kustomize(
+    name = "image_digest_test",
+    testonly = True,
+    images = [
+        ":image_digest_push",
+    ],
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+        "crb.yaml",
+    ],
+    namespace = "",
+)
+
+file_compare_test(
+    name = "image_digest_resolved_file",
     expected = "expected_image_resolved_test.yaml",
     file = ":image_test",
+    ignore_all_space = True,
 )
 
 k8s_container_push(
@@ -152,6 +200,7 @@ file_compare_test(
     name = "logacy_image_resolved_file",
     expected = "expected_image_resolved_test.yaml",
     file = ":legacy_image_test",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -165,6 +214,7 @@ file_compare_test(
     name = "configmap_test_file",
     expected = "expected_configmap_test.yaml",
     file = ":configmap_test",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -178,6 +228,7 @@ file_compare_test(
     name = "secret_test_file",
     expected = "expected_secret_test.yaml",
     file = ":secret_test",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -245,6 +296,7 @@ file_compare_test(
     name = "name_suffix_test",
     expected = "expected_name_suffix.yaml",
     file = ":name_suffix",
+    ignore_all_space = True,
 )
 
 #-------------------
@@ -259,10 +311,29 @@ kustomize(
     patches = ["overlay/deployment.yaml"],
 )
 
+genrule(
+    name = "expected_patch_yaml",
+    srcs = [
+        ":expected_patch.tpl.yaml",
+        ":image.digest",
+    ],
+    outs = ["expected_patch.yaml"],
+    cmd = " ".join([
+        "./$(location //templating:fast_template_engine)",
+        "--template=$(location expected_patch.tpl.yaml)",
+        "--variable=IMAGE_DIGEST=$$(cat $(location :image.digest))",
+        "--output=$@",
+    ]),
+    tools = [
+        "//templating:fast_template_engine",
+    ],
+)
+
 file_compare_test(
     name = "patch_test",
-    expected = "expected_patch.yaml",
+    expected = ":expected_patch_yaml",
     file = ":patch",
+    ignore_all_space = True,
 )
 
 #-------------------
@@ -278,6 +349,7 @@ file_compare_test(
     name = "deployment_prefix_compat_test",
     expected = "expected_deployment_prefix_compat.yaml",
     file = ":deployment_prefix_compat",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -291,6 +363,7 @@ file_compare_test(
     name = "deployment_suffix_compat_test",
     expected = "expected_deployment_suffix_compat.yaml",
     file = ":deployment_suffix_compat",
+    ignore_all_space = True,
 )
 
 #-------------------
@@ -307,6 +380,7 @@ file_compare_test(
     name = "deployment_prefix_test",
     expected = "expected_deployment_prefix.yaml",
     file = ":deployment_prefix",
+    ignore_all_space = True,
 )
 
 kustomize(
@@ -321,6 +395,7 @@ file_compare_test(
     name = "deployment_suffix_test",
     expected = "expected_deployment_suffix.yaml",
     file = ":deployment_suffix",
+    ignore_all_space = True,
 )
 
 #-------------------
@@ -340,4 +415,29 @@ file_compare_test(
     name = "common_labels_test",
     expected = "expected_common_labels.yaml",
     file = ":common_labels",
+    ignore_all_space = True,
+)
+
+#-------------------
+# patch images
+
+kustomize(
+    name = "patch_images",
+    image_name_patches = {
+        "busybox": "alpine",
+        "debian": "ubuntu",
+    },
+    image_tag_patches = {
+        "busybox": "3",
+    },
+    manifests = [
+        "job.yaml",
+    ],
+)
+
+file_compare_test(
+    name = "patch_images_test",
+    expected = "expected_job.yaml",
+    file = ":patch_images",
+    ignore_all_space = True,
 )

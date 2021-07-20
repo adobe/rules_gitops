@@ -5,7 +5,6 @@ go_library(
     srcs = [
         "fields.go",
         "yaml.go",
-        "yaml_go110.go",
     ],
     importmap = "github.com/adobe/rules_gitops/vendor/github.com/ghodss/yaml",
     importpath = "github.com/ghodss/yaml",

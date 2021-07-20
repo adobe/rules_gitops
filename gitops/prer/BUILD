@@ -20,10 +20,12 @@ go_library(
     deps = [
         "//gitops/analysis:go_default_library",
         "//gitops/bazel:go_default_library",
-        "//gitops/bitbucket:go_default_library",
         "//gitops/commitmsg:go_default_library",
         "//gitops/exec:go_default_library",
         "//gitops/git:go_default_library",
+        "//gitops/git/bitbucket:go_default_library",
+        "//gitops/git/github:go_default_library",
+        "//gitops/git/gitlab:go_default_library",
         "@com_github_golang_protobuf//proto:go_default_library",
     ],
 )

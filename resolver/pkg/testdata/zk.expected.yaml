@@ -1,0 +1,8 @@
+apiVersion: zookeeper.pravega.io/v1beta1
+kind: ZookeeperCluster
+metadata:
+  name: zk-cluster
+spec:
+  image:
+    repository: repository
+    tag: 1

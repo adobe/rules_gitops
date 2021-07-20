@@ -56,7 +56,7 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
 			Container:  t.ContainerName,
 		})
 
-		stream, err := req.Stream()
+		stream, err := req.Stream(ctx)
 		if err != nil {
 			log.Printf("Error opening stream to %s/%s/%s: %s", t.Namespace, t.PodName, t.ContainerName, err)
 			return

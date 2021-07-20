@@ -29,7 +29,7 @@ def _python_runfiles(ctx, f):
     return "PYTHON_RUNFILES=${RUNFILES} %s" % _runfiles(ctx, f)
 
 def _show_impl(ctx):
-    script_content = "#!/bin/bash\nset -e\n"
+    script_content = "#!/usr/bin/env bash\nset -e\n"
 
     kustomize_outputs = []
     script_template = "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file}\n"
@@ -73,6 +73,30 @@ show = rule(
     executable = True,
 )
 
+def _image_pushes(name_suffix, images, image_registry, image_repository, image_repository_prefix, image_digest_tag):
+    image_pushes = []
+    for image_name in images:
+        image = images[image_name]
+        rule_name_parts = []
+        rule_name_parts.append(image_registry)
+        if image_repository:
+            rule_name_parts.append(image_repository)
+        rule_name_parts.append(image_name)
+        rule_name = "-".join(rule_name_parts)
+        rule_name = rule_name.replace("/", "-").replace(":", "-")
+        image_pushes.append(rule_name + name_suffix)
+        if not native.existing_rule(rule_name + name_suffix):
+            k8s_container_push(
+                name = rule_name + name_suffix,
+                image = image,
+                image_digest_tag = image_digest_tag,
+                legacy_image_name = image_name,
+                registry = image_registry,
+                repository = image_repository,
+                repository_prefix = image_repository_prefix,
+            )
+    return image_pushes
+
 def k8s_deploy(
         name,  # name of the rule is important for gitops, since it will become a part of the target manifest file name in /cloud
         cluster = "dev",
@@ -86,6 +110,8 @@ def k8s_deploy(
         name_suffix = None,
         prefix_suffix_app_labels = False,  # apply kustomize configuration to modify "app" labels in Deployments when name prefix or suffix applied
         patches = None,
+        image_name_patches = {},
+        image_tag_patches = {},
         substitutions = {},  # dict of template parameter substitutions. CLUSTER and NAMESPACE parameters are added automatically.
         configurations = [],  # additional kustomize configuration files. rules_gitops provides
         common_labels = {},  # list of common labels to apply to all objects see commonLabels kustomize docs
@@ -93,11 +119,13 @@ def k8s_deploy(
         deps = [],
         deps_aliases = {},
         images = {},
+        image_digest_tag = False,
         image_registry = "docker.io",  # registry to push container to. jenkins will need an access configured for gitops to work. Ignored for mynamespace.
         image_repository = None,  # repository (registry path) to push container to. Generated from the image bazel path if empty.
         image_repository_prefix = None,  # Mutually exclusive with 'image_repository'. Add a prefix to the repository name generated from the image bazel path
         objects = [],
         gitops = True,  # make sure to use gitops = False to work with individual namespace. This option will be turned False if namespace is '{BUILD_USER}'
+        gitops_path = "cloud",
         deployment_branch = None,
         release_branch_prefix = "master",
         flatten_manifest_directories = False,
@@ -120,23 +148,19 @@ def k8s_deploy(
     # NAMESPACE substitution is deferred until test_setup/kubectl/gitops
     if namespace == "{BUILD_USER}":
         gitops = False
+
     if not gitops:
         # Mynamespace option
         if not namespace:
             namespace = "{BUILD_USER}"
-        images_v = []
-        for imgname in images:
-            img = images[imgname]
-            images_v.append(imgname + "_mynamespace_push")
-            if not native.existing_rule(imgname + "_mynamespace_push"):
-                k8s_container_push(
-                    name = imgname + "_mynamespace_push",
-                    image = img,
-                    legacy_image_name = imgname,
-                    registry = image_registry,
-                    repository = image_repository,
-                    repository_prefix = "{BUILD_USER}",
-                )
+        image_pushes = _image_pushes(
+            name_suffix = "-mynamespace.push",
+            images = images,
+            image_registry = image_registry,
+            image_repository = image_repository,
+            image_repository_prefix = "{BUILD_USER}",
+            image_digest_tag = image_digest_tag,
+        )
         kustomize(
             name = name,
             namespace = namespace,
@@ -144,7 +168,7 @@ def k8s_deploy(
             secrets_srcs = secrets_srcs,
             # disable_name_suffix_hash is renamed to configmaps_renaming in recent Kustomize
             disable_name_suffix_hash = (configmaps_renaming != "hash"),
-            images = images_v,
+            images = image_pushes,
             manifests = manifests,
             substitutions = substitutions,
             deps = deps,
@@ -158,6 +182,8 @@ def k8s_deploy(
             common_annotations = common_annotations,
             patches = patches,
             objects = objects,
+            image_name_patches = image_name_patches,
+            image_tag_patches = image_tag_patches,
             visibility = visibility,
         )
         kubectl(
@@ -188,19 +214,14 @@ def k8s_deploy(
         # gitops
         if not namespace:
             fail("namespace must be defined for gitops k8s_deploy")
-        images_v = []
-        for imgname in images:
-            img = images[imgname]
-            images_v.append(imgname + "_push")
-            if not native.existing_rule(imgname + "_push"):
-                k8s_container_push(
-                    name = imgname + "_push",
-                    image = img,
-                    legacy_image_name = imgname,
-                    registry = image_registry,
-                    repository = image_repository,
-                    repository_prefix = image_repository_prefix,
-                )
+        image_pushes = _image_pushes(
+            name_suffix = ".push",
+            images = images,
+            image_registry = image_registry,
+            image_repository = image_repository,
+            image_repository_prefix = image_repository_prefix,
+            image_digest_tag = image_digest_tag,
+        )
         kustomize(
             name = name,
             namespace = namespace,
@@ -208,7 +229,7 @@ def k8s_deploy(
             secrets_srcs = secrets_srcs,
             # disable_name_suffix_hash is renamed to configmaps_renaming in recent Kustomize
             disable_name_suffix_hash = (configmaps_renaming != "hash"),
-            images = images_v,
+            images = image_pushes,
             manifests = manifests,
             visibility = visibility,
             substitutions = substitutions,
@@ -222,6 +243,8 @@ def k8s_deploy(
             common_labels = common_labels,
             common_annotations = common_annotations,
             patches = patches,
+            image_name_patches = image_name_patches,
+            image_tag_patches = image_tag_patches,
         )
         kubectl(
             name = name + ".apply",
@@ -236,6 +259,7 @@ def k8s_deploy(
             srcs = [name],
             cluster = cluster,
             namespace = namespace,
+            gitops_path = gitops_path,
             strip_prefixes = [
                 namespace + "-",
                 cluster + "-",

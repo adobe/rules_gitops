@@ -88,11 +88,10 @@ def _is_ignored_src(src):
     return basename.startswith(".")
 
 _script_template = """\
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 {kustomize} build --load_restrictor none --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
-
 KustomizeInfo = provider(fields = [
     "image_pushes",
 ])
@@ -130,6 +129,19 @@ def _kustomize_impl(ctx):
         kustomization_yaml += "patches:\n"
         for _, f in enumerate(ctx.files.patches):
             kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
+
+    if ctx.attr.image_name_patches or ctx.attr.image_tag_patches:
+        kustomization_yaml += "images:\n"
+        for image, new_tag in ctx.attr.image_tag_patches.items():
+            new_name = ctx.attr.image_name_patches.get(image, default = None)
+            kustomization_yaml += "- name: \"{}\"\n".format(image)
+            kustomization_yaml += "  newTag: \"{}\"\n".format(new_tag)
+            if new_name != None:
+                kustomization_yaml += "  newName: \"{}\"\n".format(new_name)
+        for image, new_name in ctx.attr.image_name_patches.items():
+            if ctx.attr.image_tag_patches.get(image, default = None) == None:
+                kustomization_yaml += "- name: \"{}\"\n".format(image)
+                kustomization_yaml += "  newName: \"{}\"\n".format(new_name)
 
     if ctx.attr.common_labels:
         kustomization_yaml += "commonLabels:\n"
@@ -225,6 +237,23 @@ def _kustomize_impl(ctx):
             "--imports=%s=%s" % (k, d[str(ctx.label.relative(ctx.attr.deps_aliases[k]))])
             for k in ctx.attr.deps_aliases
         ])
+
+        # Image name substitutions
+        if ctx.attr.images:
+            for i, img in enumerate(ctx.attr.images):
+                kpi = img[K8sPushInfo]
+                regrepo = kpi.registry + "/" + kpi.repository
+                if "{" in regrepo:
+                    regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
+                template_part += " --variable={}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
+
+                # Image digest
+                template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(kpi.image_label) + ".digest", kpi.digestfile.path)
+                template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(kpi.image_label) + ".short-digest", kpi.digestfile.path)
+
+                if kpi.legacy_image_name:
+                    template_part += " --variable={}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
+
         template_part += " "
 
     script = ctx.actions.declare_file("%s-kustomize" % ctx.label.name)
@@ -245,18 +274,24 @@ def _kustomize_impl(ctx):
         tools = [ctx.executable._kustomize_bin],
     )
 
-    transitive = [m[KustomizeInfo].image_pushes for m in ctx.attr.manifests if KustomizeInfo in m]
-    transitive += [obj[KustomizeInfo].image_pushes for obj in ctx.attr.objects]
+    transitive_files = [m[DefaultInfo].files for m in ctx.attr.manifests if KustomizeInfo in m]
+    transitive_files += [obj[DefaultInfo].files for obj in ctx.attr.objects]
 
-    trans_imgs = depset(ctx.attr.images, transitive = transitive)
+    transitive_image_pushes = [m[KustomizeInfo].image_pushes for m in ctx.attr.manifests if KustomizeInfo in m]
+    transitive_image_pushes += [obj[KustomizeInfo].image_pushes for obj in ctx.attr.objects]
 
     return [
-        DefaultInfo(files = depset(
-            [ctx.outputs.yaml],
-            transitive = [m[DefaultInfo].files for m in ctx.attr.manifests if KustomizeInfo in m] + [obj[DefaultInfo].files for obj in ctx.attr.objects],
-        )),
+        DefaultInfo(
+            files = depset(
+                [ctx.outputs.yaml],
+                transitive = transitive_files,
+            ),
+        ),
         KustomizeInfo(
-            image_pushes = trans_imgs,
+            image_pushes = depset(
+                ctx.attr.images,
+                transitive = transitive_image_pushes,
+            ),
         ),
     ]
 
@@ -275,6 +310,8 @@ kustomize = rule(
         "namespace": attr.string(),
         "objects": attr.label_list(doc = "a list of dependent kustomize objects", providers = (KustomizeInfo,)),
         "patches": attr.label_list(allow_files = True),
+        "image_name_patches": attr.string_dict(default = {}, doc = "set new names for selected images"),
+        "image_tag_patches": attr.string_dict(default = {}, doc = "set new tags for selected images"),
         "start_tag": attr.string(default = "{{"),
         "substitutions": attr.string_dict(default = {}),
         "deps": attr.label_list(default = [], allow_files = True),
@@ -405,14 +442,15 @@ fi
         if "{" in namespace:
             fail("unable to gitops namespace with placeholders %s" % inattr.label)  #mynamespace should not be gitopsed
         for infile in inattr.files.to_list():
-            statements += ("echo $TARGET_DIR/cloud/{namespace}/{cluster}/{file}\n" +
-                           "mkdir -p $TARGET_DIR/cloud/{namespace}/{cluster}\n" +
-                           "echo '# GENERATED BY {rulename} -> {gitopsrulename}' > $TARGET_DIR/cloud/{namespace}/{cluster}/{file}\n" +
-                           "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} >> $TARGET_DIR/cloud/{namespace}/{cluster}/{file}\n").format(
+            statements += ("echo $TARGET_DIR/{gitops_path}/{namespace}/{cluster}/{file}\n" +
+                           "mkdir -p $TARGET_DIR/{gitops_path}/{namespace}/{cluster}\n" +
+                           "echo '# GENERATED BY {rulename} -> {gitopsrulename}' > $TARGET_DIR/{gitops_path}/{namespace}/{cluster}/{file}\n" +
+                           "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} >> $TARGET_DIR/{gitops_path}/{namespace}/{cluster}/{file}\n").format(
                 infile = infile.path,
                 rulename = inattr.label,
                 gitopsrulename = ctx.label,
                 namespace = namespace,
+                gitops_path = ctx.attr.gitops_path,
                 cluster = cluster,
                 file = _remove_prefixes(infile.path.split("/")[-1], strip_prefixes),
                 template_engine = "${RUNFILES}/%s" % _get_runfile_path(ctx, ctx.executable._template_engine),
@@ -446,6 +484,7 @@ gitops = rule(
         "cluster": attr.string(mandatory = True),
         "namespace": attr.string(mandatory = True),
         "deployment_branch": attr.string(),
+        "gitops_path": attr.string(),
         "release_branch_prefix": attr.string(),
         "strip_prefixes": attr.string_list(),
         "_info_file": attr.label(

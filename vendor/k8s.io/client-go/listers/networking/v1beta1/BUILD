@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "expansion_generated.go",
         "ingress.go",
+        "ingressclass.go",
     ],
     importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/listers/networking/v1beta1",
     importpath = "k8s.io/client-go/listers/networking/v1beta1",
