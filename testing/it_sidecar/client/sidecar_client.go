@@ -40,11 +40,14 @@ func (s *K8STestSetup) TestMain(m *testing.M) {
 // TestMainWithHook will execute the provided setup command, wait for configured pods and services to be
 // ready, forwards service logs to test output, and then runs the provided hook for any custom pre-test suite setup.
 // On completion, signals to the it_sidecar to teardown the test namespace.
-func (s *K8STestSetup) TestMainWithHook(m *testing.M, hook func()) {
+func (s *K8STestSetup) TestMainWithHook(m *testing.M, hook Hook) {
 	s.testMain(m, hook)
 }
 
-func (s *K8STestSetup) testMain(m *testing.M, hook func()) {
+// Hook function type is invoked post-setup but pre-test
+type Hook func() error
+
+func (s *K8STestSetup) testMain(m *testing.M, hook Hook) {
 	s.forwards = make(map[string]int)
 	wg := new(sync.WaitGroup)
 	wg.Add(2) // there will be 2 goroutines, one reading stdout and one reading stdin
@@ -61,7 +64,10 @@ func (s *K8STestSetup) testMain(m *testing.M, hook func()) {
 		}()
 		s.before(wg)
 		if hook != nil {
-			hook()
+			err := hook()
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		// Run tests.
 		return m.Run()

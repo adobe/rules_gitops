@@ -20,8 +20,6 @@ import (
 var (
 	setup K8STestSetup
 
-	// NOTE: these global variables are used specifically for this test scenario, and should
-	// be kept in mind when more tests are added in the future.
 	isTestRun bool
 	isHookRun bool
 )
@@ -29,16 +27,16 @@ var (
 func TestMain(m *testing.M) {
 	setup := K8STestSetup{PortForwardServices: map[string]int{}}
 
-	hook := func() {
+	hook := func() error {
 		isHookRun = true
+		return nil
 	}
 
 	setup.TestMainWithHook(m, hook)
 }
 
 // TestSetupHook validates that the pre-test hook is run. Note that this test scenario assumes
-// that the K8STestSetup TestMain will invoke the test, as a success will be detected when either
-// the test is not invoked or if the hook is successfully run.
+// that the K8STestSetup in TestMain will invoke the test.
 func TestSetupHook(t *testing.T) {
 	isTestRun = true
 	if !isHookRun {
