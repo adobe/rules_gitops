@@ -15,31 +15,37 @@ import (
 	"testing"
 )
 
-// This file currently only tests a scenario involving K8STestSetup where a custom hook is applied after the k8s test
-// cluster is ready but prior to invoking tests.
 var (
-	setup K8STestSetup
-
-	isTestRun bool
-	isHookRun bool
+	setup             K8STestSetup
+	readyCallbacksRun = map[string]bool{}
 )
 
 func TestMain(m *testing.M) {
-	setup := K8STestSetup{PortForwardServices: map[string]int{}}
-
-	hook := func() error {
-		isHookRun = true
+	firstCallback := func() error {
+		readyCallbacksRun["first"] = true
 		return nil
 	}
 
-	setup.TestMainWithHook(m, hook)
+	secondCallback := func() error {
+		readyCallbacksRun["second"] = true
+		return nil
+	}
+
+	setup := K8STestSetup{
+		PortForwardServices: map[string]int{},
+		ReadyCallbacks: []ReadyCallback{
+			firstCallback,
+			secondCallback,
+		},
+	}
+
+	setup.TestMain(m)
 }
 
-// TestSetupHook validates that the pre-test hook is run. Note that this test scenario assumes
-// that the K8STestSetup in TestMain will invoke the test.
-func TestSetupHook(t *testing.T) {
-	isTestRun = true
-	if !isHookRun {
-		t.Fatalf("Pre hook was not run before invoking tests!")
+// TestReadyCallback validates that the pre-test ReadyCallback is run. Note that this test scenario assumes
+// that a K8STestSetup in TestMain will invoke the test.
+func TestReadyCallback(t *testing.T) {
+	if len(readyCallbacksRun) != 2 {
+		t.Fatalf("all ready callbacks should have been run")
 	}
 }

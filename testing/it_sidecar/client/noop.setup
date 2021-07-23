@@ -1,13 +1,4 @@
 #! /bin/bash
-end=$((SECONDS+2))
 
 # This is a no-op setup script that simulates the K8Setup script output
-
 echo "READY"
-
-while [ $SECONDS -lt $end ]; do
-    sleep 1
-    echo "RUNNING"
-done
-
-echo "DONE"
