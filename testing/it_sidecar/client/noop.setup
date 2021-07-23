@@ -1,6 +1,7 @@
 #! /bin/bash
 
 # This is a no-op setup script that simulates the K8Setup script output
-echo "FORWARD foobar"
+echo "FORWARD foo"
+echo "FORWARD bar"
 
 echo "READY"
