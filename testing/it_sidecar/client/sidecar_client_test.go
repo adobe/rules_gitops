@@ -16,27 +16,19 @@ import (
 )
 
 var (
-	setup             K8STestSetup
-	readyCallbacksRun = map[string]bool{}
+	setup         K8STestSetup
+	isCallbackRun bool
 )
 
 func TestMain(m *testing.M) {
-	firstCallback := func() error {
-		readyCallbacksRun["first"] = true
-		return nil
-	}
-
-	secondCallback := func() error {
-		readyCallbacksRun["second"] = true
+	callback := func() error {
+		isCallbackRun = true
 		return nil
 	}
 
 	setup := K8STestSetup{
 		PortForwardServices: map[string]int{},
-		ReadyCallbacks: []Callback{
-			firstCallback,
-			secondCallback,
-		},
+		ReadyCallback:       callback,
 	}
 
 	setup.TestMain(m)
@@ -45,7 +37,7 @@ func TestMain(m *testing.M) {
 // TestReadyCallback validates that the pre-test ReadyCallback is run. Note that this test scenario assumes
 // that a K8STestSetup in TestMain will invoke the test.
 func TestReadyCallback(t *testing.T) {
-	if len(readyCallbacksRun) != 2 {
-		t.Fatalf("all ready callbacks should have been run")
+	if !isCallbackRun {
+		t.Fatalf("ready callback should have been run")
 	}
 }

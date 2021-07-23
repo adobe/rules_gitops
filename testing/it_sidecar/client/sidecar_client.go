@@ -27,8 +27,8 @@ type K8STestSetup struct {
 	out io.ReadCloser
 	er  io.ReadCloser
 
-	// ReadyCallbacks for custom setup after services are ready and before pre-test
-	ReadyCallbacks []Callback
+	// ReadyCallback for custom setup after services are ready and before pre-test
+	ReadyCallback Callback
 }
 
 // Callback function type is invoked post-setup but pre-test
@@ -55,12 +55,11 @@ func (s *K8STestSetup) TestMain(m *testing.M) {
 			}
 		}()
 		s.before(wg)
-		for _, callback := range s.ReadyCallbacks {
-			err := callback()
-			if err != nil {
-				log.Fatal(err)
-			}
+		err := s.ReadyCallback()
+		if err != nil {
+			log.Fatal(err)
 		}
+
 		// Run tests.
 		return m.Run()
 	}())
