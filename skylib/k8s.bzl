@@ -73,7 +73,7 @@ show = rule(
     executable = True,
 )
 
-def _image_pushes(name_suffix, images, image_registry, image_repository, image_repository_prefix, image_digest_tag):
+def _image_pushes(name_suffix, images, image_registry, image_repository, image_repository_prefix, image_digest_tag, image_tag):
     image_pushes = []
     for image_name in images:
         image = images[image_name]
@@ -94,6 +94,7 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_r
                 registry = image_registry,
                 repository = image_repository,
                 repository_prefix = image_repository_prefix,
+                tag = image_tag,
             )
     return image_pushes
 
@@ -123,6 +124,7 @@ def k8s_deploy(
         image_registry = "docker.io",  # registry to push container to. jenkins will need an access configured for gitops to work. Ignored for mynamespace.
         image_repository = None,  # repository (registry path) to push container to. Generated from the image bazel path if empty.
         image_repository_prefix = None,  # Mutually exclusive with 'image_repository'. Add a prefix to the repository name generated from the image bazel path
+        image_tag = "latest",
         objects = [],
         gitops = True,  # make sure to use gitops = False to work with individual namespace. This option will be turned False if namespace is '{BUILD_USER}'
         gitops_path = "cloud",
@@ -160,6 +162,7 @@ def k8s_deploy(
             image_repository = image_repository,
             image_repository_prefix = "{BUILD_USER}",
             image_digest_tag = image_digest_tag,
+            image_tag = image_tag,
         )
         kustomize(
             name = name,
@@ -221,6 +224,7 @@ def k8s_deploy(
             image_repository = image_repository,
             image_repository_prefix = image_repository_prefix,
             image_digest_tag = image_digest_tag,
+            image_tag = image_tag,
         )
         kustomize(
             name = name,
