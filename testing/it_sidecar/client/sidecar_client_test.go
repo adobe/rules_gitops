@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 
 	setup := K8STestSetup{
 		PortForwardServices: map[string]int{},
-		ReadyCallbacks: []ReadyCallback{
+		ReadyCallbacks: []Callback{
 			firstCallback,
 			secondCallback,
 		},

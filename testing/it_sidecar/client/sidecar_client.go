@@ -28,11 +28,11 @@ type K8STestSetup struct {
 	er  io.ReadCloser
 
 	// ReadyCallbacks for custom setup after services are ready and before pre-test
-	ReadyCallbacks []ReadyCallback
+	ReadyCallbacks []Callback
 }
 
-// Hook function type is invoked post-setup but pre-test
-type ReadyCallback func() error
+// Callback function type is invoked post-setup but pre-test
+type Callback func() error
 
 var setupCMD = flag.String("setup", "", "the path to the it setup command")
 
