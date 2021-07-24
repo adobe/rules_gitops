@@ -26,7 +26,13 @@ type K8STestSetup struct {
 	in  io.WriteCloser
 	out io.ReadCloser
 	er  io.ReadCloser
+
+	// ReadyCallback for custom setup after services are ready and before pre-test
+	ReadyCallback Callback
 }
+
+// Callback function type is invoked post-setup but pre-test
+type Callback func() error
 
 var setupCMD = flag.String("setup", "", "the path to the it setup command")
 
@@ -49,6 +55,11 @@ func (s *K8STestSetup) TestMain(m *testing.M) {
 			}
 		}()
 		s.before(wg)
+		err := s.ReadyCallback()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// Run tests.
 		return m.Run()
 	}())
@@ -141,4 +152,3 @@ waitForReady:
 	}()
 
 }
-
