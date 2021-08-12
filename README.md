@@ -117,6 +117,7 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***image_registry***      | `docker.io`    | The registry to push images to.
 | ***image_repository***    | `None`         | The repository to push images to. By default, this is generated from the current package path.
 | ***image_repository_prefix*** | `None`     | Add a prefix to the image_repository. Can be used to upload the images in
+| ***not_gitops_image_repository_prefix*** | `{BUILD_USER}`     | Add a prefix to the image_repository when gitops == False for the .apply|.delete targets
 | ***release_branch_prefix*** | `master`     | A git branch name/prefix. Automatically run GitOps while building this branch. See [GitOps and Deployment](#gitops_and_deployment).
 | ***deployment_branch***   | `None`         | Automatic GitOps output will appear in a branch and PR with this name. See [GitOps and Deployment](#gitops_and_deployment).
 | ***gitops_path***         | `cloud`        | Path within the git repo where gitops files get generated into
