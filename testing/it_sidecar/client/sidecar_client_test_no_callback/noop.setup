@@ -1,0 +1,7 @@
+#! /bin/bash
+
+# This is a no-op setup script that simulates the K8Setup script output
+echo "FORWARD foo:8000:8000"
+echo "FORWARD bar:8001:8001"
+
+echo "READY"
