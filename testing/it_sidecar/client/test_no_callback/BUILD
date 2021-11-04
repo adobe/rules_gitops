@@ -6,10 +6,10 @@ go_test(
     deps = ["//testing/it_sidecar/client:go_default_library"],
     args = [
         "-setup",
-        "$(location :noop.setup)",
+        "$(location //testing/it_sidecar/client:noop.setup)",
     ],
     data = [
-        ":noop.setup",
+        "//testing/it_sidecar/client:noop.setup",
     ],
     rundir = ".",
 )

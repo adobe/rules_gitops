@@ -9,7 +9,7 @@ the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTA
 OF ANY KIND, either express or implied. See the License for the specific language
 governing permissions and limitations under the License.
 */
-package sidecar_client_test_no_callback
+package test_callback
 
 import (
 	"github.com/adobe/rules_gitops/testing/it_sidecar/client"
@@ -18,13 +18,27 @@ import (
 
 var (
 	setup         client.K8STestSetup
+	isCallbackRun bool
 )
 
-// The setup should run without error since ReadyCallback is optional
 func TestMain(m *testing.M) {
+	callback := func() error {
+		isCallbackRun = true
+		return nil
+	}
+
 	setup := client.K8STestSetup{
 		PortForwardServices: map[string]int{},
+		ReadyCallback:       callback,
 	}
 
 	setup.TestMain(m)
+}
+
+// TestReadyCallback validates that the pre-test ReadyCallback is run. Note that this test scenario assumes
+// that a K8STestSetup in TestMain will invoke the test.
+func TestReadyCallback(t *testing.T) {
+	if !isCallbackRun {
+		t.Fatalf("ready callback should have been run")
+	}
 }
