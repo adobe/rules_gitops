@@ -59,7 +59,12 @@ jobs:
           \) | xargs buildifier \
             -mode=check \
             -lint=warn \
-            --warnings=-module-docstring,-function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-print
+            --warnings=-module-docstring,-function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-print \
+          || {
+            buildifier_exit_code=$?
+            echo "Error: failed buildifier checks. Please run \"bazel run //:buildifier-fix\" and commit the changes."
+            exit $buildifier_exit_code
+          }
       - name: Test
         run: |
           bazel test //...
