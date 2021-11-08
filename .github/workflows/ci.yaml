@@ -36,7 +36,7 @@ jobs:
           chmod +x "${TOOLS_DIR}/bin/bazel"
           curl -Ls -o "${TOOLS_DIR}/bin/buildifier" "https://github.com/bazelbuild/buildtools/releases/download/0.29.0/buildifier"
           chmod +x "${TOOLS_DIR}/bin/buildifier"
-          curl -Ls -o "${TOOLS_DIR}/bin/kind" "https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-linux-amd64"
+          curl -Ls -o "${TOOLS_DIR}/bin/kind" "https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-amd64"
           chmod +x "${TOOLS_DIR}/bin/kind"
           echo "${TOOLS_DIR}/bin" >> $GITHUB_PATH
       - name: Setup kind cluster
@@ -59,7 +59,12 @@ jobs:
           \) | xargs buildifier \
             -mode=check \
             -lint=warn \
-            --warnings=-module-docstring,-function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-print
+            --warnings=-module-docstring,-function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-print \
+          || {
+            buildifier_exit_code=$?
+            echo "Error: failed buildifier checks. Please run \"bazel run //:buildifier-fix\" and commit the changes."
+            exit $buildifier_exit_code
+          }
       - name: Test
         run: |
           bazel test //...
