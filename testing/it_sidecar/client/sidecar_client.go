@@ -55,9 +55,11 @@ func (s *K8STestSetup) TestMain(m *testing.M) {
 			}
 		}()
 		s.before(wg)
-		err := s.ReadyCallback()
-		if err != nil {
-			log.Fatal(err)
+		if s.ReadyCallback != nil {
+			err := s.ReadyCallback()
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		// Run tests.
