@@ -4,9 +4,9 @@ workflows:
   - name: bazel
     image: us.gcr.io/fasterci/bazelbuilder:cd990e6
     on:
-      push:
+      pull_request:
         branches:
-          - "fasterci*"
+          - master
     steps:
       - name: bazel build
         bazel:
