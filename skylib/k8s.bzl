@@ -16,7 +16,7 @@ load(
     "@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl",
     "KustomizeInfo",
     "imagePushStatements",
-    "kubectl",
+    kustomize_kubectl = "kubectl",
     "kustomize",
     kustomize_gitops = "gitops",
 )
@@ -131,6 +131,7 @@ def k8s_deploy(
         flatten_manifest_directories = False,
         start_tag = "{{",
         end_tag = "}}",
+        kubectl = None,
         visibility = None):
     """ k8s_deploy
     """
@@ -186,15 +187,16 @@ def k8s_deploy(
             image_tag_patches = image_tag_patches,
             visibility = visibility,
         )
-        kubectl(
+        kustomize_kubectl(
             name = name + ".apply",
             srcs = [name],
             cluster = cluster,
             user = user,
             namespace = namespace,
+            kubectl = kubectl,
             visibility = visibility,
         )
-        kubectl(
+        kustomize_kubectl(
             name = name + ".delete",
             srcs = [name],
             command = "delete",
@@ -202,6 +204,7 @@ def k8s_deploy(
             push = False,
             user = user,
             namespace = namespace,
+            kubectl = kubectl,
             visibility = visibility,
         )
         show(
@@ -246,12 +249,13 @@ def k8s_deploy(
             image_name_patches = image_name_patches,
             image_tag_patches = image_tag_patches,
         )
-        kubectl(
+        kustomize_kubectl(
             name = name + ".apply",
             srcs = [name],
             cluster = cluster,
             user = user,
             namespace = namespace,
+            kubectl = kubectl,
             visibility = visibility,
         )
         kustomize_gitops(
