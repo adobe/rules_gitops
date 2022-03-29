@@ -1,0 +1,15 @@
+
+nameSuffix:
+  - path: metadata/name
+  - path: spec/selector/matchLabels/app
+    kind: Deployment
+  - path: spec/template/metadata/labels/app
+    kind: Deployment
+  - path: spec/selector/matchLabels/app.kubernetes.io\/name
+    kind: Deployment
+  - path: spec/template/metadata/labels/app.kubernetes.io\/name
+    kind: Deployment
+  - path: spec/selector/app
+    kind: Service
+  - path: spec/selector/app.kubernetes.io\/name
+    kind: Service

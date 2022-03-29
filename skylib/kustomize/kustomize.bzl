@@ -90,7 +90,7 @@ def _is_ignored_src(src):
 _script_template = """\
 #!/usr/bin/env bash
 set -euo pipefail
-{kustomize} build --load_restrictor none --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
+{kustomize} build --load-restrictor LoadRestrictionsNone --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
 KustomizeInfo = provider(fields = [
     "image_pushes",
