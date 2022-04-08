@@ -1,2 +1,5 @@
+# print out tests output in case of error
+test --test_output=errors
+
 # required for rules_docker 0.15
 common --incompatible_restrict_string_escapes=false
