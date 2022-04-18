@@ -39,4 +39,4 @@ workflows:
   - <<: *build_workflow
     name: Faster CI / build (5.0.0)
     env:
-      USE_BAZEL_VERSION: "5.0.0"
+      USE_BAZEL_VERSION: "5.0.0" 
