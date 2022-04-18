@@ -364,7 +364,7 @@ def _push_all_impl(ctx):
         template = ctx.file._tpl,
         substitutions = {
             "%{statements}": "\n".join([
-                                 "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].digest)
+                                 "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].repository)
                                  for exe in trans_img_pushes
                              ]) + "\n" +
                              "\n".join([
