@@ -13,5 +13,3 @@ namePrefix:
   kind: Service
 - path: spec/selector/app.kubernetes.io\/name
   kind: Service
-
-

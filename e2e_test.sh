@@ -23,7 +23,7 @@ docker version
 which kubectl
 go version
 
-go get sigs.k8s.io/kind@v0.10.0
+go get sigs.k8s.io/kind@v0.11.1
 
 cluster_running="$(docker inspect -f '{{.State.Running}}' kind-control-plane 2>/dev/null || true)"
 if [ "${cluster_running}" != 'true' ]; then

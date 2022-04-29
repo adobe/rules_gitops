@@ -385,7 +385,7 @@ file_compare_test(
 
 kustomize(
     name = "deployment_suffix",
-    configurations = ["//skylib/kustomize:nameprefix_deployment_labels_config.yaml"],
+    configurations = ["//skylib/kustomize:namesuffix_deployment_labels_config.yaml"],
     manifests = ["deployment_with_labels.yaml"],
     name_suffix = "-suffix",
     namespace = "",

@@ -17,8 +17,8 @@ load("//skylib:push.bzl", "K8sPushInfo")
 load("//skylib:stamp.bzl", "stamp")
 
 _binaries = {
-    "darwin_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.5.5/kustomize_v3.5.5_darwin_amd64.tar.gz", "5e286dc6e02c850c389aa3c1f5fc4ff5d70f064e480d49e804f209c717c462bd"),
-    "linux_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.5.5/kustomize_v3.5.5_linux_amd64.tar.gz", "23306e0c0fb24f5a9fea4c3b794bef39211c580e4cbaee9e21b9891cb52e73e7"),
+    "darwin_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.3/kustomize_v4.5.3_darwin_amd64.tar.gz", "b0a6b0568273d466abd7cd535c556e44aa9ff5f54c07e86ed9f3016b416de992"),
+    "linux_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.3/kustomize_v4.5.3_linux_amd64.tar.gz", "e4dc2f795235b03a2e6b12c3863c44abe81338c5c0054b29baf27dcc734ae693"),
 }
 
 def _download_binary_impl(ctx):
@@ -90,7 +90,7 @@ def _is_ignored_src(src):
 _script_template = """\
 #!/usr/bin/env bash
 set -euo pipefail
-{kustomize} build --load_restrictor none --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
+{kustomize} build --load-restrictor LoadRestrictionsNone --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
 KustomizeInfo = provider(fields = [
     "image_pushes",
@@ -364,7 +364,7 @@ def _push_all_impl(ctx):
         template = ctx.file._tpl,
         substitutions = {
             "%{statements}": "\n".join([
-                                 "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
+                                 "echo pushing {}/{}".format(exe[PushInfo].registry, exe[PushInfo].repository)
                                  for exe in trans_img_pushes
                              ]) + "\n" +
                              "\n".join([
@@ -415,7 +415,7 @@ def imagePushStatements(
     statements = ""
     trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
     statements += "\n".join([
-        "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
+        "echo  pushing {}/{}".format(exe[PushInfo].registry, exe[PushInfo].repository)
         for exe in trans_img_pushes
     ]) + "\n"
     statements += "\n".join([
@@ -527,7 +527,7 @@ def _kubectl_impl(ctx):
     if ctx.attr.push:
         trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
         statements += "\n".join([
-            "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
+            "echo  pushing {}/{}".format(exe[PushInfo].registry, exe[PushInfo].repository)
             for exe in trans_img_pushes
         ]) + "\n"
         statements += "\n".join([

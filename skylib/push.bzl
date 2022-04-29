@@ -131,9 +131,6 @@ def _impl(ctx):
         PushInfo(
             registry = registry,
             repository = repository,
-            tag = tag,
-            stamp = stamp,
-            stamp_inputs = stamp_inputs,
             digest = image["digest"],
         ),
         K8sPushInfo(
