@@ -8,6 +8,9 @@ workflows:
     on:
       push:
         branches:
+          - master
+      pull_request:
+        branches:
           - "**"
     steps:
       - name: Build & test
