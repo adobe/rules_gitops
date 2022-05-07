@@ -653,7 +653,7 @@ Contributions are welcomed! Read the [Contributing Guide](./.github/CONTRIBUTING
 ## Adopters
 Here's a (non-exhaustive) list of companies that use `rules_gitops` in production. Don't see yours? [You can add it in a PR!](https://github.com/adobe/rules_gitops/edit/master/README.md)
   * [Adobe (Advertising Cloud)](https://www.adobe.com/advertising/adobe-advertising-cloud.html)
-
+  * [Skydio](https://www.skydio.com)
 
 ## Licensing
 
