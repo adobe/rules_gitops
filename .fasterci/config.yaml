@@ -26,6 +26,7 @@ workflows:
             - //...
           test_targets:
             - //...
+            - -//helloworld:helloworld_integration_test
       - name: Check
         run: bazel run //:buildifier-check
 
