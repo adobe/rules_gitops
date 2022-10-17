@@ -12,7 +12,7 @@ licenses(["notice"])  # Apache 2.0
 
 load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
-load("@com_adobe_rules_gitops//gitops:defs.bzl", "k8s_deploy")
+load("@com_adobe_rules_gitops//gitops:defs.bzl", "k8s_deploy", "k8s_test_setup")
 
 go_library(
     name = "go_default_library",
@@ -136,5 +136,29 @@ sh_test(
     ],
     deps = [
         "@bazel_tools//tools/bash/runfiles",
+    ],
+)
+
+k8s_test_setup(
+    name = "service_it.setup",
+    kubeconfig = "@k8s_test//:kubeconfig",
+    objects = [
+        ":mynamespace",
+    ],
+)
+
+go_test(
+    name = "helloworld_integration_test",
+    srcs = ["helloworld_integration_test.go"],
+    args = [
+        "-setup",
+        "$(location :service_it.setup)",
+    ],
+    data = [
+        ":service_it.setup",
+    ],
+    rundir = ".",
+    deps = [
+        "@com_adobe_rules_gitops//testing/it_sidecar/client:go_default_library",
     ],
 )
