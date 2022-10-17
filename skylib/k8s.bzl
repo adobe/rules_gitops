@@ -67,7 +67,7 @@ show = rule(
         "_template_engine": attr.label(
             default = Label("//templating:fast_template_engine"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
     executable = True,
@@ -446,7 +446,7 @@ def _k8s_cmd_impl(ctx):
         command_file = ctx.actions.declare_file(ctx.label.name + ".command")
         _stamp(ctx, ctx.attr.command, command_file)
         command_arg = "source %s" % _runfiles(ctx, command_file)
-        files += [command_file]
+        files.append(command_file)
 
     ctx.actions.expand_template(
         template = ctx.file._template,
@@ -468,7 +468,7 @@ _k8s_cmd = rule(
             allow_single_file = True,
         ),
         "kubectl": attr.label(
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_single_file = True,
         ),
@@ -478,7 +478,7 @@ _k8s_cmd = rule(
         ),
         "_stamper": attr.label(
             default = Label("//stamper:stamper"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),
@@ -508,7 +508,7 @@ def _k8s_test_namespace_impl(ctx):
         output = namespace_create,
         is_executable = True,
     )
-    files += [namespace_create]
+    files.append(namespace_create)
 
     return [DefaultInfo(
         executable = namespace_create,
@@ -521,7 +521,7 @@ k8s_test_namespace = rule(
             allow_single_file = True,
         ),
         "kubectl": attr.label(
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_single_file = True,
         ),
@@ -550,16 +550,16 @@ def _k8s_test_setup_impl(ctx):
     for obj in ctx.attr.objects:
         if obj.files_to_run.executable:
             # add object' targets and excutables to runfiles
-            files += [obj.files_to_run.executable]
+            files.append(obj.files_to_run.executable)
             transitive.append(obj.default_runfiles.files)
 
             # add object' execution command
-            commands += [_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -"]
+            commands.append(_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -")
         else:
             files += obj.files.to_list()
             commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
 
-    files += [ctx.executable._template_engine]
+    files.append(ctx.executable._template_engine)
 
     # create namespace script
     ctx.actions.expand_template(
@@ -596,7 +596,7 @@ k8s_test_setup = rule(
         ),
         "kubectl": attr.label(
             default = Label("@k8s_test//:kubectl"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_single_file = True,
         ),
@@ -612,12 +612,12 @@ k8s_test_setup = rule(
         ),
         "_it_sidecar": attr.label(
             default = Label("//testing/it_sidecar:it_sidecar"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
         ),
         "_kustomize": attr.label(
             default = Label("@kustomize_bin//:kustomize"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
         ),
         "_namespace_template": attr.label(
@@ -626,24 +626,24 @@ k8s_test_setup = rule(
         ),
         "_set_namespace": attr.label(
             default = Label("//skylib/kustomize:set_namespace"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
         ),
         "_it_manifest_filter": attr.label(
             default = Label("//testing/it_manifest_filter:it_manifest_filter"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
         ),
         "_stamper": attr.label(
             default = Label("//stamper:stamper"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),
         "_template_engine": attr.label(
             default = Label("//templating:fast_template_engine"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
     executable = True,

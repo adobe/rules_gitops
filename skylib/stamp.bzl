@@ -83,7 +83,7 @@ stamp_value = rule(
         ),
         "_stamper": attr.label(
             default = Label("//stamper:stamper"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),

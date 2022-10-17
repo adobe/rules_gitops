@@ -84,7 +84,7 @@ Args:
         "_engine": attr.label(
             default = Label("//templating:fast_template_engine"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
         "_info_file": attr.label(
             default = Label("//skylib:more_stable_status.txt"),
@@ -213,12 +213,12 @@ Args:
         "template_extension": attr.string(default = ".tpl"),
         "_build_tar": attr.label(
             default = Label("@bazel_tools//tools/build_defs/pkg:build_tar"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),
         "_engine": attr.label(
-            cfg = "host",
+            cfg = "exec",
             default = Label("//templating:template_engine"),
             executable = True,
         ),

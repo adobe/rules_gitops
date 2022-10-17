@@ -328,25 +328,25 @@ kustomize = rule(
         ),
         "_kustomize_bin": attr.label(
             default = Label("@kustomize_bin//:kustomize"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),
         "_resolver": attr.label(
             default = Label("//resolver:resolver"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
         ),
         "_stamper": attr.label(
             default = Label("//stamper:stamper"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),
         "_template_engine": attr.label(
             default = Label("//templating:fast_template_engine"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
     outputs = {
@@ -494,7 +494,7 @@ gitops = rule(
         "_template_engine": attr.label(
             default = Label("//templating:fast_template_engine"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
         "_template": attr.label(
             default = Label("//skylib:k8s_gitops.sh.tpl"),
@@ -581,7 +581,7 @@ kubectl = rule(
         ),
         "_stamper": attr.label(
             default = Label("//stamper:stamper"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),
@@ -592,7 +592,7 @@ kubectl = rule(
         "_template_engine": attr.label(
             default = Label("//templating:fast_template_engine"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
     executable = True,

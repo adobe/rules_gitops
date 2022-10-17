@@ -8,11 +8,11 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
-
 load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@com_adobe_rules_gitops//gitops:defs.bzl", "k8s_deploy")
+
+licenses(["notice"])  # Apache 2.0
 
 go_library(
     name = "go_default_library",

@@ -39,9 +39,11 @@ register_unittest_toolchains()
 
 http_archive(
     name = "com_github_bazelbuild_buildtools",
-    sha256 = "05eb52437fb250c7591dd6cbcfd1f9b5b61d85d6b20f04b041e0830dd1ab39b3",
-    strip_prefix = "buildtools-0.29.0",
-    url = "https://github.com/bazelbuild/buildtools/archive/0.29.0.zip",
+    sha256 = "ae34c344514e08c23e90da0e2d6cb700fcd28e80c02e23e4d5715dddcb42f7b3",
+    strip_prefix = "buildtools-4.2.2",
+    urls = [
+        "https://github.com/bazelbuild/buildtools/archive/refs/tags/4.2.2.tar.gz",
+    ],
 )
 
 load("@com_github_bazelbuild_buildtools//buildifier:deps.bzl", "buildifier_dependencies")

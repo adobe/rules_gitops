@@ -8,9 +8,9 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
-
 load(":stamp.bzl", "more_stable_status", "stamp_value")
+
+licenses(["notice"])  # Apache 2.0
 
 exports_files([
     "k8s_gitops.sh.tpl",
