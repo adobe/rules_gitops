@@ -13,7 +13,7 @@ load(
     _get_runfile_path = "runfile",
 )
 load(
-    "//skylib/kustomize:kustomize.bzl",
+    "@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl",
     "KustomizeInfo",
     "imagePushStatements",
     "kubectl",
@@ -29,7 +29,7 @@ def _python_runfiles(ctx, f):
     return "PYTHON_RUNFILES=${RUNFILES} %s" % _runfiles(ctx, f)
 
 def _show_impl(ctx):
-    script_content = "#!/bin/bash\nset -e\n"
+    script_content = "#!/usr/bin/env bash\nset -e\n"
 
     kustomize_outputs = []
     script_template = "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file}\n"
@@ -73,6 +73,30 @@ show = rule(
     executable = True,
 )
 
+def _image_pushes(name_suffix, images, image_registry, image_repository, image_repository_prefix, image_digest_tag):
+    image_pushes = []
+    for image_name in images:
+        image = images[image_name]
+        rule_name_parts = []
+        rule_name_parts.append(image_registry)
+        if image_repository:
+            rule_name_parts.append(image_repository)
+        rule_name_parts.append(image_name)
+        rule_name = "-".join(rule_name_parts)
+        rule_name = rule_name.replace("/", "-").replace(":", "-")
+        image_pushes.append(rule_name + name_suffix)
+        if not native.existing_rule(rule_name + name_suffix):
+            k8s_container_push(
+                name = rule_name + name_suffix,
+                image = image,
+                image_digest_tag = image_digest_tag,
+                legacy_image_name = image_name,
+                registry = image_registry,
+                repository = image_repository,
+                repository_prefix = image_repository_prefix,
+            )
+    return image_pushes
+
 def k8s_deploy(
         name,  # name of the rule is important for gitops, since it will become a part of the target manifest file name in /cloud
         cluster = "dev",
@@ -81,20 +105,27 @@ def k8s_deploy(
         configmaps_srcs = None,
         secrets_srcs = None,
         configmaps_renaming = None,  # configmaps renaming policy. Could be None or 'hash'.
-        manifests = [],
+        manifests = None,
         name_prefix = None,
         name_suffix = None,
+        prefix_suffix_app_labels = False,  # apply kustomize configuration to modify "app" labels in Deployments when name prefix or suffix applied
         patches = None,
+        image_name_patches = {},
+        image_tag_patches = {},
         substitutions = {},  # dict of template parameter substitutions. CLUSTER and NAMESPACE parameters are added automatically.
+        configurations = [],  # additional kustomize configuration files. rules_gitops provides
+        common_labels = {},  # list of common labels to apply to all objects see commonLabels kustomize docs
+        common_annotations = {},  # list of common annotations to apply to all objects see commonAnnotations kustomize docs
         deps = [],
         deps_aliases = {},
         images = {},
-        image_chroot = None,  # DEPRECATED. ignored now. If default repo path is not working for you, use image_repository to change it
+        image_digest_tag = False,
         image_registry = "docker.io",  # registry to push container to. jenkins will need an access configured for gitops to work. Ignored for mynamespace.
         image_repository = None,  # repository (registry path) to push container to. Generated from the image bazel path if empty.
         image_repository_prefix = None,  # Mutually exclusive with 'image_repository'. Add a prefix to the repository name generated from the image bazel path
         objects = [],
         gitops = True,  # make sure to use gitops = False to work with individual namespace. This option will be turned False if namespace is '{BUILD_USER}'
+        gitops_path = "cloud",
         deployment_branch = None,
         release_branch_prefix = "master",
         flatten_manifest_directories = False,
@@ -106,6 +137,8 @@ def k8s_deploy(
 
     if not manifests:
         manifests = native.glob(["*.yaml", "*.yaml.tpl"])
+    if prefix_suffix_app_labels:
+        configurations = configurations + ["@com_adobe_rules_gitops//skylib/kustomize:nameprefix_deployment_labels_config.yaml"]
     for reservedname in ["CLUSTER", "NAMESPACE"]:
         if substitutions.get(reservedname):
             fail("do not put %s in substitutions parameter of k8s_deploy. It will be added autimatically" % reservedname)
@@ -115,25 +148,19 @@ def k8s_deploy(
     # NAMESPACE substitution is deferred until test_setup/kubectl/gitops
     if namespace == "{BUILD_USER}":
         gitops = False
-    if image_chroot:
-        print("image_chroot parameter of k8s_deploy rule in %s is ignored now. If default repo path is not working for you, use image_repository to change it." % native.package_name())
+
     if not gitops:
         # Mynamespace option
         if not namespace:
             namespace = "{BUILD_USER}"
-        images_v = []
-        for imgname in images:
-            img = images[imgname]
-            images_v.append(imgname + "_mynamespace_push")
-            if not native.existing_rule(imgname + "_mynamespace_push"):
-                k8s_container_push(
-                    name = imgname + "_mynamespace_push",
-                    image = img,
-                    legacy_image_name = imgname,
-                    registry = image_registry,
-                    repository = image_repository,
-                    repository_prefix = "{BUILD_USER}",
-                )
+        image_pushes = _image_pushes(
+            name_suffix = "-mynamespace.push",
+            images = images,
+            image_registry = image_registry,
+            image_repository = image_repository,
+            image_repository_prefix = "{BUILD_USER}",
+            image_digest_tag = image_digest_tag,
+        )
         kustomize(
             name = name,
             namespace = namespace,
@@ -141,7 +168,7 @@ def k8s_deploy(
             secrets_srcs = secrets_srcs,
             # disable_name_suffix_hash is renamed to configmaps_renaming in recent Kustomize
             disable_name_suffix_hash = (configmaps_renaming != "hash"),
-            images = images_v,
+            images = image_pushes,
             manifests = manifests,
             substitutions = substitutions,
             deps = deps,
@@ -150,8 +177,13 @@ def k8s_deploy(
             end_tag = end_tag,
             name_prefix = name_prefix,
             name_suffix = name_suffix,
+            configurations = configurations,
+            common_labels = common_labels,
+            common_annotations = common_annotations,
             patches = patches,
             objects = objects,
+            image_name_patches = image_name_patches,
+            image_tag_patches = image_tag_patches,
             visibility = visibility,
         )
         kubectl(
@@ -167,6 +199,7 @@ def k8s_deploy(
             srcs = [name],
             command = "delete",
             cluster = cluster,
+            push = False,
             user = user,
             namespace = namespace,
             visibility = visibility,
@@ -179,23 +212,16 @@ def k8s_deploy(
         )
     else:
         # gitops
-        if objects:
-            print("Warning: objects parameter of k8s_deploy should not be used for gitops in %s. make sure dependencies are processed independently." % native.package_name())
         if not namespace:
             fail("namespace must be defined for gitops k8s_deploy")
-        images_v = []
-        for imgname in images:
-            img = images[imgname]
-            images_v.append(imgname + "_push")
-            if not native.existing_rule(imgname + "_push"):
-                k8s_container_push(
-                    name = imgname + "_push",
-                    image = img,
-                    legacy_image_name = imgname,
-                    registry = image_registry,
-                    repository = image_repository,
-                    repository_prefix = image_repository_prefix,
-                )
+        image_pushes = _image_pushes(
+            name_suffix = ".push",
+            images = images,
+            image_registry = image_registry,
+            image_repository = image_repository,
+            image_repository_prefix = image_repository_prefix,
+            image_digest_tag = image_digest_tag,
+        )
         kustomize(
             name = name,
             namespace = namespace,
@@ -203,7 +229,7 @@ def k8s_deploy(
             secrets_srcs = secrets_srcs,
             # disable_name_suffix_hash is renamed to configmaps_renaming in recent Kustomize
             disable_name_suffix_hash = (configmaps_renaming != "hash"),
-            images = images_v,
+            images = image_pushes,
             manifests = manifests,
             visibility = visibility,
             substitutions = substitutions,
@@ -213,7 +239,12 @@ def k8s_deploy(
             end_tag = end_tag,
             name_prefix = name_prefix,
             name_suffix = name_suffix,
+            configurations = configurations,
+            common_labels = common_labels,
+            common_annotations = common_annotations,
             patches = patches,
+            image_name_patches = image_name_patches,
+            image_tag_patches = image_tag_patches,
         )
         kubectl(
             name = name + ".apply",
@@ -228,6 +259,7 @@ def k8s_deploy(
             srcs = [name],
             cluster = cluster,
             namespace = namespace,
+            gitops_path = gitops_path,
             strip_prefixes = [
                 namespace + "-",
                 cluster + "-",
@@ -266,6 +298,7 @@ def _kubeconfig_impl(repository_ctx):
     if not kubectl:
         fail("Unable to find kubectl executable. PATH=%s" % repository_ctx.path)
     repository_ctx.symlink(kubectl, "kubectl")
+    repository_ctx.file(repository_ctx.path("cluster"), content = repository_ctx.attr.cluster, executable = False)
 
     # TODO: figure out how to use BUILD_USER
     if "USER" in repository_ctx.os.environ:
@@ -301,7 +334,18 @@ def _kubeconfig_impl(repository_ctx):
         else:
             # fall back to the default
             server = "https://kubernetes.default"
-        print("Using in cluster configuration. Kubernetes master is running at %s" % server)
+    elif repository_ctx.attr.symlink:
+        home = repository_ctx.path(repository_ctx.os.environ["HOME"])
+        kubeconfig = home.get_child(".kube").get_child("config")
+        if repository_ctx.path(kubeconfig).exists:
+            repository_ctx.symlink(kubeconfig, repository_ctx.path("kubeconfig"))
+        else:
+            _kubectl_config(repository_ctx, [
+                "set-cluster",
+                repository_ctx.attr.cluster,
+                "--server",
+                server,
+            ])
     else:
         home = repository_ctx.path(repository_ctx.os.environ["HOME"])
         certs = home.get_child(".kube").get_child("certs")
@@ -313,14 +357,15 @@ def _kubeconfig_impl(repository_ctx):
     #     --certificate-authority=... \
     #     --server=https://dev3.k8s.tubemogul.info:443 \
     #     --embed-certs",
-    _kubectl_config(repository_ctx, [
-        "set-cluster",
-        repository_ctx.attr.cluster,
-        "--server",
-        server,
-        "--certificate-authority",
-        ca_crt,
-    ])
+    if ca_crt:
+        _kubectl_config(repository_ctx, [
+            "set-cluster",
+            repository_ctx.attr.cluster,
+            "--server",
+            server,
+            "--certificate-authority",
+            ca_crt,
+        ])
 
     # config set-credentials {user} --token=...",
     if token:
@@ -350,17 +395,19 @@ def _kubeconfig_impl(repository_ctx):
         ])
 
     # export repostory contents
-    repository_ctx.file("BUILD", """exports_files(["kubeconfig", "kubectl"])""", False)
+    repository_ctx.file("BUILD", """exports_files(["kubeconfig", "kubectl", "cluster"])""", False)
 
     return {
         "cluster": repository_ctx.attr.cluster,
         "server": repository_ctx.attr.server,
+        "symlink": repository_ctx.attr.symlink,
     }
 
 kubeconfig = repository_rule(
     attrs = {
         "cluster": attr.string(),
         "server": attr.string(),
+        "symlink": attr.bool(),
     },
     environ = [
         "HOME",
@@ -430,7 +477,7 @@ _k8s_cmd = rule(
             allow_single_file = True,
         ),
         "_stamper": attr.label(
-            default = Label("@io_bazel_rules_k8s//k8s:stamper"),
+            default = Label("//stamper:stamper"),
             cfg = "host",
             executable = True,
             allow_files = True,
@@ -493,8 +540,9 @@ def _k8s_test_setup_impl(ctx):
     commands = []  # the list of commands to execute
 
     # add files referenced by rule attributes to runfiles
-    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, ctx.executable._kustomize, ctx.executable._it_sidecar]
+    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, ctx.executable._kustomize, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
     files += ctx.files._set_namespace
+    files += ctx.files._cluster
 
     push_statements, files, pushes_runfiles = imagePushStatements(ctx, [o for o in ctx.attr.objects if KustomizeInfo in o], files)
 
@@ -506,10 +554,10 @@ def _k8s_test_setup_impl(ctx):
             transitive.append(obj.default_runfiles.files)
 
             # add object' execution command
-            commands += [_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${KUBECTL} apply -f -"]
+            commands += [_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -"]
         else:
             files += obj.files.to_list()
-            commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
+            commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
 
     files += [ctx.executable._template_engine]
 
@@ -518,11 +566,13 @@ def _k8s_test_setup_impl(ctx):
         template = ctx.file._namespace_template,
         substitutions = {
             "%{it_sidecar}": ctx.executable._it_sidecar.short_path,
+            "%{cluster}": ctx.file._cluster.path,
             "%{kubeconfig}": ctx.file.kubeconfig.path,
             "%{kubectl}": ctx.file.kubectl.path,
             "%{portforwards}": " ".join(["-portforward=" + p for p in ctx.attr.portforward_services]),
             "%{push_statements}": push_statements,
-            "%{set_namespace}": ctx.executable._set_namespace.path,
+            "%{set_namespace}": ctx.executable._set_namespace.short_path,
+            "%{it_manifest_filter}": ctx.executable._it_manifest_filter.short_path,
             "%{statements}": "\n".join(commands),
             "%{test_timeout}": ctx.attr.setup_timeout,
             "%{waitforapps}": " ".join(["-waitforapp=" + p for p in ctx.attr.wait_for_apps]),
@@ -556,6 +606,10 @@ k8s_test_setup = rule(
         "portforward_services": attr.string_list(),
         "setup_timeout": attr.string(default = "10m"),
         "wait_for_apps": attr.string_list(),
+        "_cluster": attr.label(
+            default = Label("@k8s_test//:cluster"),
+            allow_single_file = True,
+        ),
         "_it_sidecar": attr.label(
             default = Label("//testing/it_sidecar:it_sidecar"),
             cfg = "host",
@@ -575,8 +629,13 @@ k8s_test_setup = rule(
             cfg = "host",
             executable = True,
         ),
+        "_it_manifest_filter": attr.label(
+            default = Label("//testing/it_manifest_filter:it_manifest_filter"),
+            cfg = "host",
+            executable = True,
+        ),
         "_stamper": attr.label(
-            default = Label("@io_bazel_rules_k8s//k8s:stamper"),
+            default = Label("//stamper:stamper"),
             cfg = "host",
             executable = True,
             allow_files = True,
