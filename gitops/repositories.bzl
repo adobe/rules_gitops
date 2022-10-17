@@ -29,7 +29,7 @@ def rules_gitops_repositories():
     bazel_skylib_workspace()
     protobuf_deps()
     go_rules_dependencies()
-    go_register_toolchains()
+    go_register_toolchains(version = "1.19.1")
     gazelle_dependencies()
     container_repositories()
     container_go_deps()
