@@ -65,10 +65,6 @@ def _impl(ctx):
         tag = "$(cat {})".format(_get_runfile_path(ctx, ctx.file.tag_file))
         pusher_input.append(ctx.file.tag_file)
 
-    # If any stampable attr contains python format syntax (which is how users
-    # configure stamping), we enable stamping.
-    if ctx.attr.stamp:
-        print("Attr 'stamp' is deprecated; it is now automatically inferred. Please remove it from %s" % ctx.label)
     stamp = "{" in tag or "{" in registry or "{" in repository
     stamp_inputs = [ctx.file._info_file] if stamp else []
     for f in stamp_inputs:
@@ -83,20 +79,7 @@ def _impl(ctx):
     digester_img_args, digester_img_inputs = _gen_img_args(ctx, image)
     digester_input += digester_img_inputs
     digester_args += digester_img_args
-    tarball = image.get("legacy")
-    if tarball:
-        print("Pushing an image based on a tarball can be very " +
-              "expensive.  If the image is the output of a " +
-              "container_build, consider dropping the '.tar' extension. " +
-              "If the image is checked in, consider using " +
-              "container_import instead.")
-
-    pusher_args.append("--format={}".format(ctx.attr.format))
-    pusher_args.append("--dst={registry}/{repository}:{tag}".format(
-        registry = registry,
-        repository = repository,
-        tag = tag,
-    ))
+    pusher_runfiles = [ctx.executable._pusher] + pusher_input
 
     if ctx.attr.skip_unchanged_digest:
         pusher_args += ["-skip-unchanged-digest"]
@@ -110,15 +93,22 @@ def _impl(ctx):
         mnemonic = "ContainerPushDigest",
     )
 
+    if ctx.attr.image_digest_tag:
+        tag = "$(cat {} | cut -d ':' -f 2 | cut -c 1-7)".format(_get_runfile_path(ctx, ctx.outputs.digest))
+        pusher_runfiles += [ctx.outputs.digest]
+
+    pusher_args.append("--format={}".format(ctx.attr.format))
+    pusher_args.append("--dst={registry}/{repository}:{tag}".format(
+        registry = registry,
+        repository = repository,
+        tag = tag,
+    ))
+
     # If the docker toolchain is configured to use a custom client config
     # directory, use that instead
     toolchain_info = ctx.toolchains["@io_bazel_rules_docker//toolchains/docker:toolchain_type"].info
     if toolchain_info.client_config != "":
         pusher_args += ["-client-config-dir", str(toolchain_info.client_config)]
-
-    pusher_runfiles = [ctx.executable._pusher] + pusher_input
-    runfiles = ctx.runfiles(files = pusher_runfiles)
-    runfiles = runfiles.merge(ctx.attr._pusher[DefaultInfo].default_runfiles)
 
     ctx.actions.expand_template(
         template = ctx.file._tag_tpl,
@@ -130,6 +120,9 @@ def _impl(ctx):
         is_executable = True,
     )
 
+    runfiles = ctx.runfiles(files = pusher_runfiles)
+    runfiles = runfiles.merge(ctx.attr._pusher[DefaultInfo].default_runfiles)
+
     return [
         DefaultInfo(
             executable = ctx.outputs.executable,
@@ -138,9 +131,6 @@ def _impl(ctx):
         PushInfo(
             registry = registry,
             repository = repository,
-            tag = tag,
-            stamp = stamp,
-            stamp_inputs = stamp_inputs,
             digest = image["digest"],
         ),
         K8sPushInfo(
@@ -183,6 +173,11 @@ Args:
             mandatory = True,
             doc = "The label of the image to push.",
         ),
+        "image_digest_tag": attr.bool(
+            default = False,
+            mandatory = False,
+            doc = "Tag the image with the container digest, default to False",
+        ),
         "legacy_image_name": attr.string(doc = "image name used in deployments, for compatibility with k8s_deploy. Do not use, refer images by full bazel target name instead"),
         "registry": attr.string(
             doc = "The registry to which we are pushing.",
@@ -201,6 +196,7 @@ Args:
         "stamp": attr.bool(
             default = False,
             mandatory = False,
+            doc = "(unused)",
         ),
         "tag": attr.string(
             default = "latest",

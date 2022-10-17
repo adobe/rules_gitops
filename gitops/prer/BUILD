@@ -18,22 +18,20 @@ go_library(
     importpath = "github.com/adobe/rules_gitops/gitops/prer",
     visibility = ["//visibility:private"],
     deps = [
+        "//gitops/analysis:go_default_library",
         "//gitops/bazel:go_default_library",
-        "//gitops/bitbucket:go_default_library",
-        "//gitops/blaze_query:go_default_library",
         "//gitops/commitmsg:go_default_library",
         "//gitops/exec:go_default_library",
         "//gitops/git:go_default_library",
+        "//gitops/git/bitbucket:go_default_library",
+        "//gitops/git/github:go_default_library",
+        "//gitops/git/gitlab:go_default_library",
         "@com_github_golang_protobuf//proto:go_default_library",
     ],
 )
 
 go_binary(
     name = "create_gitops_prs",
-    data = [
-        # required for find_repo_root()
-        "//:WORKSPACE",
-    ],
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
 )

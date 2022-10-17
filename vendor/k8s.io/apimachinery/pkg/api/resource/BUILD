@@ -16,7 +16,7 @@ go_library(
     importpath = "k8s.io/apimachinery/pkg/api/resource",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/gogo/protobuf/proto:go_default_library",
         "//vendor/gopkg.in/inf.v0:go_default_library",
+        "@com_github_gogo_protobuf//proto:go_default_library",
     ],
 )

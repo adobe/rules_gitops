@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+      - feature/*
   pull_request:
     branches: [master]
 
@@ -12,9 +14,8 @@ jobs:
     strategy:
       matrix:
         bazel-version:
-          - 2.0.1
-          - 2.1.1
-          - 2.2.0
+          - 4.2.1
+          - 5.1.1
     env:
       USE_BAZEL_VERSION: ${{ matrix.bazel-version }}
     steps:
@@ -35,7 +36,12 @@ jobs:
           chmod +x "${TOOLS_DIR}/bin/bazel"
           curl -Ls -o "${TOOLS_DIR}/bin/buildifier" "https://github.com/bazelbuild/buildtools/releases/download/0.29.0/buildifier"
           chmod +x "${TOOLS_DIR}/bin/buildifier"
-          echo "::add-path::${TOOLS_DIR}/bin"
+          curl -Ls -o "${TOOLS_DIR}/bin/kind" "https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-amd64"
+          chmod +x "${TOOLS_DIR}/bin/kind"
+          echo "${TOOLS_DIR}/bin" >> $GITHUB_PATH
+      - name: Setup kind cluster
+        run: |
+          ./create_kind_cluster.sh
       - name: Build
         run: |
           bazel build //...
@@ -53,7 +59,12 @@ jobs:
           \) | xargs buildifier \
             -mode=check \
             -lint=warn \
-            --warnings=-module-docstring,-function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-print
+            --warnings=-module-docstring,-function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-print \
+          || {
+            buildifier_exit_code=$?
+            echo "Error: failed buildifier checks. Please run \"bazel run //:buildifier-fix\" and commit the changes."
+            exit $buildifier_exit_code
+          }
       - name: Test
         run: |
           bazel test //...
@@ -65,3 +76,7 @@ jobs:
         run: |
           cd examples
           bazel test //...
+      - name: E2E
+        run: |
+          cd examples
+          ./e2e-test.sh

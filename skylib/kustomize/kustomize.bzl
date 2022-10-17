@@ -17,8 +17,8 @@ load("//skylib:push.bzl", "K8sPushInfo")
 load("//skylib:stamp.bzl", "stamp")
 
 _binaries = {
-    "darwin_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/v3.0.0/kustomize_3.0.0_darwin_amd64", "58bf0cf1fe6839a1463120ced1eae385423efa6437539eb491650db5089c60b9"),
-    "linux_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/v3.0.0/kustomize_3.0.0_linux_amd64", "ef0dbeca85c419891ad0e12f1f9df649b02ceb01517fa9aea0297ef14e400c7a"),
+    "darwin_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.3/kustomize_v4.5.3_darwin_amd64.tar.gz", "b0a6b0568273d466abd7cd535c556e44aa9ff5f54c07e86ed9f3016b416de992"),
+    "linux_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.3/kustomize_v4.5.3_linux_amd64.tar.gz", "e4dc2f795235b03a2e6b12c3863c44abe81338c5c0054b29baf27dcc734ae693"),
 }
 
 def _download_binary_impl(ctx):
@@ -39,7 +39,7 @@ sh_binary(
 """)
 
     filename, sha256 = _binaries[platform]
-    ctx.download(filename, "bin/kustomize", sha256 = sha256, executable = True)
+    ctx.download_and_extract(filename, "bin/", sha256 = sha256)
 
 _download_binary = repository_rule(
     _download_binary_impl,
@@ -88,11 +88,10 @@ def _is_ignored_src(src):
     return basename.startswith(".")
 
 _script_template = """\
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
-{kustomize} build --load_restrictor none --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
+{kustomize} build --load-restrictor LoadRestrictionsNone --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
-
 KustomizeInfo = provider(fields = [
     "image_pushes",
 ])
@@ -121,10 +120,38 @@ def _kustomize_impl(ctx):
         kustomization_yaml += "nameSuffix: '{}'\n".format(ctx.attr.name_suffix)
         use_stamp = use_stamp or "{" in ctx.attr.name_suffix
 
+    if ctx.attr.configurations:
+        kustomization_yaml += "configurations:\n"
+        for _, f in enumerate(ctx.files.configurations):
+            kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
+
     if ctx.files.patches:
         kustomization_yaml += "patches:\n"
         for _, f in enumerate(ctx.files.patches):
             kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
+
+    if ctx.attr.image_name_patches or ctx.attr.image_tag_patches:
+        kustomization_yaml += "images:\n"
+        for image, new_tag in ctx.attr.image_tag_patches.items():
+            new_name = ctx.attr.image_name_patches.get(image, default = None)
+            kustomization_yaml += "- name: \"{}\"\n".format(image)
+            kustomization_yaml += "  newTag: \"{}\"\n".format(new_tag)
+            if new_name != None:
+                kustomization_yaml += "  newName: \"{}\"\n".format(new_name)
+        for image, new_name in ctx.attr.image_name_patches.items():
+            if ctx.attr.image_tag_patches.get(image, default = None) == None:
+                kustomization_yaml += "- name: \"{}\"\n".format(image)
+                kustomization_yaml += "  newName: \"{}\"\n".format(new_name)
+
+    if ctx.attr.common_labels:
+        kustomization_yaml += "commonLabels:\n"
+        for k in ctx.attr.common_labels:
+            kustomization_yaml += "  {}: '{}'\n".format(k, ctx.attr.common_labels[k])
+
+    if ctx.attr.common_annotations:
+        kustomization_yaml += "commonAnnotations:\n"
+        for k in ctx.attr.common_annotations:
+            kustomization_yaml += "  {}: '{}'\n".format(k, ctx.attr.common_annotations[k])
 
     kustomization_yaml += "generatorOptions:\n"
 
@@ -210,6 +237,23 @@ def _kustomize_impl(ctx):
             "--imports=%s=%s" % (k, d[str(ctx.label.relative(ctx.attr.deps_aliases[k]))])
             for k in ctx.attr.deps_aliases
         ])
+
+        # Image name substitutions
+        if ctx.attr.images:
+            for i, img in enumerate(ctx.attr.images):
+                kpi = img[K8sPushInfo]
+                regrepo = kpi.registry + "/" + kpi.repository
+                if "{" in regrepo:
+                    regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
+                template_part += " --variable={}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
+
+                # Image digest
+                template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(kpi.image_label) + ".digest", kpi.digestfile.path)
+                template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(kpi.image_label) + ".short-digest", kpi.digestfile.path)
+
+                if kpi.legacy_image_name:
+                    template_part += " --variable={}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
+
         template_part += " "
 
     script = ctx.actions.declare_file("%s-kustomize" % ctx.label.name)
@@ -224,24 +268,30 @@ def _kustomize_impl(ctx):
 
     ctx.actions.run(
         outputs = [ctx.outputs.yaml],
-        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
+        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
         executable = script,
         mnemonic = "Kustomize",
         tools = [ctx.executable._kustomize_bin],
     )
 
-    transitive = [m[KustomizeInfo].image_pushes for m in ctx.attr.manifests if KustomizeInfo in m]
-    transitive += [obj[KustomizeInfo].image_pushes for obj in ctx.attr.objects]
+    transitive_files = [m[DefaultInfo].files for m in ctx.attr.manifests if KustomizeInfo in m]
+    transitive_files += [obj[DefaultInfo].files for obj in ctx.attr.objects]
 
-    trans_imgs = depset(ctx.attr.images, transitive = transitive)
+    transitive_image_pushes = [m[KustomizeInfo].image_pushes for m in ctx.attr.manifests if KustomizeInfo in m]
+    transitive_image_pushes += [obj[KustomizeInfo].image_pushes for obj in ctx.attr.objects]
 
     return [
-        DefaultInfo(files = depset(
-            [ctx.outputs.yaml],
-            transitive = [m[DefaultInfo].files for m in ctx.attr.manifests if KustomizeInfo in m] + [obj[DefaultInfo].files for obj in ctx.attr.objects],
-        )),
+        DefaultInfo(
+            files = depset(
+                [ctx.outputs.yaml],
+                transitive = transitive_files,
+            ),
+        ),
         KustomizeInfo(
-            image_pushes = trans_imgs,
+            image_pushes = depset(
+                ctx.attr.images,
+                transitive = transitive_image_pushes,
+            ),
         ),
     ]
 
@@ -260,9 +310,14 @@ kustomize = rule(
         "namespace": attr.string(),
         "objects": attr.label_list(doc = "a list of dependent kustomize objects", providers = (KustomizeInfo,)),
         "patches": attr.label_list(allow_files = True),
+        "image_name_patches": attr.string_dict(default = {}, doc = "set new names for selected images"),
+        "image_tag_patches": attr.string_dict(default = {}, doc = "set new tags for selected images"),
         "start_tag": attr.string(default = "{{"),
         "substitutions": attr.string_dict(default = {}),
         "deps": attr.label_list(default = [], allow_files = True),
+        "configurations": attr.label_list(allow_files = True),
+        "common_labels": attr.string_dict(default = {}),
+        "common_annotations": attr.string_dict(default = {}),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
             allow_single_file = True,
@@ -309,7 +364,7 @@ def _push_all_impl(ctx):
         template = ctx.file._tpl,
         substitutions = {
             "%{statements}": "\n".join([
-                                 "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
+                                 "echo pushing {}/{}".format(exe[PushInfo].registry, exe[PushInfo].repository)
                                  for exe in trans_img_pushes
                              ]) + "\n" +
                              "\n".join([
@@ -330,7 +385,7 @@ push_all = rule(
     implementation = _push_all_impl,
     doc = """
 push_all run all pushes referred in images attribute
-rules_docker's container_push or kubedobe_push could be used.
+k8s_container_push should be used.
     """,
     attrs = {
         "srcs": attr.label_list(doc = "a list of images used in manifests", providers = (KustomizeInfo,)),
@@ -360,7 +415,7 @@ def imagePushStatements(
     statements = ""
     trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
     statements += "\n".join([
-        "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
+        "echo  pushing {}/{}".format(exe[PushInfo].registry, exe[PushInfo].repository)
         for exe in trans_img_pushes
     ]) + "\n"
     statements += "\n".join([
@@ -387,14 +442,15 @@ fi
         if "{" in namespace:
             fail("unable to gitops namespace with placeholders %s" % inattr.label)  #mynamespace should not be gitopsed
         for infile in inattr.files.to_list():
-            statements += ("echo $TARGET_DIR/cloud/{namespace}/{cluster}/{file}\n" +
-                           "mkdir -p $TARGET_DIR/cloud/{namespace}/{cluster}\n" +
-                           "echo '# GENERATED BY {rulename} -> {gitopsrulename}' > $TARGET_DIR/cloud/{namespace}/{cluster}/{file}\n" +
-                           "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} >> $TARGET_DIR/cloud/{namespace}/{cluster}/{file}\n").format(
+            statements += ("echo $TARGET_DIR/{gitops_path}/{namespace}/{cluster}/{file}\n" +
+                           "mkdir -p $TARGET_DIR/{gitops_path}/{namespace}/{cluster}\n" +
+                           "echo '# GENERATED BY {rulename} -> {gitopsrulename}' > $TARGET_DIR/{gitops_path}/{namespace}/{cluster}/{file}\n" +
+                           "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} >> $TARGET_DIR/{gitops_path}/{namespace}/{cluster}/{file}\n").format(
                 infile = infile.path,
                 rulename = inattr.label,
                 gitopsrulename = ctx.label,
                 namespace = namespace,
+                gitops_path = ctx.attr.gitops_path,
                 cluster = cluster,
                 file = _remove_prefixes(infile.path.split("/")[-1], strip_prefixes),
                 template_engine = "${RUNFILES}/%s" % _get_runfile_path(ctx, ctx.executable._template_engine),
@@ -411,7 +467,6 @@ fi
     )
     runfiles = files + ctx.files.srcs + [ctx.executable._template_engine, ctx.file._info_file]
     transitive = depset(transitive = [obj.default_runfiles.files for obj in ctx.attr.srcs])
-    runfiles += list([ctx.file.workspace])
 
     rf = ctx.runfiles(files = runfiles, transitive_files = transitive)
     for dep_rf in pushes_runfiles:
@@ -429,12 +484,9 @@ gitops = rule(
         "cluster": attr.string(mandatory = True),
         "namespace": attr.string(mandatory = True),
         "deployment_branch": attr.string(),
+        "gitops_path": attr.string(),
         "release_branch_prefix": attr.string(),
         "strip_prefixes": attr.string_list(),
-        "workspace": attr.label(
-            default = "//:WORKSPACE",
-            allow_single_file = True,
-        ),
         "_info_file": attr.label(
             default = Label("//skylib:more_stable_status.txt"),
             allow_single_file = True,
@@ -470,18 +522,20 @@ def _kubectl_impl(ctx):
     kubectl_command_arg = ctx.expand_make_variables("kubectl_command", kubectl_command_arg, {})
 
     statements = ""
+    transitive = None
 
-    trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
-    statements += "\n".join([
-        "echo pushing {}/{}:{}".format(exe[PushInfo].registry, exe[PushInfo].repository, exe[PushInfo].tag)
-        for exe in trans_img_pushes
-    ]) + "\n"
-    statements += "\n".join([
-        "async \"${RUNFILES}/%s\"" % _get_runfile_path(ctx, exe.files_to_run.executable)
-        for exe in trans_img_pushes
-    ]) + "\nwaitpids\n"
-    files += [obj.files_to_run.executable for obj in trans_img_pushes]
-    transitive = depset(transitive = [obj.default_runfiles.files for obj in trans_img_pushes])
+    if ctx.attr.push:
+        trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
+        statements += "\n".join([
+            "echo  pushing {}/{}".format(exe[PushInfo].registry, exe[PushInfo].repository)
+            for exe in trans_img_pushes
+        ]) + "\n"
+        statements += "\n".join([
+            "async \"${RUNFILES}/%s\"" % _get_runfile_path(ctx, exe.files_to_run.executable)
+            for exe in trans_img_pushes
+        ]) + "\nwaitpids\n"
+        files += [obj.files_to_run.executable for obj in trans_img_pushes]
+        transitive = depset(transitive = [obj.default_runfiles.files for obj in trans_img_pushes])
 
     namespace = ctx.attr.namespace
     for inattr in ctx.attr.srcs:
@@ -516,6 +570,7 @@ kubectl = rule(
         "namespace": attr.string(mandatory = True),
         "command": attr.string(default = "apply"),
         "user": attr.string(default = "{BUILD_USER}"),
+        "push": attr.bool(default = True),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
             allow_single_file = True,

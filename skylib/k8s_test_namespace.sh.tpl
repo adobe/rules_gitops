@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright 2020 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License. You may obtain a copy
@@ -24,7 +24,9 @@ TEST_UNDECLARED_OUTPUTS_DIR=${TEST_UNDECLARED_OUTPUTS_DIR:-.}
 
 KUBECTL=%{kubectl}
 KUBECONFIG=%{kubeconfig}
-SET_NAMESPACE=skylib/kustomize/set_namespace
+SET_NAMESPACE=%{set_namespace}
+IT_MANIFEST_FILTER=%{it_manifest_filter}
+
 
 NAMESPACE_NAME_FILE=${TEST_UNDECLARED_OUTPUTS_DIR}/namespace
 KUBECONFIG_FILE=${TEST_UNDECLARED_OUTPUTS_DIR}/kubeconfig
@@ -36,13 +38,18 @@ USER=$(${KUBECTL} --kubeconfig=${KUBECONFIG} config view -o jsonpath='{.users[0]
 echo "Cluster: ${CLUSTER}" >&2
 echo "User: ${USER}" >&2
 
-# create random namespace
 set +e
 if [ -n "${K8S_MYNAMESPACE:-}" ]
 then
+    # do not create random namesspace
     NAMESPACE=${USER}
+    # do not delete namespace after the test is complete
     DELETE_NAMESPACE_FLAG=""
+    # do not perform manifest transformations
+    # test setup should not try to apply modified manifests
+    IT_MANIFEST_FILTER="cat"
 else
+    # create random namespace
     DELETE_NAMESPACE_FLAG="-delete_namespace"
     COUNT="0"
     while true; do

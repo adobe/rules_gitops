@@ -16,8 +16,6 @@ repo_path=$bindir/..
 vendordir=$repo_path/vendor
 
 novendor=(
-    "golang.org/x/net"
-    "golang.org/x/text"
     "golang.org/x/tools"
     "golang.org/x/sync"
     "github.com/golang/glog"

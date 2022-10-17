@@ -11,6 +11,8 @@
 exports_files([
     "run-all.sh.tpl",
     "kubectl.sh.tpl",
+    "nameprefix_deployment_labels_config.yaml",
+    "namesuffix_deployment_labels_config.yaml",
 ])
 
 sh_binary(

@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    ownerTeam: apps
+  labels:
+    flavor: canary
+  name: myapp
+spec:
+  ports:
+  - name: web
+    port: 80
+    targetPort: 8080
+  selector:
+    app: myapp
+    flavor: canary
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    ownerTeam: apps
+  labels:
+    flavor: canary
+  name: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+      flavor: canary
+  template:
+    metadata:
+      annotations:
+        ownerTeam: apps
+      labels:
+        app: myapp
+        flavor: canary
+    spec:
+      containers:
+      - image: test-image
+        name: myapp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    ownerTeam: apps
+  labels:
+    flavor: canary
+  name: myapp2
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: myapp
+      flavor: canary
+  template:
+    metadata:
+      annotations:
+        ownerTeam: apps
+      labels:
+        app.kubernetes.io/name: myapp
+        flavor: canary
+    spec:
+      containers:
+      - image: test-image
+        name: myapp
