@@ -298,6 +298,7 @@ def _kubeconfig_impl(repository_ctx):
     if not kubectl:
         fail("Unable to find kubectl executable. PATH=%s" % repository_ctx.path)
     repository_ctx.symlink(kubectl, "kubectl")
+    repository_ctx.file(repository_ctx.path("cluster"), content = repository_ctx.attr.cluster, executable = False)
 
     # TODO: figure out how to use BUILD_USER
     if "USER" in repository_ctx.os.environ:
@@ -333,6 +334,18 @@ def _kubeconfig_impl(repository_ctx):
         else:
             # fall back to the default
             server = "https://kubernetes.default"
+    elif repository_ctx.attr.use_host_config:
+        home = repository_ctx.path(repository_ctx.os.environ["HOME"])
+        kubeconfig = home.get_child(".kube").get_child("config")
+        if repository_ctx.path(kubeconfig).exists:
+            repository_ctx.symlink(kubeconfig, repository_ctx.path("kubeconfig"))
+        else:
+            _kubectl_config(repository_ctx, [
+                "set-cluster",
+                repository_ctx.attr.cluster,
+                "--server",
+                server,
+            ])
     else:
         home = repository_ctx.path(repository_ctx.os.environ["HOME"])
         certs = home.get_child(".kube").get_child("certs")
@@ -344,14 +357,15 @@ def _kubeconfig_impl(repository_ctx):
     #     --certificate-authority=... \
     #     --server=https://dev3.k8s.tubemogul.info:443 \
     #     --embed-certs",
-    _kubectl_config(repository_ctx, [
-        "set-cluster",
-        repository_ctx.attr.cluster,
-        "--server",
-        server,
-        "--certificate-authority",
-        ca_crt,
-    ])
+    if ca_crt:
+        _kubectl_config(repository_ctx, [
+            "set-cluster",
+            repository_ctx.attr.cluster,
+            "--server",
+            server,
+            "--certificate-authority",
+            ca_crt,
+        ])
 
     # config set-credentials {user} --token=...",
     if token:
@@ -381,17 +395,19 @@ def _kubeconfig_impl(repository_ctx):
         ])
 
     # export repostory contents
-    repository_ctx.file("BUILD", """exports_files(["kubeconfig", "kubectl"])""", False)
+    repository_ctx.file("BUILD", """exports_files(["kubeconfig", "kubectl", "cluster"])""", False)
 
     return {
         "cluster": repository_ctx.attr.cluster,
         "server": repository_ctx.attr.server,
+        "use_host_config": repository_ctx.attr.use_host_config,
     }
 
 kubeconfig = repository_rule(
     attrs = {
         "cluster": attr.string(),
         "server": attr.string(),
+        "use_host_config": attr.bool(),
     },
     environ = [
         "HOME",
@@ -526,6 +542,7 @@ def _k8s_test_setup_impl(ctx):
     # add files referenced by rule attributes to runfiles
     files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, ctx.executable._kustomize, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
     files += ctx.files._set_namespace
+    files += ctx.files._cluster
 
     push_statements, files, pushes_runfiles = imagePushStatements(ctx, [o for o in ctx.attr.objects if KustomizeInfo in o], files)
 
@@ -549,6 +566,7 @@ def _k8s_test_setup_impl(ctx):
         template = ctx.file._namespace_template,
         substitutions = {
             "%{it_sidecar}": ctx.executable._it_sidecar.short_path,
+            "%{cluster}": ctx.file._cluster.path,
             "%{kubeconfig}": ctx.file.kubeconfig.path,
             "%{kubectl}": ctx.file.kubectl.path,
             "%{portforwards}": " ".join(["-portforward=" + p for p in ctx.attr.portforward_services]),
@@ -588,6 +606,10 @@ k8s_test_setup = rule(
         "portforward_services": attr.string_list(),
         "setup_timeout": attr.string(default = "10m"),
         "wait_for_apps": attr.string_list(),
+        "_cluster": attr.label(
+            default = Label("@k8s_test//:cluster"),
+            allow_single_file = True,
+        ),
         "_it_sidecar": attr.label(
             default = Label("//testing/it_sidecar:it_sidecar"),
             cfg = "host",
