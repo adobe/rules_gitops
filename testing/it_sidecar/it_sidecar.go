@@ -24,6 +24,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
@@ -309,6 +310,7 @@ func cleanup(clientset *kubernetes.Clientset) {
 
 func main() {
 	flag.Parse()
+	log.SetOutput(os.Stdout)
 
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 
