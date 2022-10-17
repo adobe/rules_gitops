@@ -334,7 +334,7 @@ def _kubeconfig_impl(repository_ctx):
         else:
             # fall back to the default
             server = "https://kubernetes.default"
-    elif repository_ctx.attr.symlink:
+    elif repository_ctx.attr.use_host_config:
         home = repository_ctx.path(repository_ctx.os.environ["HOME"])
         kubeconfig = home.get_child(".kube").get_child("config")
         if repository_ctx.path(kubeconfig).exists:
@@ -400,14 +400,14 @@ def _kubeconfig_impl(repository_ctx):
     return {
         "cluster": repository_ctx.attr.cluster,
         "server": repository_ctx.attr.server,
-        "symlink": repository_ctx.attr.symlink,
+        "use_host_config": repository_ctx.attr.use_host_config,
     }
 
 kubeconfig = repository_rule(
     attrs = {
         "cluster": attr.string(),
         "server": attr.string(),
-        "symlink": attr.bool(),
+        "use_host_config": attr.bool(),
     },
     environ = [
         "HOME",
