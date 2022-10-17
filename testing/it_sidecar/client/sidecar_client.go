@@ -89,8 +89,10 @@ func (s *K8STestSetup) before(wg *sync.WaitGroup) {
 	// so we do not need to close this ourselves.  We must also guarantee that all reads on this pipe are completed
 	// before calling wait, so the goroutines below must be canceled before the defered teardown above
 	if s.er, err = s.cmd.StderrPipe(); err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("unable to read  setup command STDOUT; %w", err))
 	}
+
+
 	go func() {
 		rd := bufio.NewReader(s.er)
 		for {
@@ -125,7 +127,7 @@ waitForReady:
 	for {
 		str, err := rd.ReadString('\n')
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Unable to read from setup script stdout. Cannot wait for pods")
 		}
 		fmt.Print(str)
 		if strings.HasPrefix(str, "FORWARD") {
