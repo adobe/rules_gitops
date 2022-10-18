@@ -27,7 +27,6 @@ go_rules_dependencies()
 
 go_register_toolchains(version = "1.19.2")
 
-
 local_repository(
     name = "com_adobe_rules_gitops",
     path = "..",
