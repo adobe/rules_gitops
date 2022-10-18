@@ -70,7 +70,7 @@ rules_gitops_dependencies()
 
 load("@com_adobe_rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
 
-rules_gitops_repositories("1.19.2")
+rules_gitops_repositories(go_version = "1.19.2")
 
 ```
 The `rules_gitops_repositories()` parameter is optional go sdk version to load. Omit if rules_go
