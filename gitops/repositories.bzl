@@ -24,13 +24,14 @@ def rules_gitops_repositories(go_version = None):
     """Initializes Declares workspaces the GitOps rules depend on.
 
     Workspaces that use rules_gitops should call this after rules_gitops_dependencies call.
+    Parameters:
+    go_version go sdk version to load. Do not set if rules_go is initialized elsewhere.
     """
 
     bazel_skylib_workspace()
     protobuf_deps()
-    if go_version:
-        go_rules_dependencies()
-        go_register_toolchains(version = go_version)
+    go_rules_dependencies()
+    go_register_toolchains(version = go_version)
     gazelle_dependencies()
     container_repositories()
     container_go_deps()
