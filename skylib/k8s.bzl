@@ -25,9 +25,6 @@ load("//skylib:push.bzl", "k8s_container_push")
 def _runfiles(ctx, f):
     return "${RUNFILES}/%s" % _get_runfile_path(ctx, f)
 
-def _python_runfiles(ctx, f):
-    return "PYTHON_RUNFILES=${RUNFILES} %s" % _runfiles(ctx, f)
-
 def _show_impl(ctx):
     script_content = "#!/usr/bin/env bash\nset -e\n"
 
@@ -128,7 +125,6 @@ def k8s_deploy(
         gitops_path = "cloud",
         deployment_branch = None,
         release_branch_prefix = "master",
-        flatten_manifest_directories = False,
         start_tag = "{{",
         end_tag = "}}",
         visibility = None):
@@ -417,78 +413,6 @@ kubeconfig = repository_rule(
     ],
     local = True,
     implementation = _kubeconfig_impl,
-)
-
-def _stamp(ctx, string, output):
-    stamps = [ctx.file._info_file]
-    stamp_args = [
-        "--stamp-info-file=%s" % sf.path
-        for sf in stamps
-    ]
-    ctx.actions.run(
-        executable = ctx.executable._stamper,
-        arguments = [
-            "--format=%s" % string,
-            "--output=%s" % output.path,
-        ] + stamp_args,
-        inputs = [ctx.executable._stamper] + stamps,
-        outputs = [output],
-        mnemonic = "Stamp",
-    )
-
-def _k8s_cmd_impl(ctx):
-    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig]
-
-    # replace placeholders in the parameter value
-    # see: https://github.com/bazelbuild/rules_docker#stamping
-    command_arg = ctx.expand_make_variables("command", ctx.attr.command, {})
-    if "{" in ctx.attr.command:
-        command_file = ctx.actions.declare_file(ctx.label.name + ".command")
-        _stamp(ctx, ctx.attr.command, command_file)
-        command_arg = "source %s" % _runfiles(ctx, command_file)
-        files.append(command_file)
-
-    ctx.actions.expand_template(
-        template = ctx.file._template,
-        substitutions = {
-            "%{kubeconfig}": ctx.file.kubeconfig.path,
-            "%{kubectl}": ctx.file.kubectl.path,
-            "%{statements}": command_arg,
-        },
-        output = ctx.outputs.executable,
-    )
-    return [
-        DefaultInfo(runfiles = ctx.runfiles(files = files)),
-    ]
-
-_k8s_cmd = rule(
-    attrs = {
-        "command": attr.string(),
-        "kubeconfig": attr.label(
-            allow_single_file = True,
-        ),
-        "kubectl": attr.label(
-            cfg = "exec",
-            executable = True,
-            allow_single_file = True,
-        ),
-        "_info_file": attr.label(
-            default = Label("//skylib:more_stable_status.txt"),
-            allow_single_file = True,
-        ),
-        "_stamper": attr.label(
-            default = Label("//stamper:stamper"),
-            cfg = "exec",
-            executable = True,
-            allow_files = True,
-        ),
-        "_template": attr.label(
-            default = Label("//skylib:k8s_cmd.sh.tpl"),
-            allow_single_file = True,
-        ),
-    },
-    executable = True,
-    implementation = _k8s_cmd_impl,
 )
 
 def _k8s_test_namespace_impl(ctx):

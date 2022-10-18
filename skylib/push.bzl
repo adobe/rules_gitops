@@ -29,13 +29,16 @@ load(
     "runfile",
 )
 
-K8sPushInfo = provider(fields = [
-    "image_label",
-    "legacy_image_name",
-    "registry",
-    "repository",
-    "digestfile",
-])
+K8sPushInfo = provider(
+    "rules_docker's PushInfo wirth additional information of image_label",
+    fields = [
+        "image_label",
+        "legacy_image_name",
+        "registry",
+        "repository",
+        "digestfile",
+    ],
+)
 
 def _get_runfile_path(ctx, f):
     return "${RUNFILES}/%s" % runfile(ctx, f)

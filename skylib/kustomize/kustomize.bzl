@@ -28,7 +28,6 @@ def _download_binary_impl(ctx):
         platform = "darwin_amd64"
     else:
         fail("Platform " + ctx.os.name + " is not supported")
-    path = ctx.path("bin")
 
     ctx.file("BUILD", """
 sh_binary(
@@ -66,23 +65,6 @@ def _stamp_file(ctx, infile, output):
         tools = [ctx.executable._stamper],
     )
 
-def _stamp(ctx, string, output):
-    stamps = [ctx.file._info_file]
-    stamp_args = [
-        "--stamp-info-file=%s" % sf.path
-        for sf in stamps
-    ]
-    ctx.actions.run(
-        executable = ctx.executable._stamper,
-        arguments = [
-            "--format=%s" % string,
-            "--output=%s" % output.path,
-        ] + stamp_args,
-        inputs = [ctx.executable._stamper] + stamps,
-        outputs = [output],
-        mnemonic = "Stamp",
-    )
-
 def _is_ignored_src(src):
     basename = src.rsplit("/", 1)[-1]
     return basename.startswith(".")
@@ -92,6 +74,8 @@ _script_template = """\
 set -euo pipefail
 {kustomize} build --load-restrictor LoadRestrictionsNone --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
+
+# buildifier: disable=provider-params
 KustomizeInfo = provider(fields = [
     "image_pushes",
 ])
@@ -240,7 +224,7 @@ def _kustomize_impl(ctx):
 
         # Image name substitutions
         if ctx.attr.images:
-            for i, img in enumerate(ctx.attr.images):
+            for _, img in enumerate(ctx.attr.images):
                 kpi = img[K8sPushInfo]
                 regrepo = kpi.registry + "/" + kpi.repository
                 if "{" in regrepo:
@@ -354,9 +338,6 @@ kustomize = rule(
     },
 )
 
-def _runfiles(ctx, f):
-    return "PYTHON_RUNFILES=${RUNFILES} ${RUNFILES}/%s" % _get_runfile_path(ctx, f)
-
 def _push_all_impl(ctx):
     trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
 
@@ -404,9 +385,6 @@ def _remove_prefixes(s, prefixes):
     for prefix in prefixes:
         s = _remove_prefix(s, prefix)
     return s
-
-def _python_runfiles(ctx, f):
-    return "PYTHON_RUNFILES=${RUNFILES} %s" % _runfiles(ctx, f)
 
 def imagePushStatements(
         ctx,
