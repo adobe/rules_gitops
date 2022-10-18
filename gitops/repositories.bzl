@@ -20,7 +20,7 @@ load("@io_bazel_rules_docker//repositories:repositories.bzl", container_reposito
 load("@io_bazel_rules_docker//repositories:go_repositories.bzl", container_go_deps = "go_deps")
 load("@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize_setup")
 
-def rules_gitops_repositories():
+def rules_gitops_repositories(go_version = None):
     """Initializes Declares workspaces the GitOps rules depend on.
 
     Workspaces that use rules_gitops should call this after rules_gitops_dependencies call.
@@ -28,8 +28,9 @@ def rules_gitops_repositories():
 
     bazel_skylib_workspace()
     protobuf_deps()
-    go_rules_dependencies()
-    go_register_toolchains(version = "1.19.1")
+    if go_version:
+        go_rules_dependencies()
+        go_register_toolchains(version = go_version)
     gazelle_dependencies()
     container_repositories()
     container_go_deps()
