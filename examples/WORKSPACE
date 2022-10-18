@@ -23,6 +23,13 @@ load("@com_adobe_rules_gitops//gitops:repositories.bzl", "rules_gitops_repositor
 
 rules_gitops_repositories()
 
+load("@com_adobe_rules_gitops//skylib:k8s.bzl", "kubeconfig")
+
+kubeconfig(
+    name = "k8s_test",
+    cluster = "kind-kind",
+)
+
 #
 # Repository dependencies
 #
