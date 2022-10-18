@@ -8,9 +8,9 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
-
 load("//skylib:k8s.bzl", "k8s_deploy")
+
+licenses(["notice"])  # Apache 2.0
 
 k8s_deploy(
     name = "testdeployment",

@@ -3,7 +3,7 @@
 workflows:
 
   - &build_workflow
-    name: Faster CI / build (4.2.1)
+    name: Faster CI / build (5.1.1)
     image: us.gcr.io/fasterci/bazelbuilder:d278ee1
     on:
       push:
@@ -30,6 +30,6 @@ workflows:
         run: bazel run //:buildifier-check
 
   - <<: *build_workflow
-    name: Faster CI / build (5.1.1)
+    name: Faster CI / build (5.3.0)
     env:
-      USE_BAZEL_VERSION: "5.1.1"
+      USE_BAZEL_VERSION: "5.3.0"

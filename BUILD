@@ -11,10 +11,10 @@
 # gazelle:build_tags darwin,linux
 # gazelle:exclude examples
 
-licenses(["notice"])  # Apache 2.0
-
 load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
+
+licenses(["notice"])  # Apache 2.0
 
 exports_files(["WORKSPACE"])
 

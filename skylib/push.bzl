@@ -29,13 +29,16 @@ load(
     "runfile",
 )
 
-K8sPushInfo = provider(fields = [
-    "image_label",
-    "legacy_image_name",
-    "registry",
-    "repository",
-    "digestfile",
-])
+K8sPushInfo = provider(
+    "rules_docker's PushInfo wirth additional information of image_label",
+    fields = [
+        "image_label",
+        "legacy_image_name",
+        "registry",
+        "repository",
+        "digestfile",
+    ],
+)
 
 def _get_runfile_path(ctx, f):
     return "${RUNFILES}/%s" % runfile(ctx, f)
@@ -82,7 +85,7 @@ def _impl(ctx):
     pusher_runfiles = [ctx.executable._pusher] + pusher_input
 
     if ctx.attr.skip_unchanged_digest:
-        pusher_args += ["-skip-unchanged-digest"]
+        pusher_args.append("-skip-unchanged-digest")
     digester_args += ["--dst", str(ctx.outputs.digest.path), "--format", str(ctx.attr.format)]
     ctx.actions.run(
         inputs = digester_input,
@@ -95,7 +98,7 @@ def _impl(ctx):
 
     if ctx.attr.image_digest_tag:
         tag = "$(cat {} | cut -d ':' -f 2 | cut -c 1-7)".format(_get_runfile_path(ctx, ctx.outputs.digest))
-        pusher_runfiles += [ctx.outputs.digest]
+        pusher_runfiles.append(ctx.outputs.digest)
 
     pusher_args.append("--format={}".format(ctx.attr.format))
     pusher_args.append("--dst={registry}/{repository}:{tag}".format(
@@ -212,12 +215,12 @@ Args:
         ),
         "_digester": attr.label(
             default = "@io_bazel_rules_docker//container/go/cmd/digester",
-            cfg = "host",
+            cfg = "exec",
             executable = True,
         ),
         "_pusher": attr.label(
             default = "@io_bazel_rules_docker//container/go/cmd/pusher",
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),
