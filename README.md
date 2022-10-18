@@ -70,11 +70,11 @@ go_rules_dependencies()
 
 go_register_toolchains(version = "1.19.2")
 
-rules_gitops_version = "01b16044b3ae3384d03a75f58d45218091ad1ba5"
+rules_gitops_version = "6db602bea69822a1fa17d19865a450f504e5a4bc"
 
 http_archive(
     name = "com_adobe_rules_gitops",
-    sha256 = "4921c8f7fab5f16240f39bc67b10a1dce9f7c63eda54ceb7b97b88251ad7bdaf",
+    sha256 = "08b909ff9440e1bb03befa5cbd01e9880fff67ce2b83dc20f53e918dff9e4f6b",
     strip_prefix = "rules_gitops-%s" % rules_gitops_version,
     urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
 )
