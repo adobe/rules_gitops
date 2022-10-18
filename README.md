@@ -88,8 +88,6 @@ load("@com_adobe_rules_gitops//gitops:repositories.bzl", "rules_gitops_repositor
 rules_gitops_repositories()
 
 ```
-The `rules_gitops_repositories()` parameter is optional go sdk version to load. Omit if rules_go
-is initialized elsewhere, in this case rules_go should be initialized before rules_gitops.
 
 <a name="k8s_deploy"></a>
 ## k8s_deploy
