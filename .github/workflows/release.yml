@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    env:
+      USE_BAZEL_VERSION: 5.3.1
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -18,9 +20,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/bazel
-          key: bazel-${{ matrix.bazel-version }}-${{ github.sha }}
+          key: bazel-${{ env.USE_BAZEL_VERSION }}-${{ github.sha }}
           restore-keys: |
-            bazel-${{ matrix.bazel-version }}-
+            bazel-${{ env.USE_BAZEL_VERSION }}-
             bazel-
       - name: Setup build tools
         run: |
