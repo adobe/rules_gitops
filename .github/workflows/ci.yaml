@@ -33,7 +33,7 @@ jobs:
         run: |
           TOOLS_DIR="${HOME}/.cache/tools"
           mkdir -p "${TOOLS_DIR}/bin/"
-          curl -Ls -o "${TOOLS_DIR}/bin/bazel" "https://github.com/bazelbuild/bazelisk/releases/download/v1.3.0/bazelisk-linux-amd64"
+          curl -Ls -o "${TOOLS_DIR}/bin/bazel" "https://github.com/bazelbuild/bazelisk/releases/download/v1.14.0/bazelisk-linux-amd64"
           chmod +x "${TOOLS_DIR}/bin/bazel"
           curl -Ls -o "${TOOLS_DIR}/bin/buildifier" "https://github.com/bazelbuild/buildtools/releases/download/0.29.0/buildifier"
           chmod +x "${TOOLS_DIR}/bin/buildifier"
