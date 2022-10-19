@@ -394,6 +394,7 @@ def _kubeconfig_impl(repository_ctx):
     repository_ctx.file("BUILD", """exports_files(["kubeconfig", "kubectl", "cluster"])""", False)
 
     return {
+        "name": repository_ctx.attr.name,
         "cluster": repository_ctx.attr.cluster,
         "server": repository_ctx.attr.server,
         "use_host_config": repository_ctx.attr.use_host_config,
