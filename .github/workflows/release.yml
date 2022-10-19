@@ -1,23 +1,18 @@
-name: CI
+# Cut a release whenever a new tag is pushed to the repo.
+# You should use an annotated tag, like `git tag -a v1.2.3`
+# and put the release notes into the commit message for the tag.
+name: Release
 
 on:
   push:
-    branches:
-      - main
-      - feature/*
-  pull_request:
-    branches: [main]
+    tags:
+      - "v*.*.*"
 
 jobs:
   build:
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        bazel-version:
-          - 5.1.1
-          - 5.3.1
     env:
-      USE_BAZEL_VERSION: ${{ matrix.bazel-version }}
+      USE_BAZEL_VERSION: 5.3.1
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -25,9 +20,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/bazel
-          key: bazel-${{ matrix.bazel-version }}-${{ github.sha }}
+          key: bazel-${{ env.USE_BAZEL_VERSION }}-${{ github.sha }}
           restore-keys: |
-            bazel-${{ matrix.bazel-version }}-
+            bazel-${{ env.USE_BAZEL_VERSION }}-
             bazel-
       - name: Setup build tools
         run: |
@@ -81,3 +76,12 @@ jobs:
         run: |
           cd examples
           ./e2e-test.sh
+      - name: Prepare workspace snippet
+        run: .github/workflows/workspace_snippet.sh ${{ env.GITHUB_REF_NAME }} > release_notes.txt
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: true
+          # Use GH feature to populate the changelog automatically
+          generate_release_notes: true
+          body_path: release_notes.txt

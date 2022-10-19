@@ -32,62 +32,13 @@ Bazel GitOps Rules is an alternative to [rules_k8s](https://github.com/bazelbuil
 * [Integration Testing Support](#integration-testing-support)
 
 
-## Setup
+<a name="installation"></a>
+## Installation
 
-Add the following to your `WORKSPACE` file to add the necessary external dependencies:
+From the release you wish to use:
+<https://github.com/adobe/rules_gitops/releases>
+copy the WORKSPACE snippet into your `WORKSPACE` file.
 
-<!--
-# generate the WORKSPACE snippet:
-
-rev=$(git rev-parse HEAD) && sha265=$(curl -Ls https://github.com/adobe/rules_gitops/archive/${rev}.zip | shasum -a 256 - | cut -d ' ' -f1) && cat <<EOF
-# copy/paste following snippet into README.md
-rules_gitops_version = "${rev}"
-
-http_archive(
-    name = "com_adobe_rules_gitops",
-    sha256 = "${sha265}",
-    strip_prefix = "rules_gitops-%s" % rules_gitops_version,
-    urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
-)
-EOF
--->
-
-```python
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
-http_archive(
-    name = "io_bazel_rules_go",
-    sha256 = "099a9fb96a376ccbbb7d291ed4ecbdfd42f6bc822ab77ae6f1b5cb9e914e94fa",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.35.0/rules_go-v0.35.0.zip",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.35.0/rules_go-v0.35.0.zip",
-    ],
-)
-
-load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
-
-go_rules_dependencies()
-
-go_register_toolchains(version = "1.19.2")
-
-rules_gitops_version = "6db602bea69822a1fa17d19865a450f504e5a4bc"
-
-http_archive(
-    name = "com_adobe_rules_gitops",
-    sha256 = "08b909ff9440e1bb03befa5cbd01e9880fff67ce2b83dc20f53e918dff9e4f6b",
-    strip_prefix = "rules_gitops-%s" % rules_gitops_version,
-    urls = ["https://github.com/adobe/rules_gitops/archive/%s.zip" % rules_gitops_version],
-)
-
-load("@com_adobe_rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
-
-rules_gitops_dependencies()
-
-load("@com_adobe_rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
-
-rules_gitops_repositories()
-
-```
 
 <a name="k8s_deploy"></a>
 ## k8s_deploy
@@ -147,7 +98,7 @@ The base manifests will be modified by most of the other `k8s_deploy` attributes
 To demonstrate, let's go over hypothetical multi cluster deployment.
 
 Here is the fragment of the `k8s_deploy` rule that is responsible for generating manifest variants per CLOUD, CLUSTER, and NAMESPACE :
-```python
+```starlark
 k8s_deploy(
     ...
     manifests = glob([                 # (1)
@@ -208,7 +159,7 @@ That looks like a lot. But lets try to decode what is happening here:
 
 Configmaps are a special case of manifests. They can be rendered from a collection of files of any kind (.yaml, .properties, .xml, .sh, whatever). Let's use hypothetical Grafana deployment as an example:
 
-```python
+```starlark
 [
     k8s_deploy(
         name = NAME,
@@ -280,7 +231,7 @@ spec:
 Third-party Docker images can be referenced directly in K8s manifests, but for most apps, we need to run our own images. The images are built in the Bazel build pipeline using [rules_docker](https://github.com/bazelbuild/rules_docker). For example, the `java_image` rule creates an image of a Java application from Java source code, dependencies, and configuration.
 
 Here's a (very contrived) example of how this ties in with `k8s_deploy`. Here's the `BUILD` file located in the package `//examples`:
-```python
+```starlark
 java_image(
     name = "helloworld_image",
     srcs = glob(["*.java"]),
@@ -371,7 +322,7 @@ Many instances of `k8s_deploy` include an `objects` attribute that references ot
 `k8s_deploy`. When chained this way, running the `.apply` will also apply any dependencies as well.
 
 For example, to add dependency to the example [helloworld deployment](./examples/helloworld/BUILD):
-```python
+```starlark
 k8s_deploy(
     name = "mynamespace",
     objects = [
@@ -457,7 +408,7 @@ The `create_gitops_prs` tool will query all `gitops` targets which have set the 
 The all discovered `gitops` targets are grouped by the value of ***deploy_branch*** attribute. The one deployment branch will accumulate the output of all corresponding `gitops` targets.
 
 For example, we define two deployments: grafana and prometheus. Both deployments share the same namespace. The deployments a grouped by namespace.
-```python
+```starlark
 [
     k8s_deploy(
         name = NAME,
@@ -524,7 +475,7 @@ The meaning of the parameters is the same as with [trunk based workflow](#trunk_
 The `--release_branch` parameter takes the value of `release/team`. The additional parameter `--deployment_branch_suffix` will add the release branch suffix to the target deployment branch name.
 
 If we modify previous example:
-```python
+```starlark
 [
     k8s_deploy(
         name = NAME,
@@ -564,7 +515,7 @@ The result of the setup above the `create_gitops_prs` tool will open up to 2 pot
 **Note:** the Integration testing support has known limitations and should be considered **experimental**. The public API is subject to change.
 
 Integration tests are defined in `BUILD` files like this:
-```python
+```starlark
 k8s_test_setup(
     name = "service_it.setup",
     kubeconfig = "@k8s_test//:kubeconfig",
@@ -597,7 +548,7 @@ The test code launches the script to perform the test setup. The test code shoul
 
 The `@k8s_test//:kubeconfig` target referenced from `k8s_test_setup` rule serves the purpose of making Kubernetes configuration available in the test sandbox. The `kubeconfig` repository rule in the `WORKSPACE` file will need, at minimum, provide the cluster name.
 
-```python
+```starlark
 load("@com_adobe_rules_gitops//gitops:defs.bzl", "kubeconfig")
 
 kubeconfig(
