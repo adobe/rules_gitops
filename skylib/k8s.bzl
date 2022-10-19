@@ -124,7 +124,7 @@ def k8s_deploy(
         gitops = True,  # make sure to use gitops = False to work with individual namespace. This option will be turned False if namespace is '{BUILD_USER}'
         gitops_path = "cloud",
         deployment_branch = None,
-        release_branch_prefix = "master",
+        release_branch_prefix = "main",
         start_tag = "{{",
         end_tag = "}}",
         visibility = None):
