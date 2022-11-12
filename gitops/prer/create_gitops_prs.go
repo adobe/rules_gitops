@@ -38,6 +38,18 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
+// SliceFlags should be used with flags.Var to define a command line flag with multiple values
+type SliceFlags []string
+
+func (i *SliceFlags) String() string {
+	return "[" + strings.Join(*i, ",") + "]"
+}
+
+func (i *SliceFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
 var (
 	releaseBranch          = flag.String("release_branch", "master", "filter gitops targets by release branch")
 	bazelCmd               = flag.String("bazel_cmd", "tools/bazel", "bazel binary to use")
@@ -53,7 +65,16 @@ var (
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
 	gitHost                = flag.String("git_server", "bitbucket", "the git server api to use. 'bitbucket', 'github' or 'gitlab'")
+	gitopsKind             SliceFlags
+	gitopsRuleName         SliceFlags
+	gitopsRuleAttr         SliceFlags
 )
+
+func init() {
+	flag.Var(&gitopsKind, "gitops_dependencies_kind", "dependency kind(s) to run during gitops phase. Can be specified multiple times. Default is 'k8s_container_push'")
+	flag.Var(&gitopsRuleName, "gitops_dependencies_name", "dependency name(s) to run during gitops phase. Can be specified multiple times. Default is empty")
+	flag.Var(&gitopsRuleAttr, "gitops_dependencies_attr", "dependency attribute(s) to run during gitops phase. Use attribute=value format. Can be specified multiple times. Default is empty")
+}
 
 func bazelQuery(query string) *analysis.CqueryResult {
 	log.Println("Executing bazel cquery ", query)
@@ -82,6 +103,9 @@ func main() {
 		if err := os.Chdir(*workspace); err != nil {
 			log.Fatal(err)
 		}
+	}
+	if len(gitopsKind) == 0 {
+		gitopsKind = []string{"k8s_container_push"}
 	}
 
 	var gitServer git.Server
@@ -170,7 +194,27 @@ func main() {
 	}
 
 	// Push images
-	qr = bazelQuery(fmt.Sprintf("kind(k8s_container_push, deps(%s))", strings.Join(updatedGitopsTargets, " + ")))
+	depslist := strings.Join(updatedGitopsTargets, " ")
+	var qv []string
+	for _, kind := range gitopsKind {
+		q := fmt.Sprintf("kind(%s, deps(%s))", kind, depslist)
+		qv = append(qv, q)
+	}
+	for _, name := range gitopsRuleName {
+		q := fmt.Sprintf("filter(%s, deps(%s))", name, depslist)
+		qv = append(qv, q)
+	}
+	for _, attr := range gitopsRuleAttr {
+		name, value, found := strings.Cut(attr, "=")
+		if !found {
+			value = ".*"
+		}
+		q := fmt.Sprintf("attr(%s, %s, deps(%s))", name, value, depslist)
+		qv = append(qv, q)
+	}
+
+	query := strings.Join(qv, " union ")
+	qr = bazelQuery(query)
 	targetsCh := make(chan string)
 	var wg sync.WaitGroup
 	wg.Add(*pushParallelism)
