@@ -150,7 +150,7 @@ def k8s_deploy(
         # Mynamespace option
         if not namespace:
             namespace = "{BUILD_USER}"
-        image_pushes += _image_pushes(
+        image_pushes = image_pushes + _image_pushes(
             name_suffix = "-mynamespace.push",
             images = images,
             image_registry = image_registry,
@@ -211,7 +211,7 @@ def k8s_deploy(
         # gitops
         if not namespace:
             fail("namespace must be defined for gitops k8s_deploy")
-        image_pushes += _image_pushes(
+        image_pushes = image_pushes + _image_pushes(
             name_suffix = ".push",
             images = images,
             image_registry = image_registry,
