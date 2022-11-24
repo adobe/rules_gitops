@@ -345,7 +345,7 @@ def _push_all_impl(ctx):
         template = ctx.file._tpl,
         substitutions = {
             "%{statements}": "\n".join([
-                                 "echo pushing {}/{}".format(exe[PushInfo].registry, exe[PushInfo].repository)
+                                 "echo pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
                                  for exe in trans_img_pushes
                              ]) + "\n" +
                              "\n".join([
@@ -393,7 +393,7 @@ def imagePushStatements(
     statements = ""
     trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
     statements += "\n".join([
-        "echo  pushing {}/{}".format(exe[PushInfo].registry, exe[PushInfo].repository)
+        "echo  pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
         for exe in trans_img_pushes
     ]) + "\n"
     statements += "\n".join([
@@ -505,7 +505,7 @@ def _kubectl_impl(ctx):
     if ctx.attr.push:
         trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
         statements += "\n".join([
-            "echo  pushing {}/{}".format(exe[PushInfo].registry, exe[PushInfo].repository)
+            "echo  pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
             for exe in trans_img_pushes
         ]) + "\n"
         statements += "\n".join([
