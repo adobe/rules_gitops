@@ -50,10 +50,14 @@ def _impl(ctx):
         # the image was already pushed, just rename if needed. Ignore registry and repository parameters
         kpi = ctx.attr.image[K8sPushInfo]
         ctx.actions.write(
-            content = "#!/bin/bash\n# This file intentionally left blank\n",
+            content = "#!/bin/bash\n{actual_pusher}\n".format(
+                actual_pusher = ctx.attr.image[DefaultInfo].files_to_run.executable.short_path,
+                ),
             output = ctx.outputs.executable,
             is_executable = True,
             )
+
+        runfiles = ctx.runfiles(files = []).merge(ctx.attr.image[DefaultInfo].default_runfiles)
 
         ctx.actions.run_shell(
             tools = [kpi.digestfile],
@@ -67,7 +71,11 @@ def _impl(ctx):
         )
 
         return [
-            # we do not need to provide any executable
+            # we need to provide executable that calls the actual pusher
+            DefaultInfo(
+                executable = ctx.outputs.executable,
+                runfiles = runfiles,
+            ),
             K8sPushInfo(
                 image_label = kpi.image_label,
                 legacy_image_name = ctx.attr.legacy_image_name, # this is the only difference
@@ -270,30 +278,3 @@ Args:
     },
 )
 
-def _rename_impl(ctx):
-    kpi = ctx.attr.image_push[K8sPushInfo]
-    return [
-        K8sPushInfo(
-            image_label = kpi.image_label,
-            legacy_image_name = ctx.attr.legacy_image_name,
-            registry = kpi.registry,
-            repository = kpi.repository,
-            digestfile = kpi.digestfile,
-        ),
-    ]
-
-rename = rule(
-    doc = "Rename a container push.",
-    implementation = _rename_impl,
-    attrs = {
-        "image_push": attr.label(
-            providers = [K8sPushInfo],
-            mandatory = True,
-            doc = "The label of the pushed image.",
-        ),
-        "legacy_image_name": attr.string(
-            mandatory = True,
-            doc = "The new name of the image.",
-        ),
-    },
-)
