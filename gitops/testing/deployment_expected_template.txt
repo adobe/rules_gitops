@@ -13,5 +13,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: docker.io/skylib/kustomize/tests/image@sha256:ab52e7a19e6ddeb7f720f833d53e0fac3833391929317f6a9b7e3b5e880b8056
+      - image: docker.io/skylib/kustomize/tests/image@{{imports.digest}}
         name: myapp

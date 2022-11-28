@@ -11,6 +11,7 @@
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("//gitops:defs.bzl", "k8s_deploy", "external_image", "k8s_test_setup")
 load("//skylib:push.bzl", "k8s_container_push")
+load("//skylib:templates.bzl", "expand_template")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -29,6 +30,30 @@ k8s_deploy(
     release_branch_prefix = "gitops_test_release_branch",
     visibility = ["//visibility:public"],
 )
+
+expand_template(
+    name = "generate_deployment_expected",
+    template = ":deployment_expected_template.txt",
+    out = "deployment_expected.txt",
+    deps = ["//skylib/kustomize/tests:image.digest"],
+    deps_aliases = {
+        "digest": "//skylib/kustomize/tests:image.digest",
+    },
+    substitutions = {},
+)
+
+expand_template(
+    name = "generate_deployment2_expected",
+    template = ":deployment2_expected_template.txt",
+    out = "deployment2_expected.txt",
+    deps = ["//skylib/kustomize/tests:image.digest"],
+    deps_aliases = {
+        "digest": "//skylib/kustomize/tests:image.digest",
+    },
+    substitutions = {},
+)
+
+
 diff_test(
     name = "legacy_alias_test",
     file1 = ":legacy_alias",
