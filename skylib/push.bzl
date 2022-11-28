@@ -49,9 +49,11 @@ def _impl(ctx):
     if K8sPushInfo in ctx.attr.image:
         # the image was already pushed, just rename if needed. Ignore registry and repository parameters
         kpi = ctx.attr.image[K8sPushInfo]
+        print("DefaultInfo:", ctx.attr.image, ctx.attr.image[DefaultInfo])
+        actual_pusher = ctx.attr.image[DefaultInfo].files_to_run.executable.short_path if ctx.attr.image[DefaultInfo].files_to_run.executable else '';
         ctx.actions.write(
             content = "#!/bin/bash\n{actual_pusher}\n".format(
-                actual_pusher = ctx.attr.image[DefaultInfo].files_to_run.executable.short_path,
+                actual_pusher = actual_pusher,
                 ),
             output = ctx.outputs.executable,
             is_executable = True,
