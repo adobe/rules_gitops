@@ -73,8 +73,8 @@ show = rule(
 def _image_pushes(name_suffix, images, image_registry, image_repository, image_repository_prefix, image_digest_tag):
     image_pushes = []
 
-    def process_image(image, legacy_name = None):
-        rule_name_parts = [image, image_registry, image_repository, legacy_name]
+    def process_image(image_label, legacy_name = None):
+        rule_name_parts = [image_label, image_registry, image_repository, legacy_name]
         rule_name_parts = [p for p in rule_name_parts if p]
         rule_name = "_".join(rule_name_parts)
         rule_name = rule_name.replace("/", "_").replace(":", "_")
@@ -85,7 +85,7 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_r
         if not native.existing_rule(rule_name + name_suffix):
             k8s_container_push(
                 name = rule_name + name_suffix,
-                image = image,
+                image = image_label,  # buildifier: disable=uninitialized
                 image_digest_tag = image_digest_tag,
                 legacy_image_name = legacy_name,
                 registry = image_registry,
