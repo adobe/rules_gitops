@@ -68,7 +68,7 @@ def _impl(ctx):
             mnemonic = "CopyFile",
             progress_message = "Copying files",
             use_default_shell_env = True,
-            execution_requirements = {"no-remote": "1", "no-cache": "1"},
+            execution_requirements = {"no-remote": "1", "no-cache": "1"},  # It is is more efficient to locally copy file (which may come from the cache) rather than talk to remote cache. See https://github.com/aspect-build/bazel-lib/blob/e9b66b5e0a11946853c20ad4781abc077ba2a9fe/lib/private/copy_common.bzl#L4 for the 
         )
 
         return [
