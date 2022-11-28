@@ -18,7 +18,7 @@ http_archive(
     name = "com_adobe_rules_gitops",
     sha256 = "${SHA}",
     strip_prefix = "${PREFIX}",
-    url = ["https://github.com/adobe/rules_gitops/archive/refs/tags/${TAG}.tar.gz"],
+    urls = ["https://github.com/adobe/rules_gitops/archive/refs/tags/${TAG}.tar.gz"],
 )
 EOF
 
