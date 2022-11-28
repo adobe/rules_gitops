@@ -9,7 +9,7 @@
 # governing permissions and limitations under the License.
 
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
-load("//gitops:defs.bzl", "k8s_deploy", "external_image", "k8s_test_setup")
+load("//gitops:defs.bzl", "external_image", "k8s_deploy", "k8s_test_setup")
 load("//skylib:push.bzl", "k8s_container_push")
 load("//skylib:templates.bzl", "expand_template")
 
@@ -24,7 +24,7 @@ k8s_deploy(
         "img": "//skylib/kustomize/tests:image",
     },
     manifests = [
-        ":deployment_legacy.yaml"
+        ":deployment_legacy.yaml",
     ],
     namespace = "ci",
     release_branch_prefix = "gitops_test_release_branch",
@@ -33,26 +33,25 @@ k8s_deploy(
 
 expand_template(
     name = "generate_deployment_expected",
-    template = ":deployment_expected_template.txt",
     out = "deployment_expected.txt",
-    deps = ["//skylib/kustomize/tests:image.digest"],
     deps_aliases = {
         "digest": "//skylib/kustomize/tests:image.digest",
     },
     substitutions = {},
+    template = ":deployment_expected_template.txt",
+    deps = ["//skylib/kustomize/tests:image.digest"],
 )
 
 expand_template(
     name = "generate_deployment2_expected",
-    template = ":deployment2_expected_template.txt",
     out = "deployment2_expected.txt",
-    deps = ["//skylib/kustomize/tests:image.digest"],
     deps_aliases = {
         "digest": "//skylib/kustomize/tests:image.digest",
     },
     substitutions = {},
+    template = ":deployment2_expected_template.txt",
+    deps = ["//skylib/kustomize/tests:image.digest"],
 )
-
 
 diff_test(
     name = "legacy_alias_test",
@@ -69,7 +68,7 @@ k8s_deploy(
         "img": "//skylib/kustomize/tests:image",
     },
     manifests = [
-        ":deployment.yaml"
+        ":deployment.yaml",
     ],
     namespace = "ci",
     release_branch_prefix = "gitops_test_release_branch",
@@ -91,7 +90,7 @@ k8s_deploy(
         "//skylib/kustomize/tests:image",
     ],
     manifests = [
-        ":deployment.yaml"
+        ":deployment.yaml",
     ],
     namespace = "ci",
     release_branch_prefix = "gitops_test_release_branch",
@@ -107,8 +106,8 @@ diff_test(
 # using image from external repo
 external_image(
     name = "external_image",
-    image = "gcr.io/repo/someimage:thetag",
     digest = "sha:1234567890",
+    image = "gcr.io/repo/someimage:thetag",
 )
 
 k8s_deploy(
@@ -120,7 +119,7 @@ k8s_deploy(
         ":external_image",
     ],
     manifests = [
-        ":deployment1.yaml"
+        ":deployment1.yaml",
     ],
     namespace = "ci",
     release_branch_prefix = "gitops_test_release_branch",
@@ -142,7 +141,7 @@ k8s_deploy(
         "img": ":external_image",
     },
     manifests = [
-        ":deployment_legacy.yaml"
+        ":deployment_legacy.yaml",
     ],
     namespace = "ci",
     release_branch_prefix = "gitops_test_release_branch",
@@ -154,7 +153,6 @@ diff_test(
     file1 = ":external_image_legacy",
     file2 = "deployment1_expected.txt",
 )
-
 
 k8s_container_push(
     name = "pushed_image",
@@ -178,7 +176,7 @@ k8s_deploy(
         "img": ":pushed_image",
     },
     manifests = [
-        ":deployment_legacy.yaml"
+        ":deployment_legacy.yaml",
     ],
     namespace = "ci",
     release_branch_prefix = "gitops_test_release_branch",
@@ -198,4 +196,3 @@ k8s_test_setup(
         ":legacy_renamed_alias",
     ],
 )
-

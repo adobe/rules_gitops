@@ -73,7 +73,7 @@ show = rule(
 def _image_pushes(name_suffix, images, image_registry, image_repository, image_repository_prefix, image_digest_tag):
     image_pushes = []
 
-    def process_image(image, legacy_name=None):
+    def process_image(image, legacy_name = None):
         rule_name_parts = [image, image_registry, image_repository, legacy_name]
         rule_name_parts = [p for p in rule_name_parts if p]
         rule_name = "_".join(rule_name_parts)
@@ -94,7 +94,7 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_r
             )
         return rule_name + name_suffix
 
-    if type(images) == 'dict':
+    if type(images) == "dict":
         for image_name in images:
             image = images[image_name]
             push = process_image(image, image_name)

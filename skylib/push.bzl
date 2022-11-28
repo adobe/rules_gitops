@@ -32,8 +32,8 @@ load(
 K8sPushInfo = provider(
     "Information required to inject image into a manifest",
     fields = [
-        "image_label", # bazel target label of the image
-        "legacy_image_name", # optional short name
+        "image_label",  # bazel target label of the image
+        "legacy_image_name",  # optional short name
         "registry",
         "repository",
         "digestfile",
@@ -49,14 +49,14 @@ def _impl(ctx):
     if K8sPushInfo in ctx.attr.image:
         # the image was already pushed, just rename if needed. Ignore registry and repository parameters
         kpi = ctx.attr.image[K8sPushInfo]
-        actual_pusher = ctx.attr.image[DefaultInfo].files_to_run.executable.short_path if ctx.attr.image[DefaultInfo].files_to_run.executable else '';
+        actual_pusher = ctx.attr.image[DefaultInfo].files_to_run.executable.short_path if ctx.attr.image[DefaultInfo].files_to_run.executable else ""
         ctx.actions.write(
             content = "#!/bin/bash\n{actual_pusher}\n".format(
                 actual_pusher = actual_pusher,
-                ),
+            ),
             output = ctx.outputs.executable,
             is_executable = True,
-            )
+        )
 
         runfiles = ctx.runfiles(files = []).merge(ctx.attr.image[DefaultInfo].default_runfiles)
 
@@ -79,13 +79,12 @@ def _impl(ctx):
             ),
             K8sPushInfo(
                 image_label = kpi.image_label,
-                legacy_image_name = ctx.attr.legacy_image_name, # this is the only difference
+                legacy_image_name = ctx.attr.legacy_image_name,  # this is the only difference
                 registry = kpi.registry,
                 repository = kpi.repository,
                 digestfile = kpi.digestfile,
             ),
         ]
-
 
     # TODO: Possible optimization for efficiently pushing intermediate format after container_image is refactored, similar with the old python implementation, e.g., push-by-layer.
 
@@ -278,4 +277,3 @@ Args:
         "digest": "%{name}.digest",
     },
 )
-
