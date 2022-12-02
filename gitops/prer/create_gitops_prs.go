@@ -194,14 +194,17 @@ func main() {
 	}
 
 	// Push images
-	depslist := strings.Join(updatedGitopsTargets, " ")
+
+	// Create space separated set('//a' '//b' ... '//z') of targets.
+	// Target names need to be quoted to protect from + and other special characters
+	depsList := "set('" + strings.Join(updatedGitopsTargets, "' '") + "')"
 	var qv []string
 	for _, kind := range gitopsKind {
-		q := fmt.Sprintf("kind(%s, deps(%s))", kind, depslist)
+		q := fmt.Sprintf("kind(%s, deps(%s))", kind, depsList)
 		qv = append(qv, q)
 	}
 	for _, name := range gitopsRuleName {
-		q := fmt.Sprintf("filter(%s, deps(%s))", name, depslist)
+		q := fmt.Sprintf("filter(%s, deps(%s))", name, depsList)
 		qv = append(qv, q)
 	}
 	for _, attr := range gitopsRuleAttr {
@@ -209,7 +212,7 @@ func main() {
 		if !found {
 			value = ".*"
 		}
-		q := fmt.Sprintf("attr(%s, %s, deps(%s))", name, value, depslist)
+		q := fmt.Sprintf("attr(%s, %s, deps(%s))", name, value, depsList)
 		qv = append(qv, q)
 	}
 
