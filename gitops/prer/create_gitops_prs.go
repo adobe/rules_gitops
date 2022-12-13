@@ -68,6 +68,7 @@ var (
 	gitopsKind             SliceFlags
 	gitopsRuleName         SliceFlags
 	gitopsRuleAttr         SliceFlags
+	dryRun                 = flag.Bool("dry_run", false, "Do not create PRs, just print what would be done")
 )
 
 func init() {
@@ -236,6 +237,10 @@ func main() {
 	close(targetsCh)
 	wg.Wait()
 
+	if *dryRun {
+		log.Println("dry-run: skipping push")
+		return
+	}
 	workdir.Push(updatedGitopsBranches)
 
 	for _, branch := range updatedGitopsBranches {
