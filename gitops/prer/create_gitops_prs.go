@@ -238,12 +238,17 @@ func main() {
 	wg.Wait()
 
 	if *dryRun {
+		log.Println("dry-run: updated gitops branches: ", updatedGitopsBranches)
 		log.Println("dry-run: skipping push")
-		return
+	} else {
+		workdir.Push(updatedGitopsBranches)
 	}
-	workdir.Push(updatedGitopsBranches)
 
 	for _, branch := range updatedGitopsBranches {
+		if *dryRun {
+			log.Println("dry-run: skipping PR creation: branch ", branch, "into ", *prInto)
+			continue
+		}
 		err := gitServer.CreatePR(branch, *prInto, fmt.Sprintf("GitOps deployment %s", branch))
 		if err != nil {
 			log.Fatal("unable to create PR: ", err)
