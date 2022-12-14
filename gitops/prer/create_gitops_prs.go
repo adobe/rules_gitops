@@ -68,6 +68,7 @@ var (
 	gitopsKind             SliceFlags
 	gitopsRuleName         SliceFlags
 	gitopsRuleAttr         SliceFlags
+	dryRun                 = flag.Bool("dry_run", false, "Do not create PRs, just print what would be done")
 )
 
 func init() {
@@ -236,9 +237,18 @@ func main() {
 	close(targetsCh)
 	wg.Wait()
 
-	workdir.Push(updatedGitopsBranches)
+	if *dryRun {
+		log.Println("dry-run: updated gitops branches: ", updatedGitopsBranches)
+		log.Println("dry-run: skipping push")
+	} else {
+		workdir.Push(updatedGitopsBranches)
+	}
 
 	for _, branch := range updatedGitopsBranches {
+		if *dryRun {
+			log.Println("dry-run: skipping PR creation: branch ", branch, "into ", *prInto)
+			continue
+		}
 		err := gitServer.CreatePR(branch, *prInto, fmt.Sprintf("GitOps deployment %s", branch))
 		if err != nil {
 			log.Fatal("unable to create PR: ", err)
