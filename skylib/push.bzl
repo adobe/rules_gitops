@@ -50,7 +50,6 @@ def _impl(ctx):
         # the image was already pushed, just rename if needed. Ignore registry and repository parameters
         kpi = ctx.attr.image[K8sPushInfo]
         if ctx.attr.image[DefaultInfo].files_to_run.executable:
-
             ctx.actions.expand_template(
                 template = ctx.file._tag_tpl,
                 substitutions = {
