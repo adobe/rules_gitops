@@ -17,5 +17,5 @@ go_test(
     name = "go_default_test",
     srcs = ["resolver_test.go"],
     data = glob(["testdata/**"]),
-    embed = [":go_default_library"],
+    deps = [":go_default_library"],
 )

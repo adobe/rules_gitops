@@ -29,13 +29,14 @@ def _show_impl(ctx):
     script_content = "#!/usr/bin/env bash\nset -e\n"
 
     kustomize_outputs = []
-    script_template = "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file}\n"
+    script_template = "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} | {sorter}\n"
     for dep in ctx.attr.src.files.to_list():
         kustomize_outputs.append(script_template.format(
             infile = dep.short_path,
             template_engine = ctx.executable._template_engine.short_path,
             namespace = ctx.attr.namespace,
             info_file = ctx.file._info_file.short_path,
+            sorter = ctx.executable._sorter.short_path,
         ))
 
     # ensure kustomize outputs are separated by '---' delimiters
@@ -43,7 +44,7 @@ def _show_impl(ctx):
 
     ctx.actions.write(ctx.outputs.executable, script_content, is_executable = True)
     return [
-        DefaultInfo(runfiles = ctx.runfiles(files = [ctx.executable._template_engine, ctx.file._info_file] + ctx.files.src)),
+        DefaultInfo(runfiles = ctx.runfiles(files = [ctx.executable._template_engine, ctx.file._info_file, ctx.executable._sorter] + ctx.files.src)),
     ]
 
 show = rule(
@@ -63,6 +64,11 @@ show = rule(
         ),
         "_template_engine": attr.label(
             default = Label("//templating:fast_template_engine"),
+            executable = True,
+            cfg = "exec",
+        ),
+        "_sorter": attr.label(
+            default = Label("//gitops/sorter"),
             executable = True,
             cfg = "exec",
         ),
@@ -138,6 +144,7 @@ def k8s_deploy(
         release_branch_prefix = "main",
         start_tag = "{{",
         end_tag = "}}",
+        crds = None,  # List. If set, will create CRDs first, wait for the specified CRDs to be established, then apply rest of the manifests.
         visibility = None):
     """ k8s_deploy
     """
@@ -201,6 +208,7 @@ def k8s_deploy(
             srcs = [name],
             cluster = cluster,
             user = user,
+            crds = crds,
             namespace = namespace,
             visibility = visibility,
         )
@@ -210,6 +218,7 @@ def k8s_deploy(
             command = "delete",
             cluster = cluster,
             push = False,
+            crds = crds,
             user = user,
             namespace = namespace,
             visibility = visibility,
@@ -260,6 +269,7 @@ def k8s_deploy(
             name = name + ".apply",
             srcs = [name],
             cluster = cluster,
+            crds = crds,
             user = user,
             namespace = namespace,
             visibility = visibility,

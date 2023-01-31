@@ -60,6 +60,7 @@ k8s_deploy(
     ],
     namespace = "{BUILD_USER}",
     user = USER,
+    crds = ["crontabs.stable.example.com"],
 )
 
 NAMESPACE = "hwteam"
@@ -82,6 +83,7 @@ k8s_deploy(
     namespace = NAMESPACE,
     prefix_suffix_app_labels = True,
     user = USER,
+    crds = ["crontabs.stable.example.com"],
 )
 
 k8s_deploy(
@@ -120,6 +122,7 @@ k8s_deploy(
     name_suffix = "-gitops-custom-path",
     namespace = NAMESPACE,
     user = USER,
+    crds = ["crontabs.stable.example.com"],
 )
 
 sh_test(

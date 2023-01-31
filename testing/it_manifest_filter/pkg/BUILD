@@ -20,6 +20,8 @@ go_test(
     name = "go_default_test",
     srcs = ["filter_test.go"],
     data = glob(["testdata/**"]),
-    embed = [":go_default_library"],
-    deps = ["//vendor/github.com/google/go-cmp/cmp:go_default_library"],
+    deps = [
+        ":go_default_library",
+        "//vendor/github.com/google/go-cmp/cmp:go_default_library",
+    ],
 )
