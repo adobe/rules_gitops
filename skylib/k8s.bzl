@@ -74,7 +74,7 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_r
     image_pushes = []
 
     def process_image(image_label, legacy_name = None):
-        rule_name_parts = [image_label, image_registry, image_repository, legacy_name]
+        rule_name_parts = [image_label, image_registry, image_repository_prefix, image_repository, legacy_name]
         rule_name_parts = [p for p in rule_name_parts if p]
         rule_name = "_".join(rule_name_parts)
         rule_name = rule_name.replace("/", "_").replace(":", "_")
@@ -163,12 +163,14 @@ def k8s_deploy(
         # Mynamespace option
         if not namespace:
             namespace = "{BUILD_USER}"
+        if image_repository_prefix == None:
+            image_repository_prefix = "{BUILD_USER}"
         image_pushes = _image_pushes(
             name_suffix = "-mynamespace.push",
             images = images,
             image_registry = image_registry,
             image_repository = image_repository,
-            image_repository_prefix = "{BUILD_USER}",
+            image_repository_prefix = image_repository_prefix,
             image_digest_tag = image_digest_tag,
         )
         kustomize(
