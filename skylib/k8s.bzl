@@ -77,7 +77,7 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_r
         rule_name_parts = [image_label, image_registry, image_repository, legacy_name]
         rule_name_parts = [p for p in rule_name_parts if p]
         rule_name = "_".join(rule_name_parts)
-        rule_name = rule_name.replace("/", "_").replace(":", "_")
+        rule_name = rule_name.replace("/", "_").replace(":", "_").replace("@", "_")
         if rule_name.startswith("_"):
             rule_name = rule_name[1:]
         if rule_name.startswith("_"):
