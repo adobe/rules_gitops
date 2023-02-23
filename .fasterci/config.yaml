@@ -3,8 +3,10 @@
 workflows:
 
   - &build_workflow
-    name: Faster CI / build (5.1.1)
-    image: us.gcr.io/fasterci/bazelbuilder:9530886
+    name: Faster CI / build (6.0.0)
+    env:
+      USE_BAZEL_VERSION: "6.0.0"
+    image: us.gcr.io/fasterci/bazelbuilder:5e59f651dbb5
     on:
       push:
         branches:
