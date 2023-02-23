@@ -9,6 +9,8 @@ go_library(
         "int.go",
         "int32.go",
         "int64.go",
+        "ordered.go",
+        "set.go",
         "string.go",
     ],
     importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/sets",

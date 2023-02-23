@@ -12,5 +12,8 @@ go_library(
     importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/util/cert",
     importpath = "k8s.io/client-go/util/cert",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/k8s.io/client-go/util/keyutil:go_default_library"],
+    deps = [
+        "//vendor/k8s.io/client-go/util/keyutil:go_default_library",
+        "//vendor/k8s.io/utils/net:go_default_library",
+    ],
 )
