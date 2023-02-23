@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
+        "aggregated_discovery.go",
         "discovery_client.go",
         "doc.go",
         "helper.go",
@@ -11,7 +12,9 @@ go_library(
     importpath = "k8s.io/client-go/discovery",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/googleapis/gnostic/openapiv2:go_default_library",
+        "//vendor/github.com/golang/protobuf/proto:go_default_library",
+        "//vendor/github.com/google/gnostic/openapiv2:go_default_library",
+        "//vendor/k8s.io/api/apidiscovery/v2beta1:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/api/errors:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",
@@ -21,7 +24,7 @@ go_library(
         "//vendor/k8s.io/apimachinery/pkg/util/sets:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/version:go_default_library",
         "//vendor/k8s.io/client-go/kubernetes/scheme:go_default_library",
+        "//vendor/k8s.io/client-go/openapi:go_default_library",
         "//vendor/k8s.io/client-go/rest:go_default_library",
-        "@com_github_golang_protobuf//proto:go_default_library",
     ],
 )

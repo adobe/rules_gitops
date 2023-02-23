@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
+        "eviction.go",
         "expansion_generated.go",
         "poddisruptionbudget.go",
         "poddisruptionbudget_expansion.go",
@@ -17,6 +18,5 @@ go_library(
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/labels:go_default_library",
         "//vendor/k8s.io/client-go/tools/cache:go_default_library",
-        "//vendor/k8s.io/klog/v2:go_default_library",
     ],
 )

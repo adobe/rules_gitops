@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "flags.go",
+        "serialization.go",
+    ],
+    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/kube-openapi/pkg/internal",
+    importpath = "k8s.io/kube-openapi/pkg/internal",
+    visibility = ["//vendor/k8s.io/kube-openapi/pkg:__subpackages__"],
+    deps = ["//vendor/github.com/go-openapi/jsonreference:go_default_library"],
+)

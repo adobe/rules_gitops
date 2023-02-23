@@ -6,7 +6,6 @@ go_library(
         "name.go",
         "pointer_unsafe.go",
         "sort.go",
-        "zero.go",
     ],
     importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/go-cmp/cmp/internal/value",
     importpath = "github.com/google/go-cmp/cmp/internal/value",

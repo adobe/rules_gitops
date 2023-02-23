@@ -22,5 +22,5 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = ["commitmsg_test.go"],
-    embed = [":go_default_library"],
+    deps = [":go_default_library"],
 )

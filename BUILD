@@ -10,6 +10,7 @@
 
 # gazelle:build_tags darwin,linux
 # gazelle:exclude examples
+# gazelle:proto disable_global
 
 load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")

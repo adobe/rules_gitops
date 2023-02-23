@@ -196,6 +196,10 @@ def _kustomize_impl(ctx):
                 regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
 
             resolver_part += " --image {}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
+            if str(kpi.image_label).startswith("@//"):
+                # Bazel 6 add a @ prefix to the image label https://github.com/bazelbuild/bazel/issues/17069
+                label = str(kpi.image_label)[1:]
+                resolver_part += " --image {}={}@$(cat {})".format(label, regrepo, kpi.digestfile.path)
             if kpi.legacy_image_name:
                 resolver_part += " --image {}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
             tmpfiles.append(kpi.digestfile)
@@ -231,10 +235,19 @@ def _kustomize_impl(ctx):
                 if "{" in regrepo:
                     regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
                 template_part += " --variable={}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
+                if str(kpi.image_label).startswith("@//"):
+                    # Bazel 6 add a @ prefix to the image label https://github.com/bazelbuild/bazel/issues/17069
+                    label = str(kpi.image_label)[1:]
+                    template_part += " --variable={}={}@$(cat {})".format(label, regrepo, kpi.digestfile.path)
 
                 # Image digest
                 template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(kpi.image_label) + ".digest", kpi.digestfile.path)
                 template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(kpi.image_label) + ".short-digest", kpi.digestfile.path)
+                if str(kpi.image_label).startswith("@//"):
+                    # Bazel 6 add a @ prefix to the image label
+                    label = str(kpi.image_label)[1:]
+                    template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(label) + ".digest", kpi.digestfile.path)
+                    template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(label) + ".short-digest", kpi.digestfile.path)
 
                 if kpi.legacy_image_name:
                     template_part += " --variable={}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)

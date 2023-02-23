@@ -9,8 +9,5 @@ go_library(
     importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/cache",
     importpath = "k8s.io/apimachinery/pkg/util/cache",
     visibility = ["//visibility:public"],
-    deps = [
-        "//vendor/github.com/hashicorp/golang-lru:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/util/clock:go_default_library",
-    ],
+    deps = ["//vendor/k8s.io/utils/clock:go_default_library"],
 )

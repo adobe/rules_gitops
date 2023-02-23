@@ -25,120 +25,87 @@ import (
 // TodosService handles communication with the todos related methods of
 // the Gitlab API.
 //
-// GitLab API docs: https://docs.gitlab.com/ce/api/todos.html
+// GitLab API docs: https://docs.gitlab.com/ee/api/todos.html
 type TodosService struct {
 	client *Client
 }
 
-// TodoAction represents the available actions that can be performed on a todo.
-//
-// GitLab API docs: https://docs.gitlab.com/ce/api/todos.html
-type TodoAction string
-
-// The available todo actions.
-const (
-	TodoAssigned          TodoAction = "assigned"
-	TodoMentioned         TodoAction = "mentioned"
-	TodoBuildFailed       TodoAction = "build_failed"
-	TodoMarked            TodoAction = "marked"
-	TodoApprovalRequired  TodoAction = "approval_required"
-	TodoDirectlyAddressed TodoAction = "directly_addressed"
-)
-
-// TodoTarget represents a todo target of type Issue or MergeRequest
-type TodoTarget struct {
-	// TODO: replace both Assignee and Author structs with v4 User struct
-	Assignee struct {
-		Name      string `json:"name"`
-		Username  string `json:"username"`
-		ID        int    `json:"id"`
-		State     string `json:"state"`
-		AvatarURL string `json:"avatar_url"`
-		WebURL    string `json:"web_url"`
-	} `json:"assignee"`
-	Author struct {
-		Name      string `json:"name"`
-		Username  string `json:"username"`
-		ID        int    `json:"id"`
-		State     string `json:"state"`
-		AvatarURL string `json:"avatar_url"`
-		WebURL    string `json:"web_url"`
-	} `json:"author"`
-	CreatedAt      *time.Time `json:"created_at"`
-	Description    string     `json:"description"`
-	Downvotes      int        `json:"downvotes"`
-	ID             int        `json:"id"`
-	IID            int        `json:"iid"`
-	Labels         []string   `json:"labels"`
-	Milestone      Milestone  `json:"milestone"`
-	ProjectID      int        `json:"project_id"`
-	State          string     `json:"state"`
-	Subscribed     bool       `json:"subscribed"`
-	Title          string     `json:"title"`
-	UpdatedAt      *time.Time `json:"updated_at"`
-	Upvotes        int        `json:"upvotes"`
-	UserNotesCount int        `json:"user_notes_count"`
-	WebURL         string     `json:"web_url"`
-
-	// Only available for type Issue
-	Confidential bool   `json:"confidential"`
-	DueDate      string `json:"due_date"`
-	Weight       int    `json:"weight"`
-
-	// Only available for type MergeRequest
-	ApprovalsBeforeMerge      int    `json:"approvals_before_merge"`
-	ForceRemoveSourceBranch   bool   `json:"force_remove_source_branch"`
-	MergeCommitSHA            string `json:"merge_commit_sha"`
-	MergeWhenPipelineSucceeds bool   `json:"merge_when_pipeline_succeeds"`
-	MergeStatus               string `json:"merge_status"`
-	SHA                       string `json:"sha"`
-	ShouldRemoveSourceBranch  bool   `json:"should_remove_source_branch"`
-	SourceBranch              string `json:"source_branch"`
-	SourceProjectID           int    `json:"source_project_id"`
-	Squash                    bool   `json:"squash"`
-	TargetBranch              string `json:"target_branch"`
-	TargetProjectID           int    `json:"target_project_id"`
-	WorkInProgress            bool   `json:"work_in_progress"`
-}
-
 // Todo represents a GitLab todo.
 //
-// GitLab API docs: https://docs.gitlab.com/ce/api/todos.html
+// GitLab API docs: https://docs.gitlab.com/ee/api/todos.html
 type Todo struct {
-	ID      int `json:"id"`
-	Project struct {
-		ID                int    `json:"id"`
-		HTTPURLToRepo     string `json:"http_url_to_repo"`
-		WebURL            string `json:"web_url"`
-		Name              string `json:"name"`
-		NameWithNamespace string `json:"name_with_namespace"`
-		Path              string `json:"path"`
-		PathWithNamespace string `json:"path_with_namespace"`
-	} `json:"project"`
-	Author struct {
-		ID        int    `json:"id"`
-		Name      string `json:"name"`
-		Username  string `json:"username"`
-		State     string `json:"state"`
-		AvatarURL string `json:"avatar_url"`
-		WebURL    string `json:"web_url"`
-	} `json:"author"`
-	ActionName TodoAction `json:"action_name"`
-	TargetType string     `json:"target_type"`
-	Target     TodoTarget `json:"target"`
-	TargetURL  string     `json:"target_url"`
-	Body       string     `json:"body"`
-	State      string     `json:"state"`
-	CreatedAt  *time.Time `json:"created_at"`
+	ID         int            `json:"id"`
+	Project    *BasicProject  `json:"project"`
+	Author     *BasicUser     `json:"author"`
+	ActionName TodoAction     `json:"action_name"`
+	TargetType TodoTargetType `json:"target_type"`
+	Target     *TodoTarget    `json:"target"`
+	TargetURL  string         `json:"target_url"`
+	Body       string         `json:"body"`
+	State      string         `json:"state"`
+	CreatedAt  *time.Time     `json:"created_at"`
 }
 
 func (t Todo) String() string {
 	return Stringify(t)
 }
 
+// TodoTarget represents a todo target of type Issue or MergeRequest
+type TodoTarget struct {
+	Assignees            []*BasicUser           `json:"assignees"`
+	Assignee             *BasicUser             `json:"assignee"`
+	Author               *BasicUser             `json:"author"`
+	CreatedAt            *time.Time             `json:"created_at"`
+	Description          string                 `json:"description"`
+	Downvotes            int                    `json:"downvotes"`
+	ID                   int                    `json:"id"`
+	IID                  int                    `json:"iid"`
+	Labels               []string               `json:"labels"`
+	Milestone            *Milestone             `json:"milestone"`
+	ProjectID            int                    `json:"project_id"`
+	State                string                 `json:"state"`
+	Subscribed           bool                   `json:"subscribed"`
+	TaskCompletionStatus *TasksCompletionStatus `json:"task_completion_status"`
+	Title                string                 `json:"title"`
+	UpdatedAt            *time.Time             `json:"updated_at"`
+	Upvotes              int                    `json:"upvotes"`
+	UserNotesCount       int                    `json:"user_notes_count"`
+	WebURL               string                 `json:"web_url"`
+
+	// Only available for type Issue
+	Confidential bool        `json:"confidential"`
+	DueDate      string      `json:"due_date"`
+	HasTasks     bool        `json:"has_tasks"`
+	Links        *IssueLinks `json:"_links"`
+	MovedToID    int         `json:"moved_to_id"`
+	TimeStats    *TimeStats  `json:"time_stats"`
+	Weight       int         `json:"weight"`
+
+	// Only available for type MergeRequest
+	ApprovalsBeforeMerge      int          `json:"approvals_before_merge"`
+	ForceRemoveSourceBranch   bool         `json:"force_remove_source_branch"`
+	MergeCommitSHA            string       `json:"merge_commit_sha"`
+	MergeWhenPipelineSucceeds bool         `json:"merge_when_pipeline_succeeds"`
+	MergeStatus               string       `json:"merge_status"`
+	Reference                 string       `json:"reference"`
+	Reviewers                 []*BasicUser `json:"reviewers"`
+	SHA                       string       `json:"sha"`
+	ShouldRemoveSourceBranch  bool         `json:"should_remove_source_branch"`
+	SourceBranch              string       `json:"source_branch"`
+	SourceProjectID           int          `json:"source_project_id"`
+	Squash                    bool         `json:"squash"`
+	TargetBranch              string       `json:"target_branch"`
+	TargetProjectID           int          `json:"target_project_id"`
+	WorkInProgress            bool         `json:"work_in_progress"`
+
+	// Only available for type DesignManagement::Design
+	FileName string `json:"filename"`
+	ImageURL string `json:"image_url"`
+}
+
 // ListTodosOptions represents the available ListTodos() options.
 //
-// GitLab API docs: https://docs.gitlab.com/ce/api/todos.html#get-a-list-of-todos
+// GitLab API docs: https://docs.gitlab.com/ee/api/todos.html#get-a-list-of-to-do-items
 type ListTodosOptions struct {
 	ListOptions
 	Action    *TodoAction `url:"action,omitempty" json:"action,omitempty"`
@@ -152,7 +119,7 @@ type ListTodosOptions struct {
 // When no filter is applied, it returns all pending todos for the current user.
 //
 // GitLab API docs:
-// https://docs.gitlab.com/ce/api/todos.html#get-a-list-of-todos
+// https://docs.gitlab.com/ee/api/todos.html#get-a-list-of-to-do-items
 func (s *TodosService) ListTodos(opt *ListTodosOptions, options ...RequestOptionFunc) ([]*Todo, *Response, error) {
 	req, err := s.client.NewRequest(http.MethodGet, "todos", opt, options)
 	if err != nil {
@@ -170,7 +137,7 @@ func (s *TodosService) ListTodos(opt *ListTodosOptions, options ...RequestOption
 
 // MarkTodoAsDone marks a single pending todo given by its ID for the current user as done.
 //
-// GitLab API docs: https://docs.gitlab.com/ce/api/todos.html#mark-a-todo-as-done
+// GitLab API docs: https://docs.gitlab.com/ee/api/todos.html#mark-a-to-do-item-as-done
 func (s *TodosService) MarkTodoAsDone(id int, options ...RequestOptionFunc) (*Response, error) {
 	u := fmt.Sprintf("todos/%d/mark_as_done", id)
 
@@ -184,7 +151,7 @@ func (s *TodosService) MarkTodoAsDone(id int, options ...RequestOptionFunc) (*Re
 
 // MarkAllTodosAsDone marks all pending todos for the current user as done.
 //
-// GitLab API docs: https://docs.gitlab.com/ce/api/todos.html#mark-all-todos-as-done
+// GitLab API docs: https://docs.gitlab.com/ee/api/todos.html#mark-all-to-do-items-as-done
 func (s *TodosService) MarkAllTodosAsDone(options ...RequestOptionFunc) (*Response, error) {
 	req, err := s.client.NewRequest(http.MethodPost, "todos/mark_as_done", nil, options)
 	if err != nil {

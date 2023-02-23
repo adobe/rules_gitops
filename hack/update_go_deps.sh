@@ -15,34 +15,8 @@ bindir=$(cd `dirname "$0"` && pwd)
 repo_path=$bindir/..
 vendordir=$repo_path/vendor
 
-novendor=(
-    "golang.org/x/tools"
-    "golang.org/x/sync"
-    "github.com/golang/glog"
-    "github.com/golang/protobuf"
-    "github.com/mwitkow/go-proto-validators"
-    "github.com/gogo/protobuf"
-    "github.com/google/go-genproto"
-    "google.golang.org/genproto/"
-    "google.golang.org/grpc"
-    "github.com/googleapis/googleapis"
-    "github.com/bazelbuild/buildtools"
-    "github.com/fsnotify/fsnotify"
-    "github.com/pelletier/go-toml"
-    "github.com/pmezard/go-difflib"
-    "github.com/magiconair"
-    "github.com/prometheus/client_golang/prometheus/process_collector_windows.go"
-    "golang.org/x/crypto/ssh/terminal/util_windows.go"
-)
-
 cd $repo_path
-GO111MODULE=on go mod vendor
-#dep ensure
-
-for pkg in ${novendor[@]}; do
-    echo "Removing $pkg..."
-    rm -rf ${vendordir}/${pkg}
-done
+go mod vendor
 
 #    -not -iname "*.proto" \
 find vendor -type f \
