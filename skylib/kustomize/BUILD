@@ -22,4 +22,5 @@ sh_binary(
         "@kustomize_bin//:kustomize",
     ],
     visibility = ["//visibility:public"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )

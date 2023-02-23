@@ -1,3 +1,4 @@
+build --nolegacy_external_runfiles
 build --verbose_failures
 test --test_output=errors
 
