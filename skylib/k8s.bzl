@@ -520,6 +520,7 @@ def _k8s_test_setup_impl(ctx):
     )
 
     rf = ctx.runfiles(files = files, transitive_files = depset(transitive = transitive))
+    rf = rf.merge(ctx.attr._set_namespace[DefaultInfo].default_runfiles)
     for dep_rf in pushes_runfiles:
         rf = rf.merge(dep_rf)
     return [DefaultInfo(
