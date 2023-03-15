@@ -481,7 +481,7 @@ def _k8s_test_setup_impl(ctx):
     # add files referenced by rule attributes to runfiles
     files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, ctx.executable._kustomize, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
     files += ctx.files._set_namespace
-    files += ctx.files._cluster
+    files += ctx.files.cluster
 
     push_statements, files, pushes_runfiles = imagePushStatements(ctx, [o for o in ctx.attr.objects if KustomizeInfo in o], files)
 
@@ -505,7 +505,7 @@ def _k8s_test_setup_impl(ctx):
         template = ctx.file._namespace_template,
         substitutions = {
             "%{it_sidecar}": ctx.executable._it_sidecar.short_path,
-            "%{cluster}": ctx.file._cluster.path,
+            "%{cluster}": ctx.file.cluster.path,
             "%{kubeconfig}": ctx.file.kubeconfig.path,
             "%{kubectl}": ctx.file.kubectl.path,
             "%{portforwards}": " ".join(["-portforward=" + p for p in ctx.attr.portforward_services]),
@@ -546,7 +546,7 @@ k8s_test_setup = rule(
         "portforward_services": attr.string_list(),
         "setup_timeout": attr.string(default = "10m"),
         "wait_for_apps": attr.string_list(),
-        "_cluster": attr.label(
+        "cluster": attr.label(
             default = Label("@k8s_test//:cluster"),
             allow_single_file = True,
         ),
