@@ -59,7 +59,11 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 					return
 				}
 
-				if pod, ok := e.Object.(*corev1.Pod); !ok {
+				var (
+					pod *corev1.Pod
+					ok  bool
+				)
+				if pod, ok = e.Object.(*corev1.Pod); !ok {
 					continue
 				}
 
