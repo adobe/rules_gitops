@@ -77,12 +77,11 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***deps***                | `[]`           | A list of dependencies used to drive `k8s_deploy` functionality (i.e. `deps_aliases`).
 | ***deps_aliases***        | `{}`           | A dict of labels of file dependencies. File dependency contents are available for template expansion in manifests as `{{imports.<label>}}`. Each dependency in this dictionary should be present in the `deps` attribute.
 | ***objects***             | `[]`           | A list of other instances of `k8s_deploy` that this one depends on. See [Adding Dependencies](#adding-dependencies).
-| ***images***              | `{}`           | A dict of labels of Docker images. See [Injecting Docker Images](#injecting-docker-images).
+| ***images***              | `{}`           | A dict of labels or array of labels of Docker images. See [Injecting Docker Images](#injecting-docker-images).
 | ***image_digest_tag***    | `False`        | A flag for whether or not to tag the image with the container digest.
 | ***image_registry***      | `docker.io`    | The registry to push images to.
 | ***image_repository***    | `None`         | The repository to push images to. By default, this is generated from the current package path.
 | ***image_repository_prefix*** | `None`     | Add a prefix to the image_repository. Can be used to upload the images in
-| ***image_pushes***        | `[]`           | A list of labels implementing K8sPushInfo referring image uploaded into registry. See [Injecting Docker Images](#injecting-docker-images).
 | ***release_branch_prefix*** | `master`     | A git branch name/prefix. Automatically run GitOps while building this branch. See [GitOps and Deployment](#gitops_and_deployment).
 | ***deployment_branch***   | `None`         | Automatic GitOps output will appear in a branch and PR with this name. See [GitOps and Deployment](#gitops_and_deployment).
 | ***gitops_path***         | `cloud`        | Path within the git repo where gitops files get generated into
