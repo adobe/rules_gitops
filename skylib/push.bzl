@@ -121,7 +121,7 @@ def _impl(ctx):
     pusher_input += stamp_inputs
 
     # Construct container_parts for input to pusher.
-    image = calc_digest(ctx)
+    image = image_digest_action(ctx)
     pusher_img_args, pusher_img_inputs = _gen_img_args(ctx, image, _get_runfile_path)
     pusher_args += pusher_img_args
     pusher_input += pusher_img_inputs
