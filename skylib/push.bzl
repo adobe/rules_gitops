@@ -28,6 +28,8 @@ load(
     "@io_bazel_rules_docker//skylib:path.bzl",
     "runfile",
 )
+load("@com_adobe_rules_gitops//skylib:digester.bzl", "calc_digest")
+
 
 K8sPushInfo = provider(
     "Information required to inject image into a manifest",
@@ -98,8 +100,6 @@ def _impl(ctx):
 
     pusher_args = []
     pusher_input = []
-    digester_args = []
-    digester_input = []
 
     # Parse and get destination registry to be pushed to
     registry = ctx.expand_make_variables("registry", ctx.attr.registry, {})
@@ -123,26 +123,14 @@ def _impl(ctx):
     pusher_input += stamp_inputs
 
     # Construct container_parts for input to pusher.
-    image = _get_layers(ctx, ctx.label.name, ctx.attr.image)
+    image = calc_digest(ctx)
     pusher_img_args, pusher_img_inputs = _gen_img_args(ctx, image, _get_runfile_path)
     pusher_args += pusher_img_args
     pusher_input += pusher_img_inputs
-    digester_img_args, digester_img_inputs = _gen_img_args(ctx, image)
-    digester_input += digester_img_inputs
-    digester_args += digester_img_args
     pusher_runfiles = [ctx.executable._pusher] + pusher_input
 
     if ctx.attr.skip_unchanged_digest:
         pusher_args.append("-skip-unchanged-digest")
-    digester_args += ["--dst", str(ctx.outputs.digest.path), "--format", str(ctx.attr.format)]
-    ctx.actions.run(
-        inputs = digester_input,
-        outputs = [ctx.outputs.digest],
-        executable = ctx.executable._digester,
-        arguments = digester_args,
-        tools = ctx.attr._digester[DefaultInfo].default_runfiles.files,
-        mnemonic = "ContainerPushDigest",
-    )
 
     if ctx.attr.image_digest_tag:
         tag = "$(cat {} | cut -d ':' -f 2 | cut -c 1-7)".format(_get_runfile_path(ctx, ctx.outputs.digest))
@@ -285,3 +273,4 @@ Args:
         "digest": "%{name}.digest",
     },
 )
+
