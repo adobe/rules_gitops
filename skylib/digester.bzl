@@ -47,7 +47,7 @@ calculate_digest = rule(
       image: the label of the image to calculate the digest for.
       format: The format to process: Docker or OCI.
     """,
-    implementation = _calculate_digest_impl,
+    implementation = _image_digest_impl,
     attrs = {
         "format": attr.string(
             default = "Docker",
