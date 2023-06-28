@@ -17,7 +17,7 @@ var (
 	accessToken = flag.String("gitlab_access_token", os.Getenv("GITLAB_TOKEN"), "the access token to authenticate requests")
 )
 
-func CreatePR(from, to, title string) error {
+func CreatePR(from, to, title, body string) error {
 	if *accessToken == "" {
 		return errors.New("gitlab_access_token must be set")
 	}
@@ -57,11 +57,11 @@ func CreatePR(from, to, title string) error {
 
 	// All other gitlab responses
 	defer resp.Body.Close()
-	body, readingErr := ioutil.ReadAll(resp.Body)
+	responseBody, readingErr := ioutil.ReadAll(resp.Body)
 	if readingErr != nil {
 		log.Println("cannot read response body")
 	} else {
-		log.Println("gitlab response: ", string(body))
+		log.Println("gitlab response: ", string(responseBody))
 	}
 
 	return err

@@ -20,7 +20,7 @@ var (
 	githubEnterpriseHost = flag.String("github_enterprise_host", "", "The host name of the private enterprise github, e.g. git.corp.adobe.com")
 )
 
-func CreatePR(from, to, title string) error {
+func CreatePR(from, to, title, body string) error {
 	if *repoOwner == "" {
 		return errors.New("github_repo_owner must be set")
 	}
@@ -55,7 +55,7 @@ func CreatePR(from, to, title string) error {
 		Title:               &title,
 		Head:                &from,
 		Base:                &to,
-		Body:                &title,
+		Body:                &body,
 		Issue:               nil,
 		MaintainerCanModify: new(bool),
 		Draft:               new(bool),
@@ -74,11 +74,11 @@ func CreatePR(from, to, title string) error {
 
 	// All other github responses
 	defer resp.Body.Close()
-	body, readingErr := ioutil.ReadAll(resp.Body)
+	responseBody, readingErr := ioutil.ReadAll(resp.Body)
 	if readingErr != nil {
 		log.Println("cannot read response body")
 	} else {
-		log.Println("github response: ", string(body))
+		log.Println("github response: ", string(responseBody))
 	}
 
 	return err

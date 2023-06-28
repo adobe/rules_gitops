@@ -63,14 +63,14 @@ type pullrequest struct {
 }
 
 // CreatePR creates a pull request using branch names from and to
-func CreatePR(from, to, title string) error {
+func CreatePR(from, to, title, body string) error {
 	repo := repository{
 		Slug:    "repo",
 		Project: project{"TM"},
 	}
 	prReq := pullrequest{
 		Title:       title,
-		Description: title,
+		Description: body,
 		State:       "OPEN",
 		Open:        true,
 		Closed:      false,
@@ -101,8 +101,8 @@ func CreatePR(from, to, title string) error {
 	}
 	log.Printf("bitbucket api response: %s", resp.Status)
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	log.Print("bitbucket response: ", string(body))
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	log.Print("bitbucket response: ", string(responseBody))
 	// 201 created
 	// 409 already exists
 	if resp.StatusCode == 201 {

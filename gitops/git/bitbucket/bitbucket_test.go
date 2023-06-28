@@ -25,7 +25,7 @@ func TestCreatePRRemote(t *testing.T) {
 	pass := "*************"
 	bitbucketUser = &user
 	bitbucketPassword = &pass
-	err := CreatePR("deploy/test1", "feature/AP-0000", "test")
+	err := CreatePR("deploy/test1", "feature/AP-0000", "test", "hello world")
 	if err != nil {
 		t.Error("Unexpected error from server: ", err)
 	}
@@ -43,14 +43,14 @@ func TestCreatePRNew(t *testing.T) {
 	oldendpoint := *apiEndpoint
 	defer func() { *apiEndpoint = oldendpoint }()
 	*apiEndpoint = ts.URL
-	err := CreatePR("deploy/test1", "feature/AP-0000", "test")
+	err := CreatePR("deploy/test1", "feature/AP-0000", "test", "hello world")
 	if err != nil {
 		t.Error("Unexpected error from server: ", err)
 	}
 	if srverr != nil {
 		t.Error("Unexpected error: ", srverr)
 	}
-	expectedreq := `{"title":"test","description":"test","state":"OPEN","open":true,"closed":false,"fromRef":{"id":"refs/heads/deploy/test1","repository":{"slug":"repo","project":{"key":"TM"}}},"toRef":{"id":"refs/heads/feature/AP-0000","repository":{"slug":"repo","project":{"key":"TM"}}},"locked":false}`
+	expectedreq := `{"title":"test","description":"hello world","state":"OPEN","open":true,"closed":false,"fromRef":{"id":"refs/heads/deploy/test1","repository":{"slug":"repo","project":{"key":"TM"}}},"toRef":{"id":"refs/heads/feature/AP-0000","repository":{"slug":"repo","project":{"key":"TM"}}},"locked":false}`
 	if string(buf) != expectedreq {
 		t.Error("Unexpected request body: ", string(buf))
 	}

@@ -412,6 +412,8 @@ if [ "${GIT_BRANCH_NAME}" == "master"]; then
         --git_server github \
         --release_branch master \
         --gitops_pr_into master \
+        --gitops_pr_title "This is my pull request title" \
+        --gitops_pr_body "This is my pull request body message" \
         --branch_name ${GIT_BRANCH_NAME} \
         --git_commit ${GIT_COMMIT_ID} \
 fi
@@ -488,6 +490,8 @@ if [ "${RELEASE_BRANCH}" == "release/team"]; then
         --release_branch ${RELEASE_BRANCH} \
         --deployment_branch_suffix=${RELEASE_BRANCH_SUFFIX} \
         --gitops_pr_into master \
+        --gitops_pr_title "This is my pull request title" \
+        --gitops_pr_body "This is my pull request body message" \
         --branch_name ${GIT_BRANCH_NAME} \
         --git_commit ${GIT_COMMIT_ID} \
 fi
