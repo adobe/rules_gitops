@@ -21,7 +21,6 @@ load("@io_bazel_rules_docker//container:providers.bzl", "PushInfo")
 load(
     "@io_bazel_rules_docker//container:layer_tools.bzl",
     _gen_img_args = "generate_args_for_image",
-    _get_layers = "get_from_target",
     _layer_tools = "tools",
 )
 load(
@@ -29,7 +28,6 @@ load(
     "runfile",
 )
 load("@com_adobe_rules_gitops//skylib:digester.bzl", "calc_digest")
-
 
 K8sPushInfo = provider(
     "Information required to inject image into a manifest",
@@ -273,4 +271,3 @@ Args:
         "digest": "%{name}.digest",
     },
 )
-
