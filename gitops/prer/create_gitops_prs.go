@@ -61,6 +61,8 @@ var (
 	target                 = flag.String("target", "//... except //experimental/...", "target to scan. Useful for debugging only")
 	pushParallelism        = flag.Int("push_parallelism", 5, "Number of image pushes to perform concurrently")
 	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as the source branch and target for deployment PR")
+	prBody                 = flag.String("gitops_pr_body", "GitOps deployment <branch>", "a body message for deployment PR")
+	prTitle                = flag.String("gitops_pr_title", "GitOps deployment <branch>", "a title for deployment PR")
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
@@ -249,7 +251,12 @@ func main() {
 			log.Println("dry-run: skipping PR creation: branch ", branch, "into ", *prInto)
 			continue
 		}
-		err := gitServer.CreatePR(branch, *prInto, fmt.Sprintf("GitOps deployment %s", branch))
+
+		if *prTitle == "" {
+			*prTitle = fmt.Sprintf("GitOps deployment %s", branch)
+		}
+
+		err := gitServer.CreatePR(branch, *prInto, *prTitle, *prBody)
 		if err != nil {
 			log.Fatal("unable to create PR: ", err)
 		}

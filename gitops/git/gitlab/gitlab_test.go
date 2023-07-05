@@ -12,6 +12,7 @@ func TestCreatePRRemote(t *testing.T) {
 		from  string
 		to    string
 		title string
+		body  string
 	}
 	tests := []struct {
 		repo    string
@@ -28,11 +29,22 @@ func TestCreatePRRemote(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			repo: "cotocisternas/rules_gitops_gitlab_test",
+			args: args{
+				from:  "feature/gitlab-test",
+				to:    "master",
+				title: "test_gitlab",
+				body:  "hello world",
+			},
+			wantErr: false,
+		},
+		{
 			repo: "petabytecl/subgroup_rules_gitops_gitlab_test/rules_gitops_gitlab_test",
 			args: args{
 				from:  "feature/gitlab-test",
 				to:    "master",
 				title: "test_gitlab",
+				body:  "hello world",
 			},
 			wantErr: false,
 		},
@@ -40,7 +52,7 @@ func TestCreatePRRemote(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.repo, func(t *testing.T) {
 			repo = &tt.repo
-			if err := CreatePR(tt.args.from, tt.args.to, tt.args.title); (err != nil) != tt.wantErr {
+			if err := CreatePR(tt.args.from, tt.args.to, tt.args.title, tt.args.body); (err != nil) != tt.wantErr {
 				t.Errorf("CreatePR() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
