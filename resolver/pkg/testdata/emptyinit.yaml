@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: CronWorkFlow
+metadata:
+  name: aaa
+  namespace: stats-dev
+spec:
+  workflowSpec:
+    metadata:
+      labels:
+        app: app
+    templates:
+      initContainers:
+      container:
+        image: helloworld-image

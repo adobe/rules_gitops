@@ -112,6 +112,9 @@ func (pt *imageTagTransformer) findAndReplaceTag(obj map[string]interface{}) err
 }
 
 func (pt *imageTagTransformer) updateContainers(obj map[string]interface{}, path string) error {
+	if obj[path] == nil {
+		return nil
+	}
 	containers := obj[path].([]interface{})
 	for i := range containers {
 		container := containers[i].(map[string]interface{})
@@ -134,6 +137,9 @@ func (pt *imageTagTransformer) updateContainers(obj map[string]interface{}, path
 }
 
 func (pt *imageTagTransformer) updateContainer(obj map[string]interface{}, path string) error {
+	if obj[path] == nil {
+		return nil
+	}
 	container := obj[path].(map[string]interface{})
 	image, found := container["image"]
 	if found {
