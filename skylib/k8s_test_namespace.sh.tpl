@@ -47,9 +47,6 @@ then
     NAMESPACE=${USER}
     # do not delete namespace after the test is complete
     DELETE_NAMESPACE_FLAG=""
-    # do not perform manifest transformations
-    # test setup should not try to apply modified manifests
-    IT_MANIFEST_FILTER="cat"
 else
     # create random namespace
     DELETE_NAMESPACE_FLAG="-delete_namespace"
