@@ -100,6 +100,7 @@ k8s_deploy(
     ],
     namespace = NAMESPACE,
     user = USER,
+    tags = [ "release" ],
 )
 
 k8s_deploy(
