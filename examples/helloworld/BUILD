@@ -99,8 +99,8 @@ k8s_deploy(
         "service.yaml",
     ],
     namespace = NAMESPACE,
+    tags = ["release"],
     user = USER,
-    tags = [ "release" ],
 )
 
 k8s_deploy(
