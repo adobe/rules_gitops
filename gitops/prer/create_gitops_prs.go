@@ -54,7 +54,7 @@ var (
 	releaseBranch          = flag.String("release_branch", "master", "filter gitops targets by release branch")
 	bazelCmd               = flag.String("bazel_cmd", "tools/bazel", "bazel binary to use")
 	workspace              = flag.String("workspace", "", "path to workspace root")
-	repo                   = flag.String("git_repo", "https://bitbucket.tubemogul.info/scm/tm/repo.git", "git repo location")
+	repo                   = flag.String("git_repo", "", "git repo location")
 	gitMirror              = flag.String("git_mirror", "", "git mirror location, like /mnt/mirror/bitbucket.tubemogul.info/tm/repo.git for jenkins")
 	gitopsPath             = flag.String("gitops_path", "cloud", "location to store files in repo.")
 	gitopsTmpDir           = flag.String("gitops_tmpdir", os.TempDir(), "location to check out git tree with /cloud.")
@@ -62,7 +62,7 @@ var (
 	pushParallelism        = flag.Int("push_parallelism", 5, "Number of image pushes to perform concurrently")
 	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as the source branch and target for deployment PR")
 	prBody                 = flag.String("gitops_pr_body", "GitOps deployment <branch>", "a body message for deployment PR")
-	prTitle                = flag.String("gitops_pr_title", "GitOps deployment <branch>", "a title for deployment PR")
+	prTitle                = flag.String("gitops_pr_title", "", "a title for deployment PR")
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
@@ -252,11 +252,17 @@ func main() {
 			continue
 		}
 
-		if *prTitle == "" {
-			*prTitle = fmt.Sprintf("GitOps deployment %s", branch)
+		title := *prTitle
+		if title == "" {
+			title = fmt.Sprintf("GitOps deployment %s", branch)
 		}
 
-		err := gitServer.CreatePR(branch, *prInto, *prTitle, *prBody)
+		body := *prBody
+		if body == "" {
+			body = branch
+		}
+
+		err := gitServer.CreatePR(branch, *prInto, title, body)
 		if err != nil {
 			log.Fatal("unable to create PR: ", err)
 		}
