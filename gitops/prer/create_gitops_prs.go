@@ -61,7 +61,7 @@ var (
 	target                 = flag.String("target", "//... except //experimental/...", "target to scan. Useful for debugging only")
 	pushParallelism        = flag.Int("push_parallelism", 5, "Number of image pushes to perform concurrently")
 	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as the source branch and target for deployment PR")
-	prBody                 = flag.String("gitops_pr_body", "GitOps deployment <branch>", "a body message for deployment PR")
+	prBody                 = flag.String("gitops_pr_body", "", "a body message for deployment PR")
 	prTitle                = flag.String("gitops_pr_title", "", "a title for deployment PR")
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
