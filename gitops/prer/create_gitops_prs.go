@@ -262,8 +262,7 @@ func main() {
 			body = branch
 		}
 
-		err := gitServer.CreatePR(branch, *prInto, title, body)
-		if err != nil {
+		if err := gitServer.CreatePR(branch, *prInto, title, body); err != nil {
 			log.Fatal("unable to create PR: ", err)
 		}
 	}
