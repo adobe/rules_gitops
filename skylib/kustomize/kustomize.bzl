@@ -129,11 +129,13 @@ def _kustomize_impl(ctx):
     if ctx.attr.common_labels:
         kustomization_yaml += "commonLabels:\n"
         for k in ctx.attr.common_labels:
+            use_stamp = use_stamp or "{" in ctx.attr.common_labels[k]
             kustomization_yaml += "  {}: '{}'\n".format(k, ctx.attr.common_labels[k])
 
     if ctx.attr.common_annotations:
         kustomization_yaml += "commonAnnotations:\n"
         for k in ctx.attr.common_annotations:
+            use_stamp = use_stamp or "{" in ctx.attr.common_annotations[k]
             kustomization_yaml += "  {}: '{}'\n".format(k, ctx.attr.common_annotations[k])
 
     kustomization_yaml += "generatorOptions:\n"
