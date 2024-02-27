@@ -33,6 +33,14 @@ def rules_gitops_dependencies():
         ],
     )
 
+    maybe(
+        http_archive,
+        name = "rules_gitops",
+        sha256 = "64acba5819fb782be0e51557a94aa5010cbd00c092471bffdfd53ef0f4609c17",
+        strip_prefix = "rules_gitops-cff946fbbc9c6acb1ce2bb2883f3cfdc4c693969",
+        urls = ["https://github.com/fasterci/rules_gitops/archive/cff946fbbc9c6acb1ce2bb2883f3cfdc4c693969.zip"],
+    )
+
     # gazelle is required by go_image_repositories
     maybe(
         http_archive,

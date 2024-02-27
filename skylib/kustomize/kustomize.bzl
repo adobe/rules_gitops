@@ -12,6 +12,7 @@ load(
     "@io_bazel_rules_docker//skylib:path.bzl",
     _get_runfile_path = "runfile",
 )
+load("@rules_gitops//gitops:provider.bzl", "GitopsArtifactsInfo")
 load("//skylib:push.bzl", "K8sPushInfo")
 load("//skylib:stamp.bzl", "stamp")
 
@@ -281,6 +282,8 @@ def _kustomize_impl(ctx):
 
     transitive_image_pushes = [m[KustomizeInfo].image_pushes for m in ctx.attr.manifests if KustomizeInfo in m]
     transitive_image_pushes += [obj[KustomizeInfo].image_pushes for obj in ctx.attr.objects]
+    transitive_image_pushes += [m[GitopsArtifactsInfo].image_pushes for m in ctx.attr.manifests if GitopsArtifactsInfo in m]
+    transitive_image_pushes += [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.objects]
 
     return [
         DefaultInfo(
@@ -291,6 +294,12 @@ def _kustomize_impl(ctx):
             runfiles = runfiles,
         ),
         KustomizeInfo(
+            image_pushes = depset(
+                ctx.attr.images,
+                transitive = transitive_image_pushes,
+            ),
+        ),
+        GitopsArtifactsInfo(
             image_pushes = depset(
                 ctx.attr.images,
                 transitive = transitive_image_pushes,
