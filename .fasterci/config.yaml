@@ -32,6 +32,6 @@ workflows:
         run: bazel run //:buildifier-check
 
   - <<: *build_workflow
-    name: Faster CI / build (5.4.2)
+    name: Faster CI / build (5.4.1)
     env:
-      USE_BAZEL_VERSION: "5.4.2"
+      USE_BAZEL_VERSION: "5.4.1"
