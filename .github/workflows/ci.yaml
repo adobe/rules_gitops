@@ -14,8 +14,8 @@ jobs:
     strategy:
       matrix:
         bazel-version:
-          - 6.0.0
-          - 5.3.1
+          - 6.5.0
+          - 5.4.2
     env:
       USE_BAZEL_VERSION: ${{ matrix.bazel-version }}
     steps:
