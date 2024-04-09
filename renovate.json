@@ -9,18 +9,24 @@
   ],
   "packageRules": [
     {
-      "groupName": "go",
+      "groupName": "Go modules",
+      "groupSlug": "go-modules",
       "matchDatasources": [
-        "go"
+        "go",
+        "gomod"
       ],
       "matchPackagePatterns": [
         "*"
       ]
     },
     {
-      "groupName": "bazel",
-      "matchDatasources": [
+      "groupName": "Bazel",
+      "groupSlug": "bazel",
+      "matchCategories": [
         "bazel"
+      ],
+      "matchDepTypes": [
+        "http_archive"
       ],
       "matchPackagePatterns": [
         "*"
