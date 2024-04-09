@@ -14,6 +14,9 @@ workflows:
       pull_request:
         branches:
           - "**"
+        from-branches-ignore:
+          # will ignore PRs from renovate bot, since the bot is not a repository collaborator
+          - "renovate/**"
     steps:
       - name: Build & test
         bazel:
