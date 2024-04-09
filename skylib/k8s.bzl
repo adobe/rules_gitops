@@ -9,16 +9,16 @@
 # governing permissions and limitations under the License.
 
 load(
-    "@io_bazel_rules_docker//skylib:path.bzl",
-    _get_runfile_path = "runfile",
-)
-load(
     "@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl",
     "KustomizeInfo",
     "imagePushStatements",
     "kubectl",
     "kustomize",
     kustomize_gitops = "gitops",
+)
+load(
+    "@io_bazel_rules_docker//skylib:path.bzl",
+    _get_runfile_path = "runfile",
 )
 load("//skylib:push.bzl", "k8s_container_push")
 

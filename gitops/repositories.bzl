@@ -12,11 +12,11 @@
 GtiOps rules repositories initialization
 """
 
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
-load("@io_bazel_rules_docker//repositories:repositories.bzl", container_repositories = "repositories")
-load("@io_bazel_rules_docker//repositories:go_repositories.bzl", container_go_deps = "go_deps")
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 load("@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize_setup")
+load("@io_bazel_rules_docker//repositories:go_repositories.bzl", container_go_deps = "go_deps")
+load("@io_bazel_rules_docker//repositories:repositories.bzl", container_repositories = "repositories")
 
 def rules_gitops_repositories():
     """Initializes Declares workspaces the GitOps rules depend on.

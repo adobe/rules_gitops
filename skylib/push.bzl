@@ -17,13 +17,13 @@ Bazel rule for publishing images.
 """
 
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
-load("@io_bazel_rules_docker//container:providers.bzl", "PushInfo")
 load(
     "@io_bazel_rules_docker//container:layer_tools.bzl",
     _gen_img_args = "generate_args_for_image",
     _get_layers = "get_from_target",
     _layer_tools = "tools",
 )
+load("@io_bazel_rules_docker//container:providers.bzl", "PushInfo")
 load(
     "@io_bazel_rules_docker//skylib:path.bzl",
     "runfile",

@@ -13,9 +13,9 @@ load(
     "@io_bazel_rules_docker//container:container.bzl",
     "container_image",
 )
-load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
 load("//skylib:push.bzl", "k8s_container_push")
 load("//skylib:test_rules.bzl", "file_compare_test")
+load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
 
 # to generate new test data if needed:
 # bazel run //skylib/kustomize:set_namespace newnamespace-1 <test.yaml >test_expected.yaml
