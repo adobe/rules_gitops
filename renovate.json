@@ -2,5 +2,29 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "timezone": "America/Los_Angeles",
+  "schedule": [
+    "before 8am every weekday"
+  ],
+  "packageRules": [
+    {
+      "groupName": "go",
+      "matchDatasources": [
+        "go"
+      ],
+      "matchPackagePatterns": [
+        "*"
+      ]
+    },
+    {
+      "groupName": "bazel",
+      "matchDatasources": [
+        "bazel"
+      ],
+      "matchPackagePatterns": [
+        "*"
+      ]
+    }
   ]
 }
