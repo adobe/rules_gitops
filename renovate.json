@@ -20,8 +20,8 @@
       ]
     },
     {
-      "groupName": "Bazel",
-      "groupSlug": "bazel",
+      "groupName": "Bazel modules",
+      "groupSlug": "bazel-modules",
       "matchCategories": [
         "bazel"
       ],
