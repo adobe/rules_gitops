@@ -53,11 +53,11 @@ rules_gitops_repositories()
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "d0f5f605d0d656007ce6c8b5a82df3037e1d8fe8b121ed42e536f569dec16113",
-    strip_prefix = "protobuf-3.14.0",
+    sha256 = "f3c0830339eaa5036eba8ff8ce7fca5aa3088f7d616f7c3713d946f611ae92bf",
+    strip_prefix = "protobuf-3.26.1",
     urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
+        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.26.1.tar.gz",
+        "https://github.com/protocolbuffers/protobuf/archive/v3.26.1.tar.gz",
     ],
 )
 
