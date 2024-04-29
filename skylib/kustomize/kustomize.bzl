@@ -539,10 +539,17 @@ def _kubectl_impl(ctx):
         transitive = depset(transitive = [obj.default_runfiles.files for obj in trans_img_pushes])
         transitive_runfiles += [exe[DefaultInfo].default_runfiles for exe in trans_img_pushes]
 
+    variables = "--variable=NAMESPACE={namespace}".format(
+        namespace = ctx.attr.namespace,
+    )
+    variables += " --variable=GIT_REVISION=\"$(git rev-parse HEAD)\""
+    variables += " --variable=UTC_DATE=\"$(date -u)\""
+    variables += " --variable=GIT_BRANCH=\"$(git rev-parse --abbrev-ref HEAD)\""
+
     namespace = ctx.attr.namespace
     for inattr in ctx.attr.srcs:
         for infile in inattr.files.to_list():
-            statements += "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} | kubectl --cluster=\"{cluster}\" --user=\"{user}\" {kubectl_command} -f -\n".format(
+            statements += "{template_engine} --template={infile} {variables} --stamp_info_file={info_file} | kubectl --cluster=\"{cluster}\" --user=\"{user}\" {kubectl_command} -f -\n".format(
                 infile = infile.short_path,
                 cluster = cluster_arg,
                 user = user_arg,
@@ -550,6 +557,7 @@ def _kubectl_impl(ctx):
                 template_engine = "${RUNFILES}/%s" % _get_runfile_path(ctx, ctx.executable._template_engine),
                 namespace = namespace,
                 info_file = ctx.file._info_file.short_path,
+                variables = variables,
             )
 
     ctx.actions.expand_template(

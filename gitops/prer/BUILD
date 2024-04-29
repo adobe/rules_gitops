@@ -21,11 +21,13 @@ go_library(
         "//gitops/analysis:go_default_library",
         "//gitops/bazel:go_default_library",
         "//gitops/commitmsg:go_default_library",
+        "//gitops/digester:go_default_library",
         "//gitops/exec:go_default_library",
         "//gitops/git:go_default_library",
         "//gitops/git/bitbucket:go_default_library",
         "//gitops/git/github:go_default_library",
         "//gitops/git/gitlab:go_default_library",
+        "//templating/fasttemplate:go_default_library",
         "//vendor/github.com/golang/protobuf/proto:go_default_library",
     ],
 )

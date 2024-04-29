@@ -28,14 +28,21 @@ def _runfiles(ctx, f):
 def _show_impl(ctx):
     script_content = "#!/usr/bin/env bash\nset -e\n"
 
+    variables = "--variable=NAMESPACE={namespace}".format(
+        namespace = ctx.attr.namespace,
+    )
+    variables += " --variable=GIT_REVISION=\"$(git rev-parse HEAD)\""
+    variables += " --variable=UTC_DATE=\"$(date -u)\""
+    variables += " --variable=GIT_BRANCH=\"$(git rev-parse --abbrev-ref HEAD)\""
+
     kustomize_outputs = []
-    script_template = "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file}\n"
+    script_template = "{template_engine} --template={infile} {variables} --stamp_info_file={info_file}\n"
     for dep in ctx.attr.src.files.to_list():
         kustomize_outputs.append(script_template.format(
             infile = dep.short_path,
             template_engine = ctx.executable._template_engine.short_path,
-            namespace = ctx.attr.namespace,
             info_file = ctx.file._info_file.short_path,
+            variables = variables,
         ))
 
     # ensure kustomize outputs are separated by '---' delimiters

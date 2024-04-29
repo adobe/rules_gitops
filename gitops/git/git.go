@@ -18,6 +18,7 @@ import (
 	"os"
 	oe "os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/adobe/rules_gitops/gitops/exec"
 )
@@ -101,6 +102,34 @@ func (r *Repo) Commit(message, gitopsPath string) bool {
 	}
 	exec.Mustex(r.Dir, "git", "commit", "-a", "-m", message)
 	return true
+}
+
+// RemoveDiff removes the changes made to a specific file in the repository
+func (r *Repo) RemoveDiff(fileName string) {
+	exec.Mustex(r.Dir, "git", "checkout", "--", fileName)
+}
+
+// split by newline and ignore empty strings
+func SplitFunc(c rune) bool {
+	return c == '\n'
+}
+
+// GetChangedFiles returns a list of files that have been changed in the repository
+func (r *Repo) GetChangedFiles() []string {
+	files, err := exec.Ex(r.Dir, "git", "diff", "--name-only")
+	if err != nil {
+		log.Fatalf("ERROR: %s", err)
+	}
+	return strings.FieldsFunc(files, SplitFunc)
+}
+
+// GetCommitSha returns the SHA of the current commit
+func (r *Repo) GetCommitSha() string {
+	commit, err := exec.Ex(r.Dir, "git", "rev-parse", "HEAD")
+	if err != nil {
+		log.Fatalf("ERROR: %s", err)
+	}
+	return strings.TrimSpace(commit)
 }
 
 // IsClean returns true if there is no local changes (nothing to commit)

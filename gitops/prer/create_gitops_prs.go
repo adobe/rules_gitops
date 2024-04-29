@@ -25,11 +25,13 @@ import (
 	"github.com/adobe/rules_gitops/gitops/analysis"
 	"github.com/adobe/rules_gitops/gitops/bazel"
 	"github.com/adobe/rules_gitops/gitops/commitmsg"
+	"github.com/adobe/rules_gitops/gitops/digester"
 	"github.com/adobe/rules_gitops/gitops/exec"
 	"github.com/adobe/rules_gitops/gitops/git"
 	"github.com/adobe/rules_gitops/gitops/git/bitbucket"
 	"github.com/adobe/rules_gitops/gitops/git/github"
 	"github.com/adobe/rules_gitops/gitops/git/gitlab"
+	"github.com/adobe/rules_gitops/templating/fasttemplate"
 
 	proto "github.com/golang/protobuf/proto"
 )
@@ -71,6 +73,7 @@ var (
 	gitopsRuleName         SliceFlags
 	gitopsRuleAttr         SliceFlags
 	dryRun                 = flag.Bool("dry_run", false, "Do not create PRs, just print what would be done")
+	stamp                  = flag.Bool("stamp", false, "Stamp results of gitops targets with volatile information")
 )
 
 func init() {
@@ -98,6 +101,40 @@ func bazelQuery(query string) *analysis.CqueryResult {
 		log.Fatal(err)
 	}
 	return qr
+}
+
+func getContext(workdir *git.Repo, branchName string) map[string]interface{} {
+	commitSha := workdir.GetCommitSha()
+
+	utcDate, err := exec.Ex("", "date", "-u")
+	if err != nil {
+		log.Fatal(err)
+	}
+	utcDate = strings.TrimSpace(utcDate)
+
+	ctx := map[string]interface{}{
+		"GIT_REVISION": commitSha,
+		"UTC_DATE":     utcDate,
+		"GIT_BRANCH":   branchName,
+	}
+
+	return ctx
+}
+
+func stampFile(fullPath string, workdir *git.Repo, branchName string) {
+	template, err := os.ReadFile(fullPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx := getContext(workdir, branchName)
+
+	stampedTemplate := fasttemplate.ExecuteString(string(template), "{{", "}}", ctx)
+
+	err = os.WriteFile(fullPath, []byte(stampedTemplate), 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
@@ -184,6 +221,18 @@ func main() {
 			log.Println("train", train, "target", target)
 			bin := bazel.TargetToExecutable(target)
 			exec.Mustex("", bin, "--nopush", "--nobazel", "--deployment_root", gitopsdir)
+		}
+		if *stamp {
+			changedFiles := workdir.GetChangedFiles()
+			for _, filePath := range changedFiles {
+				fullPath := gitopsdir + "/" + filePath
+				if digester.VerifyDigest(fullPath) {
+					workdir.RemoveDiff(fullPath)
+				} else {
+					digester.SaveDigest(fullPath)
+					stampFile(fullPath, workdir, *branchName)
+				}
+			}
 		}
 		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets)), *gitopsPath) {
 			log.Println("branch", branch, "has changes, push is required")
