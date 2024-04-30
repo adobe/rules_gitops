@@ -104,8 +104,8 @@ func (r *Repo) Commit(message, gitopsPath string) bool {
 	return true
 }
 
-// RemoveDiff removes the changes made to a specific file in the repository
-func (r *Repo) RemoveDiff(fileName string) {
+// RestoreFile restores the specified file in the repository to its original state
+func (r *Repo) RestoreFile(fileName string) {
 	exec.Mustex(r.Dir, "git", "checkout", "--", fileName)
 }
 

@@ -227,7 +227,7 @@ func main() {
 			for _, filePath := range changedFiles {
 				fullPath := gitopsdir + "/" + filePath
 				if digester.VerifyDigest(fullPath) {
-					workdir.RemoveDiff(fullPath)
+					workdir.RestoreFile(fullPath)
 				} else {
 					digester.SaveDigest(fullPath)
 					stampFile(fullPath, workdir, *branchName)
