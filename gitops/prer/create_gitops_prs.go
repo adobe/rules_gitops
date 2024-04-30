@@ -129,9 +129,13 @@ func stampFile(fullPath string, workdir *git.Repo, branchName string) {
 
 	ctx := getGitStatusDict(workdir, branchName)
 
-	stampedTemplate := fasttemplate.ExecuteString(string(template), "{{", "}}", ctx)
+	outf, err := os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer outf.Close()
 
-	err = os.WriteFile(fullPath, []byte(stampedTemplate), 0666)
+	_, err = fasttemplate.Execute(string(template), "{{", "}}", outf, ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
