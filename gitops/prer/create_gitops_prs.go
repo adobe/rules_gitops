@@ -103,7 +103,7 @@ func bazelQuery(query string) *analysis.CqueryResult {
 	return qr
 }
 
-func getContext(workdir *git.Repo, branchName string) map[string]interface{} {
+func getGitStatusDict(workdir *git.Repo, branchName string) map[string]interface{} {
 	commitSha := workdir.GetCommitSha()
 
 	utcDate, err := exec.Ex("", "date", "-u")
@@ -127,7 +127,7 @@ func stampFile(fullPath string, workdir *git.Repo, branchName string) {
 		log.Fatal(err)
 	}
 
-	ctx := getContext(workdir, branchName)
+	ctx := getGitStatusDict(workdir, branchName)
 
 	stampedTemplate := fasttemplate.ExecuteString(string(template), "{{", "}}", ctx)
 
