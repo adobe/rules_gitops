@@ -72,8 +72,8 @@ var (
 	gitopsKind             SliceFlags
 	gitopsRuleName         SliceFlags
 	gitopsRuleAttr         SliceFlags
-	dryRun                 = flag.Bool("dry_run", false, "Do not create PRs, just print what would be done")
 	stamp                  = flag.Bool("stamp", false, "Stamp results of gitops targets with volatile information")
+	dryRun                 = flag.Bool("dry_run", false, "Do not create PRs, just print what would be done")
 )
 
 func init() {
