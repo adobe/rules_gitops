@@ -12,6 +12,7 @@ governing permissions and limitations under the License.
 package git
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -109,18 +110,21 @@ func (r *Repo) RestoreFile(fileName string) {
 	exec.Mustex(r.Dir, "git", "checkout", "--", fileName)
 }
 
-// split by newline and ignore empty strings
-func SplitFunc(c rune) bool {
-	return c == '\n'
-}
-
 // GetChangedFiles returns a list of files that have been changed in the repository
 func (r *Repo) GetChangedFiles() []string {
-	files, err := exec.Ex(r.Dir, "git", "diff", "--name-only")
+	s, err := exec.Ex(r.Dir, "git", "diff", "--name-only")
 	if err != nil {
 		log.Fatalf("ERROR: %s", err)
 	}
-	return strings.FieldsFunc(files, SplitFunc)
+	var files []string
+	sc := bufio.NewScanner(strings.NewReader(s))
+	for sc.Scan() {
+		files = append(files, sc.Text())
+	}
+	if err := sc.Err(); err != nil {
+		log.Fatalf("ERROR: %s", err)
+	}
+	return files
 }
 
 // GetCommitSha returns the SHA of the current commit
