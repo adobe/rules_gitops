@@ -121,13 +121,11 @@ func getGitStatusDict(workdir *git.Repo, branchName string) map[string]interface
 	return ctx
 }
 
-func stampFile(fullPath string, workdir *git.Repo, branchName string) {
+func stampFile(fullPath string, ctx map[string]interface{}) {
 	template, err := os.ReadFile(fullPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	ctx := getGitStatusDict(workdir, branchName)
 
 	outf, err := os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
@@ -228,13 +226,16 @@ func main() {
 		}
 		if *stamp {
 			changedFiles := workdir.GetChangedFiles()
-			for _, filePath := range changedFiles {
-				fullPath := gitopsdir + "/" + filePath
-				if digester.VerifyDigest(fullPath) {
-					workdir.RestoreFile(fullPath)
-				} else {
-					digester.SaveDigest(fullPath)
-					stampFile(fullPath, workdir, *branchName)
+			if len(changedFiles) > 0 {
+				ctx := getGitStatusDict(workdir, *branchName)
+				for _, filePath := range changedFiles {
+					fullPath := gitopsdir + "/" + filePath
+					if digester.VerifyDigest(fullPath) {
+						workdir.RestoreFile(fullPath)
+					} else {
+						digester.SaveDigest(fullPath)
+						stampFile(fullPath, ctx)
+					}
 				}
 			}
 		}
