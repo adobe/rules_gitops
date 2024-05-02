@@ -540,24 +540,16 @@ def _kubectl_impl(ctx):
         transitive_runfiles += [exe[DefaultInfo].default_runfiles for exe in trans_img_pushes]
 
     namespace = ctx.attr.namespace
-
-    variables = "--variable=NAMESPACE={namespace}".format(
-        namespace = namespace,
-    )
-    variables += " --variable=GIT_REVISION=\"$(git rev-parse HEAD)\""
-    variables += " --variable=UTC_DATE=\"$(date -u)\""
-    variables += " --variable=GIT_BRANCH=\"$(git rev-parse --abbrev-ref HEAD)\""
-
     for inattr in ctx.attr.srcs:
         for infile in inattr.files.to_list():
-            statements += "{template_engine} --template={infile} {variables} --stamp_info_file={info_file} | kubectl --cluster=\"{cluster}\" --user=\"{user}\" {kubectl_command} -f -\n".format(
+            statements += "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} | kubectl --cluster=\"{cluster}\" --user=\"{user}\" {kubectl_command} -f -\n".format(
                 infile = infile.short_path,
                 cluster = cluster_arg,
                 user = user_arg,
                 kubectl_command = kubectl_command_arg,
                 template_engine = "${RUNFILES}/%s" % _get_runfile_path(ctx, ctx.executable._template_engine),
+                namespace = namespace,
                 info_file = ctx.file._info_file.short_path,
-                variables = variables,
             )
 
     ctx.actions.expand_template(
