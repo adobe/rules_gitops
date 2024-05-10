@@ -45,7 +45,7 @@ sh_binary(
     ctx.download_and_extract(filename, "bin/", sha256 = sha256)
 
 _download_binary = repository_rule(
-    implementation = _download_binary_impl,
+    _download_binary_impl,
 )
 
 def kustomize_setup(name):
