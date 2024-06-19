@@ -56,12 +56,12 @@ function async() {
 }
 
 function waitpids() {
-    # Wait for all of the subprocesses, failing the script if any of them failed.
-    if [ "${#PIDS[@]}" != 0 ]; then
-        for pid in ${PIDS[@]}; do
-            wait ${pid}
-        done
-    fi
+  # Wait for all of the subprocesses, returning the exit code of the first failed process.
+  if [ "${#PIDS[@]}" != 0 ]; then
+    for pid in ${PIDS[@]}; do
+      wait ${pid} || return $?
+    done
+  fi
 }
 
 cd $BUILD_WORKSPACE_DIRECTORY
@@ -73,4 +73,6 @@ else
   TARGET_DIR=$BUILD_WORKSPACE_DIRECTORY
 fi
 
+# make sure that the scirpt is immediately exits if any command below fails
+set -o errexit
 %{statements}
