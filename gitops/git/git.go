@@ -36,11 +36,12 @@ func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error
 	if err := os.RemoveAll(dir); err != nil {
 		return nil, fmt.Errorf("Unable to clone repo: %w", err)
 	}
+	args := []string{"clone", "--no-checkout", "--single-branch", "--branch", primaryBranch, "--filter=blob:none", "--no-tags"}
 	if mirrorDir != "" {
-		exec.Mustex("", "git", "clone", "-n", "--reference", mirrorDir, repo, dir)
-	} else {
-		exec.Mustex("", "git", "clone", "-n", repo, dir)
+		args = append(args, "--reference", mirrorDir)
 	}
+	args = append(args, repo, dir)
+	exec.Mustex("", "git", args...)
 	exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
 	genPath := fmt.Sprintf("%s/\n", gitopsPath)
 	if err := ioutil.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
@@ -63,6 +64,12 @@ type Repo struct {
 // Clean cleans up the repo
 func (r *Repo) Clean() error {
 	return os.RemoveAll(r.Dir)
+}
+
+// Fetch branches from the remote repository based on a specified pattern.
+func (r *Repo) Fetch(pattern string) {
+	refSpec := fmt.Sprintf("+refs/heads/%s:refs/remotes/origin/%s", pattern, pattern)
+	exec.Mustex(r.Dir, "git", "fetch", "--force", "--filter=blob:none", "--no-tags", "origin", refSpec)
 }
 
 // SwitchToBranch switch the repo to specified branch and checkout primaryBranch files over it.
