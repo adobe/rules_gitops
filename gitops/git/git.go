@@ -38,20 +38,22 @@ func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error
 	if err := os.RemoveAll(dir); err != nil {
 		return nil, fmt.Errorf("Unable to clone repo: %w", err)
 	}
+	remoteName := "origin"
+	args := []string{"clone", "--no-checkout", "--single-branch", "--branch", primaryBranch, "--filter=blob:none", "--no-tags", "--origin", remoteName}
 	if mirrorDir != "" {
-		exec.Mustex("", "git", "clone", "-n", "--reference", mirrorDir, repo, dir)
-	} else {
-		exec.Mustex("", "git", "clone", "-n", repo, dir)
+		args = append(args, "--reference", mirrorDir)
 	}
+	args = append(args, repo, dir)
+	exec.Mustex("", "git", args...)
 	exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
 	genPath := fmt.Sprintf("%s/\n", gitopsPath)
 	if err := ioutil.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
 		return nil, fmt.Errorf("Unable to create .git/info/sparse-checkout: %w", err)
 	}
 	exec.Mustex(dir, "git", "checkout", primaryBranch)
-
 	return &Repo{
-		Dir: dir,
+		Dir:        dir,
+		RemoteName: remoteName,
 	}, nil
 }
 
@@ -60,11 +62,20 @@ func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error
 type Repo struct {
 	// Dir is the location of the git repo.
 	Dir string
+	// RemoteName is the name of the remote that tracks upstream repository.
+	RemoteName string
 }
 
 // Clean cleans up the repo
 func (r *Repo) Clean() error {
 	return os.RemoveAll(r.Dir)
+}
+
+// Fetch branches from the remote repository based on a specified pattern.
+// The branches will be be added to the list tracked remote branches ready to be pushed.
+func (r *Repo) Fetch(pattern string) {
+	exec.Mustex(r.Dir, "git", "remote", "set-branches", "--add", r.RemoteName, pattern)
+	exec.Mustex(r.Dir, "git", "fetch", "--force", "--filter=blob:none", "--no-tags", r.RemoteName)
 }
 
 // SwitchToBranch switch the repo to specified branch and checkout primaryBranch files over it.
@@ -150,6 +161,6 @@ func (r *Repo) IsClean() bool {
 // Push pushes all local changes to the remote repository
 // all changes should be already commited
 func (r *Repo) Push(branches []string) {
-	args := append([]string{"push", "origin", "-f", "--set-upstream"}, branches...)
+	args := append([]string{"push", r.RemoteName, "-f", "--set-upstream"}, branches...)
 	exec.Mustex(r.Dir, "git", args...)
 }

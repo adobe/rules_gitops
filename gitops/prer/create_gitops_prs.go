@@ -67,6 +67,7 @@ var (
 	prTitle                = flag.String("gitops_pr_title", "", "a title for deployment PR")
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
+	deploymentBranchPrefix = flag.String("deployment_branch_prefix", "deploy/", "the prefix to add to all deployment branch names")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
 	gitHost                = flag.String("git_server", "bitbucket", "the git server api to use. 'bitbucket', 'github' or 'gitlab'")
 	gitopsKind             SliceFlags
@@ -195,13 +196,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to clone repo: %v", err)
 	}
+	workdir.Fetch(*deploymentBranchPrefix + "*")
 
 	var updatedGitopsTargets []string
 	var updatedGitopsBranches []string
 
 	for train, targets := range releaseTrains {
 		log.Println("train", train)
-		branch := fmt.Sprintf("deploy/%s%s", train, *deploymentBranchSuffix)
+		branch := *deploymentBranchPrefix + train + *deploymentBranchSuffix
 		newBranch := workdir.SwitchToBranch(branch, *prInto)
 		if !newBranch {
 			// Find if we need to recreate the branch because target was deleted
