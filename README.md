@@ -464,6 +464,16 @@ As a result of the setup above the `create_gitops_prs` tool will open up to 2 po
 
 The GitOps pull request is only created (or new commits added) if the `gitops` target changes the state for the target deployment branch. The source pull request will remain open (and keep accumulation GitOps results) until the pull request is merged and source branch is deleted.
 
+The `--stamp` parameter allows for the replacement of certain placeholders, but only when the `gitops` target changes the output's digest compared to the one already saved. The new digest of the unstamped data is also saved with the manifest. The digest is kept in a file in the same location as the YAML file, with a `.digest` extension added to its name. This is helpful when the manifests have volatile information that shouldn't be the only factor causing changes in the target deployment branch.
+
+Here are the placeholders that can be replaced:
+
+| Placeholder      | Replacement                                    |
+|------------------|-------------------------------------------------|
+| `{{GIT_REVISION}}` | Result of `git rev-parse HEAD`                  |
+| `{{UTC_DATE}}`     | Result of `date -u`                             |
+| `{{GIT_BRANCH}}`   | The `branch_name` argument given to `create_gitops_prs` |
+
 `--dry_run` parameter can be used to test the tool without creating any pull requests. The tool will print the list of the potential pull requests. It is recommended to run the tool in the dry run mode as a part of the CI test suite to verify that the tool is configured correctly.
 
 <a name="multiple-release-branches-gitops-workflow"></a>
