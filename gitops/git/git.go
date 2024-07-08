@@ -12,12 +12,14 @@ governing permissions and limitations under the License.
 package git
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	oe "os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/adobe/rules_gitops/gitops/exec"
 )
@@ -112,6 +114,28 @@ func (r *Repo) Commit(message, gitopsPath string) bool {
 	}
 	exec.Mustex(r.Dir, "git", "commit", "-a", "-m", message)
 	return true
+}
+
+// RestoreFile restores the specified file in the repository to its original state
+func (r *Repo) RestoreFile(fileName string) {
+	exec.Mustex(r.Dir, "git", "checkout", "--", fileName)
+}
+
+// GetChangedFiles returns a list of files that have been changed in the repository
+func (r *Repo) GetChangedFiles() []string {
+	s, err := exec.Ex(r.Dir, "git", "diff", "--name-only")
+	if err != nil {
+		log.Fatalf("ERROR: %s", err)
+	}
+	var files []string
+	sc := bufio.NewScanner(strings.NewReader(s))
+	for sc.Scan() {
+		files = append(files, sc.Text())
+	}
+	if err := sc.Err(); err != nil {
+		log.Fatalf("ERROR: %s", err)
+	}
+	return files
 }
 
 // IsClean returns true if there is no local changes (nothing to commit)
