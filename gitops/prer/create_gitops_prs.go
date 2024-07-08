@@ -104,9 +104,7 @@ func bazelQuery(query string) *analysis.CqueryResult {
 	return qr
 }
 
-func getGitStatusDict(workdir *git.Repo, branchName string) map[string]interface{} {
-	commitSha := workdir.GetCommitSha()
-
+func getGitStatusDict(workdir *git.Repo, gitCommit, branchName string) map[string]interface{} {
 	utcDate, err := exec.Ex("", "date", "-u")
 	if err != nil {
 		log.Fatal(err)
@@ -114,7 +112,7 @@ func getGitStatusDict(workdir *git.Repo, branchName string) map[string]interface
 	utcDate = strings.TrimSpace(utcDate)
 
 	ctx := map[string]interface{}{
-		"GIT_REVISION": commitSha,
+		"GIT_REVISION": gitCommit,
 		"UTC_DATE":     utcDate,
 		"GIT_BRANCH":   branchName,
 	}
@@ -229,7 +227,7 @@ func main() {
 		if *stamp {
 			changedFiles := workdir.GetChangedFiles()
 			if len(changedFiles) > 0 {
-				ctx := getGitStatusDict(workdir, *branchName)
+				ctx := getGitStatusDict(workdir, *gitCommit, *branchName)
 				for _, filePath := range changedFiles {
 					fullPath := gitopsdir + "/" + filePath
 					if digester.VerifyDigest(fullPath) {

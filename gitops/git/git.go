@@ -138,15 +138,6 @@ func (r *Repo) GetChangedFiles() []string {
 	return files
 }
 
-// GetCommitSha returns the SHA of the current commit
-func (r *Repo) GetCommitSha() string {
-	commit, err := exec.Ex(r.Dir, "git", "rev-parse", "HEAD")
-	if err != nil {
-		log.Fatalf("ERROR: %s", err)
-	}
-	return strings.TrimSpace(commit)
-}
-
 // IsClean returns true if there is no local changes (nothing to commit)
 func (r *Repo) IsClean() bool {
 	cmd := oe.Command("git", "status", "--porcelain")
