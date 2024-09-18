@@ -23,10 +23,10 @@ http_archive(
 
 http_archive(
     name = "com_github_bazelbuild_buildtools",
-    sha256 = "05c3c3602d25aeda1e9dbc91d3b66e624c1f9fdadf273e5480b489e744ca7269",
-    strip_prefix = "buildtools-6.4.0",
+    sha256 = "051951c10ff8addeb4f10be3b0cf474b304b2ccd675f2cc7683cdd9010320ca9",
+    strip_prefix = "buildtools-7.3.1",
     urls = [
-        "https://github.com/bazelbuild/buildtools/archive/refs/tags/v6.4.0.tar.gz",
+        "https://github.com/bazelbuild/buildtools/archive/refs/tags/v7.3.1.tar.gz",
     ],
 )
 
@@ -53,11 +53,11 @@ rules_gitops_repositories()
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "d0f5f605d0d656007ce6c8b5a82df3037e1d8fe8b121ed42e536f569dec16113",
-    strip_prefix = "protobuf-3.14.0",
+    sha256 = "b2340aa47faf7ef10a0328190319d3f3bee1b24f426d4ce8f4253b6f27ce16db",
+    strip_prefix = "protobuf-28.2",
     urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
+        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v28.2.tar.gz",
+        "https://github.com/protocolbuffers/protobuf/archive/v28.2.tar.gz",
     ],
 )
 
