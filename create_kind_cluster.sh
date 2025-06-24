@@ -18,13 +18,14 @@ reg_name='kind-registry'
 reg_port='5000'
 running="$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true)"
 if [ "${running}" != 'true' ]; then
+  docker container rm "${reg_name}" 2>/dev/null || true
   docker run \
     -d --restart=always -p "${reg_port}:5000" --name "${reg_name}" \
     registry:2
 fi
 
 # create a cluster with the local registry enabled in containerd
-cat <<EOF | kind create cluster --name "${KIND_CLUSTER_NAME}" --image "kindest/node:v1.18.15" --config=-
+cat <<EOF | kind create cluster --name "${KIND_CLUSTER_NAME}" --image "kindest/node:v1.30.13" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 containerdConfigPatches:
