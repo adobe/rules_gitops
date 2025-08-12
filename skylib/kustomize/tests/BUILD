@@ -270,6 +270,57 @@ gitops(
     namespace = "test",
 )
 
+# Test gitops with app_grp parameter
+gitops(
+    name = "dev-something-with-app-grp.gitops",
+    testonly = True,
+    srcs = [":namespace_test"],
+    app_grp = "backend",
+    cluster = "dev",
+    gitops_path = "cloud",
+    namespace = "test",
+)
+
+# Test gitops without app_grp (should behave like original)
+gitops(
+    name = "dev-something-no-app-grp.gitops",
+    testonly = True,
+    srcs = [":namespace_test"],
+    cluster = "dev",
+    gitops_path = "cloud",
+    namespace = "test",
+    # app_grp intentionally omitted to test backward compatibility
+)
+
+# Test rules to verify gitops output with app_grp
+rule_test(
+    name = "gitops_with_app_grp_generates_executable",
+    generates = ["dev-something-with-app-grp.gitops"],
+    rule = "dev-something-with-app-grp.gitops",
+)
+
+# Test rules to verify gitops output without app_grp (backward compatibility)
+rule_test(
+    name = "gitops_no_app_grp_generates_executable",
+    generates = ["dev-something-no-app-grp.gitops"],
+    rule = "dev-something-no-app-grp.gitops",
+)
+
+# File tests to verify gitops path generation
+file_test(
+    name = "gitops_with_app_grp_path_test",
+    file = ":dev-something-with-app-grp.gitops",
+    matches = 4,  # Should appear in echo, mkdir, echo comment, and template_engine commands
+    regexp = "cloud/backend",
+)
+
+file_test(
+    name = "gitops_no_app_grp_path_test",
+    file = ":dev-something-no-app-grp.gitops",
+    matches = 4,  # Should appear in echo, mkdir, echo comment, and template_engine commands
+    regexp = "cloud/test/dev",
+)
+
 #-------------------
 kustomize(
     name = "name_prefix",
