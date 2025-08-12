@@ -277,7 +277,7 @@ gitops(
     srcs = [":namespace_test"],
     cluster = "dev",
     namespace = "test",
-    app_grp = "frontend",
+    app_grp = "backend",
     gitops_path = "cloud",
 )
 
@@ -311,7 +311,7 @@ file_test(
     name = "gitops_with_app_grp_path_test",
     file = ":dev-something-with-app-grp.gitops",
     matches = 4,  # Should appear in echo, mkdir, echo comment, and template_engine commands
-    regexp = "cloud/frontend",
+    regexp = "cloud/backend",
 )
 
 file_test(
