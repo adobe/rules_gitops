@@ -275,10 +275,10 @@ gitops(
     name = "dev-something-with-app-grp.gitops",
     testonly = True,
     srcs = [":namespace_test"],
-    cluster = "dev",
-    namespace = "test",
     app_grp = "backend",
+    cluster = "dev",
     gitops_path = "cloud",
+    namespace = "test",
 )
 
 # Test gitops without app_grp (should behave like original)
@@ -287,8 +287,8 @@ gitops(
     testonly = True,
     srcs = [":namespace_test"],
     cluster = "dev",
-    namespace = "test",
     gitops_path = "cloud",
+    namespace = "test",
     # app_grp intentionally omitted to test backward compatibility
 )
 

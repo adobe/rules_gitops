@@ -441,7 +441,7 @@ fi
 
     namespace = ctx.attr.namespace
     app_grp = ctx.attr.app_grp
-    
+
     # Construct the path with optional app_grp
     if app_grp:
         path_template = "{gitops_path}/{app_grp}/{namespace}/{cluster}/{file}"
@@ -449,7 +449,7 @@ fi
     else:
         path_template = "{gitops_path}/{namespace}/{cluster}/{file}"
         mkdir_template = "{gitops_path}/{namespace}/{cluster}"
-    
+
     for inattr in ctx.attr.srcs:
         if "{" in namespace:
             fail("unable to gitops namespace with placeholders %s" % inattr.label)  #mynamespace should not be gitopsed

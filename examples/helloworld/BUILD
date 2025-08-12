@@ -125,6 +125,7 @@ k8s_deploy(
 
 k8s_deploy(
     name = "gitops_with_app_grp",
+    app_grp = "backend",  # This will create path: cloud/backend/hwteam/kind-kind/gitops_with_app_grp.yaml
     cluster = CLUSTER,
     deployment_branch = "helloworld-gitops-app-grp",
     # image_digest_tag = True,  # test optional image tagging
@@ -139,7 +140,6 @@ k8s_deploy(
     ],
     name_suffix = "-gitops-app-grp",
     namespace = NAMESPACE,
-    app_grp = "backend",  # This will create path: cloud/backend/hwteam/kind-kind/gitops_with_app_grp.yaml
     user = USER,
 )
 
