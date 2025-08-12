@@ -127,9 +127,9 @@ k8s_deploy(
     name = "gitops_with_app_grp",
     cluster = CLUSTER,
     deployment_branch = "helloworld-gitops-app-grp",
-    image_digest_tag = True,  # test optional image tagging
-    image_registry = REGISTRY,  # override the default registry host for production
-    image_repository_prefix = "k8s",
+    # image_digest_tag = True,  # test optional image tagging
+    # image_registry = REGISTRY,  # override the default registry host for production
+    # image_repository_prefix = "k8s",
     images = {
         "helloworld-image": ":image",
     },
@@ -139,7 +139,7 @@ k8s_deploy(
     ],
     name_suffix = "-gitops-app-grp",
     namespace = NAMESPACE,
-    app_grp = "frontend",  # This will create path: cloud/frontend/hwteam/kind-kind/gitops_with_app_grp.yaml
+    app_grp = "backend",  # This will create path: cloud/backend/hwteam/kind-kind/gitops_with_app_grp.yaml
     user = USER,
 )
 
