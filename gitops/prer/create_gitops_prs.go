@@ -58,7 +58,7 @@ var (
 	workspace              = flag.String("workspace", "", "path to workspace root")
 	repo                   = flag.String("git_repo", "", "git repo location")
 	gitMirror              = flag.String("git_mirror", "", "git mirror location, like /mnt/mirror/bitbucket.tubemogul.info/tm/repo.git for jenkins")
-	gitopsPath             = flag.String("gitops_path", "cloud", "location to store files in repo.")
+	gitopsPath             = flag.String("gitops_path", "", "location to store files in repo (default: full repo).")
 	gitopsTmpDir           = flag.String("gitops_tmpdir", os.TempDir(), "location to check out git tree with /cloud.")
 	target                 = flag.String("target", "//... except //experimental/...", "target to scan. Useful for debugging only")
 	pushParallelism        = flag.Int("push_parallelism", 5, "Number of image pushes to perform concurrently")
