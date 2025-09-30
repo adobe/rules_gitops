@@ -45,10 +45,13 @@ func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error
 	}
 	args = append(args, repo, dir)
 	exec.Mustex("", "git", args...)
-	exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
-	genPath := fmt.Sprintf("%s/\n", gitopsPath)
-	if err := ioutil.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
-		return nil, fmt.Errorf("Unable to create .git/info/sparse-checkout: %w", err)
+	// Enable sparse-checkout when restricting to a subdir
+	if !isRootPath(gitopsPath) {
+		exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
+		genPath := fmt.Sprintf("%s/\n", gitopsPath)
+		if err := ioutil.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
+			return nil, fmt.Errorf("Unable to create .git/info/sparse-checkout: %w", err)
+		}
 	}
 	exec.Mustex(dir, "git", "checkout", primaryBranch)
 	return &Repo{
@@ -108,7 +111,11 @@ func (r *Repo) GetLastCommitMessage() (msg string) {
 
 // Commit all changes to the current branch. returns true if there were any changes
 func (r *Repo) Commit(message, gitopsPath string) bool {
-	exec.Mustex(r.Dir, "git", "add", gitopsPath)
+	if isRootPath(gitopsPath) {
+		exec.Mustex(r.Dir, "git", "add", ".")
+	} else {
+		exec.Mustex(r.Dir, "git", "add", gitopsPath)
+	}
 	if r.IsClean() {
 		return false
 	}
@@ -154,4 +161,9 @@ func (r *Repo) IsClean() bool {
 func (r *Repo) Push(branches []string) {
 	args := append([]string{"push", r.RemoteName, "-f", "--set-upstream"}, branches...)
 	exec.Mustex(r.Dir, "git", args...)
+}
+
+// isRootPath is an internal helper to detect "full repo" case.
+func isRootPath(gitopsPath string) bool {
+	return gitopsPath == "" || gitopsPath == "."
 }
