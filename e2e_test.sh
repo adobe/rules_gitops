@@ -17,13 +17,11 @@ bindir=$(cd `dirname "$0"` && pwd)
 repo_path=$bindir
 cd $repo_path
 
-#check installs
+# Check prerequisites
 bazel version
 docker version
 which kubectl
 go version
-
-go get sigs.k8s.io/kind@v0.29.0
 
 cluster_running="$(docker inspect -f '{{.State.Running}}' kind-control-plane 2>/dev/null || true)"
 if [ "${cluster_running}" != 'true' ]; then

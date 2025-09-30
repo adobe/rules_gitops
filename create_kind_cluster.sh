@@ -13,19 +13,24 @@ set -o errexit
 # desired cluster name; default is "kind"
 KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-kind}"
 
+# kind executable
+go install sigs.k8s.io/kind@v0.29.0
+kind="$(go env GOPATH)/bin/kind"
+which "${kind}"
+
 # create registry container unless it already exists
 reg_name='kind-registry'
-reg_port='5000'
+reg_port='15000'
 running="$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true)"
 if [ "${running}" != 'true' ]; then
   docker container rm "${reg_name}" 2>/dev/null || true
   docker run \
-    -d --restart=always -p "${reg_port}:5000" --name "${reg_name}" \
-    registry:2
+    -d --restart=always -e "REGISTRY_HTTP_ADDR=0.0.0.0:${reg_port}" -p "${reg_port}:${reg_port}" --name "${reg_name}" \
+    registry:3
 fi
 
 # create a cluster with the local registry enabled in containerd
-cat <<EOF | kind create cluster --name "${KIND_CLUSTER_NAME}" --image "kindest/node:v1.30.13" --config=-
+cat <<EOF | "${kind}" create cluster --name "${KIND_CLUSTER_NAME}" --image "kindest/node:v1.30.13" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 containerdConfigPatches:
