@@ -1,12 +1,13 @@
 module github.com/adobe/rules_gitops
 
-go 1.19
+go 1.24.0
 
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.5.4
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v32 v32.1.0
+	github.com/google/go-github/v76 v76.0.0
 	github.com/xanzy/go-gitlab v0.80.2
 	golang.org/x/oauth2 v0.5.0
 	k8s.io/api v0.26.1
