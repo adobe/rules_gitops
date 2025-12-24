@@ -111,6 +111,7 @@ def k8s_deploy(
         cluster = "dev",
         user = "{BUILD_USER}",
         namespace = None,
+        app_grp = None,  # optional application group to insert between gitops_path and namespace in the file path
         configmaps_srcs = None,
         secrets_srcs = None,
         configmaps_renaming = None,  # configmaps renaming policy. Could be None or 'hash'.
@@ -279,6 +280,7 @@ def k8s_deploy(
             srcs = [name],
             cluster = cluster,
             namespace = namespace,
+            app_grp = app_grp,
             gitops_path = gitops_path,
             strip_prefixes = [
                 namespace + "-",
