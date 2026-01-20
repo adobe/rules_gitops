@@ -10,9 +10,8 @@ bzl_library(
     srcs = ["defs.bzl"],
     visibility = ["//visibility:public"],
     deps = [
-        "//kustomize/private:extension",
-        "//kustomize/private:kustomization",
-        "//kustomize/private:kustomize_binary",
-        "//kustomize/private:toolchain",
+        "//kubectl/private:extension",
+        "//kubectl/private:kubectl_binary",
+        "//kubectl/private:toolchain",
     ],
 )

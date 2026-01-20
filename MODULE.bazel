@@ -27,6 +27,11 @@ use_repo(kustomize, "kustomize")
 
 register_toolchains("@kustomize//toolchains:all")
 
+kubectl = use_extension("//kubectl:defs.bzl", "kubectl")
+use_repo(kubectl, "kubectl")
+
+register_toolchains("@kubectl//toolchains:all")
+
 bazel_dep(name = "rules_img", version = "0.3.3")
 
 # Dev Dependencies

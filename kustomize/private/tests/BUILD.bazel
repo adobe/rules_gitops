@@ -1,8 +1,9 @@
 load("//kustomize/private:kustomization.bzl", "kustomization")
+load(":util.bzl", "golden_test")
 
 # Verify that rule is combining files without processing
 kustomization(
-    name = "raw_test",
+    name = "raw",
     testonly = True,
     manifests = [
         "deployment.yaml",
@@ -10,4 +11,9 @@ kustomization(
         "crb.yaml",
     ],
     namespace = "",
+)
+
+golden_test(
+    name = "raw_test",
+    in_file = "raw"
 )

@@ -1,0 +1,39 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: crb-name
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: Group
+  name: crb-subject
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp
+spec:
+  ports:
+  - name: web
+    port: 80
+    targetPort: 8080
+  selector:
+    app: myapp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - image: //skylib/kustomize/tests:image
+        name: myapp

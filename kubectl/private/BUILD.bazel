@@ -1,7 +1,7 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 
 package(
-    default_visibility = ["//kustomize:__subpackages__"],
+    default_visibility = ["//kubectl:__subpackages__"],
 )
 
 bzl_library(
@@ -9,20 +9,10 @@ bzl_library(
     srcs = ["extension.bzl"],
     deps = [
         ":platforms",
-        "//kustomize/private/versions",
+        "//kubectl/private/versions",
         "@bazel_tools//tools/build_defs/repo:cache.bzl",
         "@bazel_tools//tools/build_defs/repo:http.bzl",
         "@bazel_tools//tools/build_defs/repo:utils.bzl",
-    ],
-)
-
-bzl_library(
-    name = "kustomization",
-    srcs = ["kustomization.bzl"],
-    deps = [
-        ":providers",
-        "//skylib:stamp",
-        "//adapters:providers",
     ],
 )
 
@@ -33,8 +23,8 @@ bzl_library(
 )
 
 bzl_library(
-    name = "kustomize_binary",
-    srcs = ["kustomize_binary.bzl"],
+    name = "kubectl_binary",
+    srcs = ["kubectl_binary.bzl"],
 )
 
 bzl_library(
