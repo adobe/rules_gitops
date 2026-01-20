@@ -369,7 +369,7 @@ The *Create GitOps PRs* step usually is the last step of a CI pipeline. `rules_g
 
 For the full list of `create_gitops_prs` command line options, run:
 ```bash
-bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs
+bazel run //gitops/prer:create_gitops_prs
 ```
 
 <a name="gitops-and-deployment-supported-git-servers"></a>
@@ -406,7 +406,7 @@ GIT_ROOT_DIR=$(git rev-parse --show-toplevel)
 GIT_COMMIT_ID=$(git rev-parse HEAD)
 GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 if [ "${GIT_BRANCH_NAME}" == "master"]; then
-    bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs -- \
+    bazel run //gitops/prer:create_gitops_prs -- \
         --workspace $GIT_ROOT_DIR \
         --git_repo https://github.com/example/repo.git \
         --git_mirror $GIT_ROOT_DIR/.git \
@@ -493,7 +493,7 @@ GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)          # => release/team-20
 RELEASE_BRANCH_SUFFIX=${GIT_BRANCH_NAME#"release/team"}     # => -20200101
 RELEASE_BRANCH=${GIT_BRANCH_NAME%${RELEASE_BRANCH_SUFFIX}}  # => release/team
 if [ "${RELEASE_BRANCH}" == "release/team"]; then
-    bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs -- \
+    bazel run //gitops/prer:create_gitops_prs -- \
         --workspace $GIT_ROOT_DIR \
         --git_repo https://github.com/example/repo.git \
         --git_mirror $GIT_ROOT_DIR/.git \
@@ -586,7 +586,7 @@ The test code launches the script to perform the test setup. The test code shoul
 The `@k8s_test//:kubeconfig` target referenced from `k8s_test_setup` rule serves the purpose of making Kubernetes configuration available in the test sandbox. The `kubeconfig` repository rule in the `WORKSPACE` file will need, at minimum, provide the cluster name.
 
 ```starlark
-load("@com_adobe_rules_gitops//gitops:defs.bzl", "kubeconfig")
+load("//gitops:defs.bzl", "kubeconfig")
 
 kubeconfig(
     name = "k8s_test",

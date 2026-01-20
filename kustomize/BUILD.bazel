@@ -1,0 +1,18 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+
+toolchain_type(
+    name = "toolchain_type",
+    visibility = ["//visibility:public"]
+)
+
+bzl_library(
+    name = "defs",
+    srcs = ["defs.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//kustomize/private:extension",
+        "//kustomize/private:kustomization",
+        "//kustomize/private:kustomize_binary",
+        "//kustomize/private:toolchain",
+    ],
+)

@@ -1,4 +1,4 @@
-# Copyright 2020 Adobe. All rights reserved.
+# Copyright 2026 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License. You may obtain a copy
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -9,7 +9,7 @@
 # governing permissions and limitations under the License.
 
 load(
-    "@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl",
+    "//kustomize:defs.bzl",
     "KustomizeInfo",
     "imagePushStatements",
     "kubectl",
@@ -148,8 +148,8 @@ def k8s_deploy(
         manifests = native.glob(["*.yaml", "*.yaml.tpl"])
     if prefix_suffix_app_labels:
         configurations = configurations + [
-            "@com_adobe_rules_gitops//skylib/kustomize:nameprefix_deployment_labels_config.yaml",
-            "@com_adobe_rules_gitops//skylib/kustomize:namesuffix_deployment_labels_config.yaml",
+            "//skylib/kustomize:nameprefix_deployment_labels_config.yaml",
+            "//skylib/kustomize:namesuffix_deployment_labels_config.yaml",
         ]
     for reservedname in ["CLUSTER", "NAMESPACE"]:
         if substitutions.get(reservedname):
@@ -174,7 +174,7 @@ def k8s_deploy(
             image_digest_tag = image_digest_tag,
             tags = tags,
         )
-        kustomize(
+        kustomization(
             name = name,
             namespace = namespace,
             configmaps_srcs = configmaps_srcs,
@@ -240,7 +240,7 @@ def k8s_deploy(
             image_digest_tag = image_digest_tag,
             tags = tags,
         )
-        kustomize(
+        kustomization(
             name = name,
             namespace = namespace,
             configmaps_srcs = configmaps_srcs,

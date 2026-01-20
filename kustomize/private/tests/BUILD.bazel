@@ -1,0 +1,13 @@
+load("//kustomize/private:kustomization.bzl", "kustomization")
+
+# Verify that rule is combining files without processing
+kustomization(
+    name = "raw_test",
+    testonly = True,
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+        "crb.yaml",
+    ],
+    namespace = "",
+)

@@ -1,0 +1,44 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+
+package(
+    default_visibility = ["//kustomize:__subpackages__"],
+)
+
+bzl_library(
+    name = "extension",
+    srcs = ["extension.bzl"],
+    deps = [
+        ":platforms",
+    ],
+)
+
+bzl_library(
+    name = "kustomization",
+    srcs = ["kustomization.bzl"],
+    deps = [
+        ":providers",
+        "//skylib:stamp",
+        "@rules_img//img:providers",
+    ],
+)
+
+bzl_library(
+    name = "toolchain",
+    srcs = ["toolchain.bzl"],
+    deps = [":providers"],
+)
+
+bzl_library(
+    name = "kustomize_binary",
+    srcs = ["kustomize_binary.bzl"],
+)
+
+bzl_library(
+    name = "platforms",
+    srcs = ["platforms.bzl"],
+)
+
+bzl_library(
+    name = "providers",
+    srcs = ["providers.bzl"],
+)

@@ -1,4 +1,4 @@
-# Copyright 2020 Adobe. All rights reserved.
+# Copyright 2026 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License. You may obtain a copy
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -14,7 +14,7 @@ GtiOps rules repositories initialization
 
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-load("@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize_setup")
+load("//skylib/kustomize:kustomize.bzl", "kustomize_setup")
 load("@io_bazel_rules_docker//repositories:go_repositories.bzl", container_go_deps = "go_deps")
 load("@io_bazel_rules_docker//repositories:repositories.bzl", container_repositories = "repositories")
 

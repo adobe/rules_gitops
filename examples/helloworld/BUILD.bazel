@@ -1,0 +1,194 @@
+# Copyright 2026 Adobe. All rights reserved.
+# This file is licensed to you under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software distributed under
+# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+# OF ANY KIND, either express or implied. See the License for the specific language
+# governing permissions and limitations under the License.
+
+# load("@rules_gitops//gitops:defs.bzl", "k8s_deploy")
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("@rules_gitops//adapters:rules_img.bzl", "image_descriptor")
+load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:layer.bzl", "image_layer")
+load("@rules_img//img:load.bzl", "image_load")
+load("@rules_img//img:push.bzl", "image_push")
+load("@rules_gitops//kustomize:defs.bzl", "kustomization")
+
+CLUSTER = "kind-kind"
+
+USER = "kind-kind"
+
+REGISTRY = "localhost:15000"
+
+platform(
+    name = "linux_amd64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = ["helloworld.go"],
+    importpath = "github.com/adobe/rules_gitops/examples/helloworld",
+    visibility = ["//visibility:private"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["helloworld_test.go"],
+    embed = [":go_default_library"],
+)
+
+go_binary(
+    name = "helloworld",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
+
+image_layer(
+    name = "go_layer",
+    srcs = {
+        "/bin/app": ":helloworld",
+    },
+)
+
+image_manifest(
+    name = "go_image",
+    entrypoint = ["/bin/app"],
+    base = "@alpine",
+    platform = ":linux_amd64",
+    layers = [
+        ":go_layer",
+    ],
+)
+
+image_load(
+    name = "load",
+    image = ":go_image",
+    tag = "helloworld:latest",
+    visibility = ["//:__pkg__"],
+)
+
+image_push(
+    name = "push",
+    image = ":go_image",
+    registry = REGISTRY,
+    repository = "rules_gitops/examples/helloworld",
+    tag = "native",
+    visibility = ["//:__pkg__"],
+)
+
+image_descriptor(
+    name = "k8s_image",
+    image = ":go_image",
+    push = ":push",
+    registry = REGISTRY,
+    repository = "rules_gitops/examples/helloworld"
+)
+
+kustomization(
+    name = "kustomize",
+    testonly = True,
+    manifests = [
+        "deployment.yaml",
+    ],
+    images = [":k8s_image"],
+    namespace = "",
+)
+
+# k8s_deploy(
+#     name = "mynamespace",
+#     cluster = CLUSTER,
+#     images = {
+#         "helloworld-image": ":k8s_image",
+#     },
+#     manifests = [
+#         "deployment.yaml",
+#         "service.yaml",
+#     ],
+#     namespace = "{BUILD_USER}",
+#     user = USER,
+# )
+
+# NAMESPACE = "hwteam"
+
+# k8s_deploy(
+#     name = "canary",
+#     cluster = CLUSTER,
+#     deployment_branch = "helloworld-canary",
+#     image_digest_tag = True,  # test optional image tagging
+#     image_registry = REGISTRY,  # override the default registry for production
+#     image_repository_prefix = "k8s",
+#     images = {
+#         "helloworld-image": ":image",
+#     },
+#     manifests = [
+#         "deployment.yaml",
+#         "service.yaml",
+#     ],
+#     name_suffix = "-canary",
+#     namespace = NAMESPACE,
+#     prefix_suffix_app_labels = True,
+#     user = USER,
+# )
+
+# k8s_deploy(
+#     name = "release",
+#     cluster = CLUSTER,
+#     deployment_branch = "helloworld-prod",
+#     image_digest_tag = True,  # test optional image tagging
+#     image_registry = REGISTRY,  # override the default registry host for production
+#     image_repository_prefix = "k8s",
+#     images = {
+#         "helloworld-image": ":image",
+#     },
+#     manifests = [
+#         "deployment.yaml",
+#         "service.yaml",
+#     ],
+#     namespace = NAMESPACE,
+#     tags = ["release"],
+#     user = USER,
+# )
+
+# k8s_deploy(
+#     name = "gitops_custom_path",
+#     cluster = CLUSTER,
+#     deployment_branch = "helloworld-gitops-custom-path",
+#     gitops_path = "custom_cloud",
+#     image_digest_tag = True,  # test optional image tagging
+#     image_registry = REGISTRY,  # override the default registry host for production
+#     image_repository_prefix = "k8s",
+#     images = {
+#         "helloworld-image": ":image",
+#     },
+#     manifests = [
+#         "deployment.yaml",
+#         "service.yaml",
+#     ],
+#     name_suffix = "-gitops-custom-path",
+#     namespace = NAMESPACE,
+#     user = USER,
+# )
+
+# sh_test(
+#     name = "k8s_deploy_test",
+#     srcs = ["k8s_deploy_test.sh"],
+#     args = [
+#         CLUSTER,
+#         NAMESPACE,
+#     ],
+#     data = [
+#         ":canary.show",
+#         ":mynamespace.show",
+#         ":release.show",
+#     ],
+#     deps = [
+#         "@bazel_tools//tools/bash/runfiles",
+#     ],
+# )

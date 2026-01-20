@@ -1,4 +1,4 @@
-# Copyright 2020 Adobe. All rights reserved.
+# Copyright 2026 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License. You may obtain a copy
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -8,18 +8,7 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load(
-    "@io_bazel_rules_docker//skylib:path.bzl",
-    "runfile",
-)
-
-def file_path(ctx, f, in_runtime):
-    if in_runtime:
-        return "${RUNFILES}/%s" % runfile(ctx, f)
-    else:
-        return f.path
-
-def stamp(ctx, string, files, tmpfilename, in_runtime = False):
+def stamp(ctx, string, files, tmpfilename):
     """
     Stamp provided string replacing placeholders like {BUILD_USER}.
     Uses an optimization shortcut for BUILD_USER
@@ -28,7 +17,7 @@ def stamp(ctx, string, files, tmpfilename, in_runtime = False):
     if "{BUILD_USER}" in string and "{" not in string.format(BUILD_USER = ""):
         # shortcut for only {BUILD_USER} in placeholders
         string = string.format(
-            BUILD_USER = "$(cat %s)" % file_path(ctx, ctx.file._build_user_value, in_runtime),
+            BUILD_USER = "$(cat %s)" % ctx.file._build_user_value.path,
         )
 
         files.append(ctx.files._build_user_value[0])
@@ -52,7 +41,7 @@ def stamp(ctx, string, files, tmpfilename, in_runtime = False):
         mnemonic = "Stamp",
         tools = [ctx.executable._stamper],
     )
-    string = "$(cat {})".format(file_path(ctx, tmp_out_file, in_runtime))
+    string = "$(cat {})".format(tmp_out_file.path)
     return string
 
 def _stamp_value_impl(ctx):
