@@ -9,10 +9,12 @@
 # governing permissions and limitations under the License.
 
 def stamp(ctx, string, files, tmpfilename):
-    """
-    Stamp provided string replacing placeholders like {BUILD_USER}.
+    """Stamp provided string replacing placeholders like {BUILD_USER}.
+    
     Uses an optimization shortcut for BUILD_USER
-    Returns a string suitable for inclusion into bash script.
+    
+    Returns:
+        a string suitable for inclusion into bash script.
     """
     if "{BUILD_USER}" in string and "{" not in string.format(BUILD_USER = ""):
         # shortcut for only {BUILD_USER} in placeholders
@@ -67,7 +69,7 @@ stamp_value = rule(
     attrs = {
         "str": attr.string(default = "{BUILD_USER}"),
         "_info_file": attr.label(
-            default = Label("//skylib:more_stable_status.txt"),
+            default = Label("//stamper:more_stable_status.txt"),
             allow_single_file = True,
         ),
         "_stamper": attr.label(

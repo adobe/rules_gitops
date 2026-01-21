@@ -87,7 +87,7 @@ Args:
             cfg = "exec",
         ),
         "_info_file": attr.label(
-            default = Label("//skylib:more_stable_status.txt"),
+            default = Label("//stamper:more_stable_status.txt"),
             allow_single_file = True,
         ),
     },

@@ -14,32 +14,21 @@ licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//visibility:public"])
 
+alias(
+    name = "nameprefix_deployment_labels_config.yaml",
+    actual = "//gitops/private:nameprefix_deployment_labels_config.yaml",
+)
+
+alias(
+    name = "namesuffix_deployment_labels_config.yaml",
+    actual = "//gitops/private:namesuffix_deployment_labels_config.yaml",
+)
+
 bzl_library(
     name = "defs",
     srcs = ["defs.bzl"],
     deps = [
         "//skylib:external_image",
         "//skylib:k8s",
-    ],
-)
-
-bzl_library(
-    name = "deps",
-    srcs = ["deps.bzl"],
-    deps = [
-        "@bazel_tools//tools/build_defs/repo:http.bzl",
-        "@bazel_tools//tools/build_defs/repo:utils.bzl",
-    ],
-)
-
-bzl_library(
-    name = "repositories",
-    srcs = ["repositories.bzl"],
-    deps = [
-        "//skylib/kustomize",
-        "@bazel_gazelle//:deps",
-        "@bazel_skylib//:workspace",
-        "@io_bazel_rules_docker//repositories",
-        "@io_bazel_rules_docker//repositories:go_repositories",
     ],
 )

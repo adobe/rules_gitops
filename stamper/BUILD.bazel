@@ -1,3 +1,5 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+
 # Copyright 2026 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License. You may obtain a copy
@@ -9,6 +11,7 @@
 # governing permissions and limitations under the License.
 
 load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load(":stamp.bzl", "more_stable_status", "stamp_value")
 
 go_library(
     name = "go_default_library",
@@ -21,5 +24,25 @@ go_library(
 go_binary(
     name = "stamper",
     embed = [":go_default_library"],
+    visibility = ["//:__subpackages__"],
+)
+
+stamp_value(
+    name = "build_user_value",
+    str = "{BUILD_USER}",
+    visibility = ["//:__subpackages__"],
+)
+
+more_stable_status(
+    name = "more_stable_status",
+    vars = [
+        "BUILD_USER",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+bzl_library(
+    name = "stamp",
+    srcs = ["stamp.bzl"],
     visibility = ["//visibility:public"],
 )

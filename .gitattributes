@@ -5,3 +5,4 @@
 # Don't include examples in the distribution artifact, to reduce size.
 # You may want to add additional exclusions for folders or files that users don't need.
 examples export-ignore
+tests export-ignore

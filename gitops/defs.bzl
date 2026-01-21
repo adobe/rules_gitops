@@ -11,10 +11,8 @@
 """
 GitOps rules public interface
 """
-
-load("//skylib:external_image.bzl", _external_iamge = "external_image")
-load("//skylib:k8s.bzl", _k8s_deploy = "k8s_deploy", _k8s_test_setup = "k8s_test_setup")
+load("//gitops/private:k8s_deploy.bzl", _k8s_deploy = "k8s_deploy")
+load("//gitops/private:gitops.bzl", _gitops = "gitops")
 
 k8s_deploy = _k8s_deploy
-k8s_test_setup = _k8s_test_setup
-external_image = _external_iamge
+gitops = _gitops

@@ -15,3 +15,10 @@ bzl_library(
         "@rules_img//img:providers",
     ],
 )
+
+bzl_library(
+    name = "external_image",
+    srcs = ["external_image.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [":providers"],
+)

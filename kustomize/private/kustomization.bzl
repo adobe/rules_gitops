@@ -9,7 +9,7 @@
 # governing permissions and limitations under the License.
 
 
-load("//skylib:stamp.bzl", "stamp")
+load("//stamper:stamp.bzl", "stamp")
 load("//kustomize/private:providers.bzl", "KustomizeInfo")
 load("//adapters:providers.bzl", "K8sPushInfo")
 
@@ -277,11 +277,11 @@ kustomization = rule(
         "common_labels": attr.string_dict(default = {}),
         "common_annotations": attr.string_dict(default = {}),
         "_build_user_value": attr.label(
-            default = Label("//skylib:build_user_value.txt"),
+            default = Label("//stamper:build_user_value.txt"),
             allow_single_file = True,
         ),
         "_info_file": attr.label(
-            default = Label("//skylib:more_stable_status.txt"),
+            default = Label("//stamper:more_stable_status.txt"),
             allow_single_file = True,
         ),
         "_resolver": attr.label(

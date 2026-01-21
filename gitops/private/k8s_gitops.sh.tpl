@@ -73,6 +73,6 @@ else
   TARGET_DIR=$BUILD_WORKSPACE_DIRECTORY
 fi
 
-# make sure that the scirpt is immediately exits if any command below fails
+# make sure that the script exits immediately if any command below fails
 set -o errexit
 %{statements}

@@ -2,7 +2,7 @@
 Implementation of external image information provider suitable for injection into manifests
 """
 
-load(":push.bzl", "K8sPushInfo")
+load(":providers.bzl", "K8sPushInfo")
 
 def _external_image_impl(ctx):
     sv = ctx.attr.image.split("@", 1)

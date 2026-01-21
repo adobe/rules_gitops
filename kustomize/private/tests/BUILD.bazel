@@ -1,3 +1,4 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("//kustomize/private:kustomization.bzl", "kustomization")
 load(":util.bzl", "golden_test")
 
@@ -15,5 +16,12 @@ kustomization(
 
 golden_test(
     name = "raw_test",
-    in_file = "raw"
+    in_file = "raw",
+)
+
+bzl_library(
+    name = "util",
+    srcs = ["util.bzl"],
+    visibility = ["//kustomize:__subpackages__"],
+    deps = ["@bazel_lib//lib:write_source_files"],
 )

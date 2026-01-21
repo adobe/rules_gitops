@@ -8,14 +8,28 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("@bazel_tools//tools/build_rules:test_rules.bzl", "file_test", "rule_test")
-load(
-    "@io_bazel_rules_docker//container:container.bzl",
-    "container_image",
+load("@bazel_tools//tools/build_rules:test_rules.bzl", "rule_test")
+load("//kustomize:defs.bzl", "kustomization")
+load("//kubectl:defs.bzl", "kubectl_binary")
+load("//gitops:defs.bzl", "gitops")
+load("@rules_gitops//adapters:rules_img.bzl", "image_descriptor")
+load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:layer.bzl", "image_layer")
+load("@rules_img//img:load.bzl", "image_load")
+load("@rules_img//img:push.bzl", "image_push")
+load(":util.bzl", "file_compare_test")
+
+
+
+REGISTRY = "localhost:15000"
+
+platform(
+    name = "linux_amd64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
 )
-load("//skylib:push.bzl", "k8s_container_push")
-load("//skylib:test_rules.bzl", "file_compare_test")
-load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
 
 # to generate new test data if needed:
 # bazel run //skylib/kustomize:set_namespace newnamespace-1 <test.yaml >test_expected.yaml
@@ -26,12 +40,12 @@ sh_test(
     data = [
         "test.yaml",
         "test_expected.yaml",
-        "//skylib/kustomize:set_namespace",
+        "//testing/private:set_namespace",
     ],
 )
 
 # Verify that rule is combining files without processing
-kustomize(
+kustomization(
     name = "raw_test",
     testonly = True,
     manifests = [
@@ -50,12 +64,11 @@ rule_test(
 
 file_compare_test(
     name = "raw_file",
-    expected = "expected_raw_test.yaml",
+    expected = "goldens/expected_raw_test.yaml",
     file = ":raw_test",
-    ignore_all_space = True,
 )
 
-kustomize(
+kustomization(
     name = "namespace_test",
     testonly = True,
     manifests = [
@@ -66,11 +79,10 @@ kustomize(
     namespace = "bs-dev",
 )
 
-file_test(
+file_compare_test(
     name = "has_namespace",
     file = ":namespace_test",
-    matches = 2,
-    regexp = "namespace: bs-dev",
+    expected = "goldens/expected_namespace_test"
 )
 
 filegroup(
@@ -83,7 +95,7 @@ filegroup(
     ],
 )
 
-kustomize(
+kustomization(
     name = "raw2_test",
     testonly = True,
     manifests = [
@@ -94,27 +106,49 @@ kustomize(
 
 file_compare_test(
     name = "raw2_file",
-    expected = "expected_raw_test.yaml",
+    expected = "goldens/expected_raw_test.yaml",
     file = ":raw2_test",
-    ignore_all_space = True,
+    
 )
 
-container_image(
+image_layer(
+    name = "base",
+    srcs = {
+        "/bin/app": "container_content.txt",
+    },
+)
+
+image_manifest(
     name = "image",
-    files = ["container_content.txt"],
-    visibility = ["//visibility:public"],
+    entrypoint = ["/bin/sh"],
+    base = "@alpine",
+    platform = ":linux_amd64",
+    layers = [
+        ":base",
+    ],
 )
 
-k8s_container_push(
-    name = "image_push",
+image_push(
+    name = "push",
     image = ":image",
+    registry = REGISTRY,
+    repository = "rules_gitops/tests/image",
+    visibility = ["//:__pkg__"],
 )
 
-kustomize(
+image_descriptor(
+    name = "k8s_image",
+    image = ":image",
+    push = ":push",
+    registry = REGISTRY,
+    repository = "rules_gitops/tests/image"
+)
+
+kustomization(
     name = "image_test",
     testonly = True,
     images = [
-        ":image_push",
+        ":k8s_image",
     ],
     manifests = [
         "deployment.yaml",
@@ -125,15 +159,15 @@ kustomize(
 )
 
 genrule(
-    name = "expected_image_resolved_test_yaml",
+    name = "goldens/expected_image_resolved_test_yaml",
     srcs = [
-        ":expected_image_resolved_test.tpl.yaml",
+        ":goldens/expected_image_resolved_test.tpl.yaml",
         ":image.digest",
     ],
-    outs = ["expected_image_resolved_test.yaml"],
+    outs = ["goldens/expected_image_resolved_test.yaml"],
     cmd = " ".join([
         "./$(location //templating:fast_template_engine)",
-        "--template=$(location expected_image_resolved_test.tpl.yaml)",
+        "--template=$(location goldens/expected_image_resolved_test.tpl.yaml)",
         "--variable=IMAGE_DIGEST=$$(cat $(location :image.digest))",
         "--output=$@",
     ]),
@@ -144,22 +178,16 @@ genrule(
 
 file_compare_test(
     name = "image_resolved_file",
-    expected = ":expected_image_resolved_test_yaml",
+    expected = ":goldens/expected_image_resolved_test_yaml",
     file = ":image_test",
-    ignore_all_space = True,
+    
 )
 
-k8s_container_push(
-    name = "image_digest_push",
-    image = ":image",
-    image_digest_tag = True,
-)
-
-kustomize(
+kustomization(
     name = "image_digest_test",
     testonly = True,
     images = [
-        ":image_digest_push",
+        ":k8s_image",
     ],
     manifests = [
         "deployment.yaml",
@@ -171,39 +199,11 @@ kustomize(
 
 file_compare_test(
     name = "image_digest_resolved_file",
-    expected = "expected_image_resolved_test.yaml",
+    expected = "goldens/expected_image_resolved_test.yaml",
     file = ":image_test",
-    ignore_all_space = True,
 )
 
-k8s_container_push(
-    name = "image_push_legacy",
-    image = ":image",
-    legacy_image_name = "test-image",
-)
-
-kustomize(
-    name = "legacy_image_test",
-    testonly = True,
-    images = [
-        ":image_push_legacy",
-    ],
-    manifests = [
-        "deployment_legacy.yaml",
-        "service.yaml",
-        "crb.yaml",
-    ],
-    namespace = "",
-)
-
-file_compare_test(
-    name = "logacy_image_resolved_file",
-    expected = "expected_image_resolved_test.yaml",
-    file = ":legacy_image_test",
-    ignore_all_space = True,
-)
-
-kustomize(
+kustomization(
     name = "configmap_test",
     testonly = True,
     configmaps_srcs = glob(["configmaps/**/*"]),
@@ -212,12 +212,11 @@ kustomize(
 
 file_compare_test(
     name = "configmap_test_file",
-    expected = "expected_configmap_test.yaml",
+    expected = "goldens/expected_configmap_test.yaml",
     file = ":configmap_test",
-    ignore_all_space = True,
 )
 
-kustomize(
+kustomization(
     name = "secret_test",
     testonly = True,
     namespace = "",
@@ -226,16 +225,15 @@ kustomize(
 
 file_compare_test(
     name = "secret_test_file",
-    expected = "expected_secret_test.yaml",
+    expected = "goldens/expected_secret_test.yaml",
     file = ":secret_test",
-    ignore_all_space = True,
 )
 
-kustomize(
+kustomization(
     name = "integration_test",
     testonly = True,
     images = [
-        ":image_push",
+        ":k8s_image",
     ],
     manifests = [
         "deployment.yaml",
@@ -245,16 +243,7 @@ kustomize(
     namespace = "{BUILD_USER}",
 )
 
-# bazel run //skylib/kustomize/tests:push_all
-push_all(
-    name = "push_all",
-    testonly = True,
-    srcs = [
-        ":integration_test",
-    ],
-)
-
-kubectl(
+kubectl_binary(
     name = "mynamespace.apply",
     testonly = True,
     srcs = [":integration_test"],
@@ -271,7 +260,7 @@ gitops(
 )
 
 #-------------------
-kustomize(
+kustomization(
     name = "name_prefix",
     manifests = ["test.yaml"],
     name_prefix = "prefix-",
@@ -280,12 +269,12 @@ kustomize(
 
 file_compare_test(
     name = "name_prefix_test",
-    expected = "expected_name_prefix.yaml",
+    expected = "goldens/expected_name_prefix.yaml",
     file = ":name_prefix",
 )
 
 #-------------------
-kustomize(
+kustomization(
     name = "name_suffix",
     manifests = ["test.yaml"],
     name_suffix = "-suffix",
@@ -294,17 +283,16 @@ kustomize(
 
 file_compare_test(
     name = "name_suffix_test",
-    expected = "expected_name_suffix.yaml",
+    expected = "goldens/expected_name_suffix.yaml",
     file = ":name_suffix",
-    ignore_all_space = True,
 )
 
 #-------------------
 # patch plus image
-kustomize(
+kustomization(
     name = "patch",
     images = [
-        ":image_push",
+        ":k8s_image",
     ],
     manifests = ["deployment.yaml"],
     namespace = "",
@@ -312,15 +300,15 @@ kustomize(
 )
 
 genrule(
-    name = "expected_patch_yaml",
+    name = "goldens/expected_patch_yaml",
     srcs = [
-        ":expected_patch.tpl.yaml",
+        ":goldens/expected_patch.tpl.yaml",
         ":image.digest",
     ],
-    outs = ["expected_patch.yaml"],
+    outs = ["goldens/expected_patch.yaml"],
     cmd = " ".join([
         "./$(location //templating:fast_template_engine)",
-        "--template=$(location expected_patch.tpl.yaml)",
+        "--template=$(location goldens/expected_patch.tpl.yaml)",
         "--variable=IMAGE_DIGEST=$$(cat $(location :image.digest))",
         "--output=$@",
     ]),
@@ -331,14 +319,14 @@ genrule(
 
 file_compare_test(
     name = "patch_test",
-    expected = ":expected_patch_yaml",
+    expected = ":goldens/expected_patch_yaml",
     file = ":patch",
-    ignore_all_space = True,
+    
 )
 
 #-------------------
 # prefix and suffix for deployments: legacy compatibility
-kustomize(
+kustomization(
     name = "deployment_prefix_compat",
     manifests = ["deployment_with_labels.yaml"],
     name_prefix = "prefix-",
@@ -347,12 +335,11 @@ kustomize(
 
 file_compare_test(
     name = "deployment_prefix_compat_test",
-    expected = "expected_deployment_prefix_compat.yaml",
+    expected = "goldens/expected_deployment_prefix_compat.yaml",
     file = ":deployment_prefix_compat",
-    ignore_all_space = True,
 )
 
-kustomize(
+kustomization(
     name = "deployment_suffix_compat",
     manifests = ["deployment_with_labels.yaml"],
     name_suffix = "-suffix",
@@ -361,16 +348,15 @@ kustomize(
 
 file_compare_test(
     name = "deployment_suffix_compat_test",
-    expected = "expected_deployment_suffix_compat.yaml",
+    expected = "goldens/expected_deployment_suffix_compat.yaml",
     file = ":deployment_suffix_compat",
-    ignore_all_space = True,
 )
 
 #-------------------
 # prefix and suffix for deployments
-kustomize(
+kustomization(
     name = "deployment_prefix",
-    configurations = ["//skylib/kustomize:nameprefix_deployment_labels_config.yaml"],
+    configurations = ["//gitops:nameprefix_deployment_labels_config.yaml"],
     manifests = ["deployment_with_labels.yaml"],
     name_prefix = "prefix-",
     namespace = "",
@@ -378,14 +364,14 @@ kustomize(
 
 file_compare_test(
     name = "deployment_prefix_test",
-    expected = "expected_deployment_prefix.yaml",
+    expected = "goldens/expected_deployment_prefix.yaml",
     file = ":deployment_prefix",
-    ignore_all_space = True,
+    
 )
 
-kustomize(
+kustomization(
     name = "deployment_suffix",
-    configurations = ["//skylib/kustomize:namesuffix_deployment_labels_config.yaml"],
+    configurations = ["//gitops:namesuffix_deployment_labels_config.yaml"],
     manifests = ["deployment_with_labels.yaml"],
     name_suffix = "-suffix",
     namespace = "",
@@ -393,14 +379,13 @@ kustomize(
 
 file_compare_test(
     name = "deployment_suffix_test",
-    expected = "expected_deployment_suffix.yaml",
+    expected = "goldens/expected_deployment_suffix.yaml",
     file = ":deployment_suffix",
-    ignore_all_space = True,
 )
 
 #-------------------
 # common labels and common annotations
-kustomize(
+kustomization(
     name = "common_labels",
     common_annotations = {"ownerTeam": "apps"},
     common_labels = {"flavor": "canary"},
@@ -413,15 +398,14 @@ kustomize(
 
 file_compare_test(
     name = "common_labels_test",
-    expected = "expected_common_labels.yaml",
+    expected = "goldens/expected_common_labels.yaml",
     file = ":common_labels",
-    ignore_all_space = True,
 )
 
 #-------------------
 # patch images
 
-kustomize(
+kustomization(
     name = "patch_images",
     image_name_patches = {
         "busybox": "alpine",
@@ -437,7 +421,6 @@ kustomize(
 
 file_compare_test(
     name = "patch_images_test",
-    expected = "expected_job.yaml",
+    expected = "goldens/expected_job.yaml",
     file = ":patch_images",
-    ignore_all_space = True,
 )

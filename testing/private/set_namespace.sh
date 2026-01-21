@@ -35,5 +35,5 @@ namespace: $1
 resources:
 - in.yaml
 EOF
-KUSTOMIZE_BIN="$(rlocation kustomize_bin/kustomize)"
+# KUSTOMIZE_BIN="$(rlocation kustomize_bin/kustomize)"
 exec $KUSTOMIZE_BIN build ${dir}

@@ -4,6 +4,10 @@ package(
     default_visibility = ["//kubectl:__subpackages__"],
 )
 
+exports_files([
+    "run-all.sh.tpl"
+])
+
 bzl_library(
     name = "extension",
     srcs = ["extension.bzl"],
@@ -25,6 +29,16 @@ bzl_library(
 bzl_library(
     name = "kubectl_binary",
     srcs = ["kubectl_binary.bzl"],
+    deps = [
+        "//adapters:providers",
+        "//kustomize:defs",
+        "//stamper:stamp",
+    ],
+)
+
+bzl_library(
+    name = "kubeconfig",
+    srcs = ["kubeconfig.bzl"],
 )
 
 bzl_library(

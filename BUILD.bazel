@@ -15,7 +15,6 @@ load("@gazelle//:def.bzl", "DEFAULT_LANGUAGES", "gazelle", "gazelle_binary")
 load("@package_metadata//licenses/rules:license.bzl", "license")
 load("@package_metadata//purl:purl.bzl", "purl")
 load("@package_metadata//rules:package_metadata.bzl", "package_metadata")
-load("//kubectl:defs.bzl", "kubectl_binary")
 load("//kustomize:defs.bzl", "kustomize_binary")
 
 package_metadata(
@@ -47,8 +46,4 @@ gazelle(
 
 kustomize_binary(
     name = "kustomize",
-)
-
-kubectl_binary(
-    name = "kubectl",
 )

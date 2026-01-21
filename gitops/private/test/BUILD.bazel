@@ -1,3 +1,5 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+
 # Copyright 2026 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License. You may obtain a copy
@@ -9,9 +11,10 @@
 # governing permissions and limitations under the License.
 
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
-load("//gitops:defs.bzl", "external_image", "k8s_deploy", "k8s_test_setup")
-load("//skylib:push.bzl", "k8s_container_push")
-load("//skylib:templates.bzl", "expand_template")
+load("//adapters:external_image.bzl", "external_image")
+load("//gitops:defs.bzl", "k8s_deploy")
+load("//testing:defs.bzl", "k8s_test_setup")
+load(":templates.bzl", "expand_template")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -19,9 +22,9 @@ k8s_deploy(
     name = "legacy_alias",
     cluster = "testcluster",
     deployment_branch = "test1",
-    gitops = 1,
+    gitops = True,
     images = {
-        "img": "//skylib/kustomize/tests:image",
+        "img": "//gitops/private/tests:image",
     },
     manifests = [
         ":deployment_legacy.yaml",
@@ -154,19 +157,6 @@ diff_test(
     file2 = "deployment1_expected.txt",
 )
 
-k8s_container_push(
-    name = "pushed_image",
-    image = "//skylib/kustomize/tests:image",
-    registry = "gcr.io",
-    repository = "repo/imagethere",
-    tag = "thetag",
-)
-
-# rename(
-#     name = "//skylib/kustomize/tests:image",
-
-# )
-
 k8s_deploy(
     name = "legacy_renamed_alias",
     cluster = "testcluster",
@@ -195,4 +185,10 @@ k8s_test_setup(
     objects = [
         ":legacy_renamed_alias",
     ],
+)
+
+bzl_library(
+    name = "templates",
+    srcs = ["templates.bzl"],
+    visibility = ["//gitops:__subpackages__"],
 )

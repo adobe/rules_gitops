@@ -13,4 +13,4 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: test-image
+        image: //tests:image
