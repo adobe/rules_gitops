@@ -73,7 +73,8 @@ def _kustomization_impl(ctx):
     if ctx.files.patches:
         kustomization_yaml += "patches:\n"
         for _, f in enumerate(ctx.files.patches):
-            kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
+            # TODO: this changed in later versions of kustomize
+            kustomization_yaml += "- path: {}/{}\n".format(upupup, f.path)
 
     if ctx.attr.image_name_patches or ctx.attr.image_tag_patches:
         kustomization_yaml += "images:\n"

@@ -12,7 +12,7 @@ spec:
         app: myapp
     spec:
       containers:
-        - image: docker.io/skylib/kustomize/tests/image@{{IMAGE_DIGEST}}
+        - image: localhost:15000/rules_gitops/tests/images/image@{{IMAGE_DIGEST}}
           name: myapp
           resources:
             limits:

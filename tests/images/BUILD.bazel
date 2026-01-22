@@ -5,7 +5,7 @@ load("@rules_img//img:load.bzl", "image_load")
 load("@rules_img//img:push.bzl", "image_push")
 
 package(
-    default_visibility = ["//tests:__subpackages__"]
+    default_visibility = ["//tests:__subpackages__"],
 )
 
 REGISTRY = "localhost:15000"
@@ -33,6 +33,14 @@ image_manifest(
         ":base",
     ],
     platform = ":linux_amd64",
+)
+
+filegroup(
+    name = "image.digest",
+    srcs = [
+        ":image",
+    ],
+    output_group = "digest",
 )
 
 image_push(

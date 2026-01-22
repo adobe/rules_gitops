@@ -37,5 +37,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: //tests:image
+      - image: //tests/images:image
         name: myapp

@@ -1,3 +1,0 @@
-BUILD_EMBED_LABEL 
-BUILD_HOST pesterni-macOS-1
-BUILD_USER pesterni
