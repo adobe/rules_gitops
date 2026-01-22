@@ -26,6 +26,8 @@ platform(
 
 container_image(
     name = "image",
+    base = "@alpine_linux_amd64//image",
+    cmd = ["/bin/sleep", "10"],
     files = [":container_contents.txt"]
 )
 
