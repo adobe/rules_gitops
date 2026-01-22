@@ -8,7 +8,7 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-# load("@rules_gitops//gitops:defs.bzl", "k8s_deploy")
+load("@rules_gitops//gitops:defs.bzl", "k8s_deploy")
 load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_gitops//adapters:rules_img.bzl", "image_descriptor")
 load("@rules_img//img:image.bzl", "image_manifest")
@@ -101,19 +101,17 @@ kustomization(
     namespace = "",
 )
 
-# k8s_deploy(
-#     name = "mynamespace",
-#     cluster = CLUSTER,
-#     images = {
-#         "helloworld-image": ":k8s_image",
-#     },
-#     manifests = [
-#         "deployment.yaml",
-#         "service.yaml",
-#     ],
-#     namespace = "{BUILD_USER}",
-#     user = USER,
-# )
+k8s_deploy(
+    name = "mynamespace",
+    cluster = CLUSTER,
+    images = [":k8s_image"],
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+    ],
+    namespace = "{BUILD_USER}",
+    user = USER,
+)
 
 # NAMESPACE = "hwteam"
 

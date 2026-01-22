@@ -24,10 +24,6 @@ def k8s_deploy(
         deps = [],
         deps_aliases = {},
         images = [],
-        image_digest_tag = False,
-        image_registry = "docker.io",  # registry to push container to. jenkins will need an access configured for gitops to work. Ignored for mynamespace.
-        image_repository = None,  # repository (registry path) to push container to. Generated from the image bazel path if empty.
-        image_repository_prefix = None,  # Mutually exclusive with 'image_repository'. Add a prefix to the repository name generated from the image bazel path
         objects = [],
         gitops = True,  # make sure to use gitops = False to work with individual namespace. This option will be turned False if namespace is '{BUILD_USER}'
         gitops_path = "cloud",
@@ -37,7 +33,56 @@ def k8s_deploy(
         end_tag = "}}",
         tags = [],
         visibility = None):
-    """ k8s_deploy
+    """Generates Kubernetes deployment targets with optional GitOps support.
+
+    This macro creates kustomization targets and kubectl binaries for deploying
+    Kubernetes manifests. When gitops is enabled, it also creates a gitops target
+    for managing deployments through a GitOps workflow.
+
+    Args:
+        name: Name of the rule. Important for gitops since it becomes part of
+            the target manifest file name in the gitops_path directory.
+        cluster: Target Kubernetes cluster name. Defaults to "dev".
+        user: Kubernetes user for authentication. Defaults to "{BUILD_USER}"
+            which is substituted at runtime.
+        namespace: Target Kubernetes namespace. Required when gitops=True.
+            Defaults to "{BUILD_USER}" when gitops=False.
+        configmaps_srcs: List of source files for generating ConfigMaps.
+        secrets_srcs: List of source files for generating Secrets.
+        configmaps_renaming: ConfigMap renaming policy. Can be None (no renaming)
+            or "hash" (append content hash to names).
+        manifests: List of Kubernetes manifest files. Defaults to all .yaml and
+            .yaml.tpl files in the package via glob.
+        name_prefix: Prefix to add to all resource names via kustomize.
+        name_suffix: Suffix to add to all resource names via kustomize.
+        prefix_suffix_app_labels: If True, applies kustomize configuration to
+            modify "app" labels in Deployments when name_prefix or name_suffix
+            is applied.
+        patches: List of kustomize patches to apply to the manifests.
+        image_name_patches: Dict mapping original image names to new image names.
+        image_tag_patches: Dict mapping image names to new tags.
+        substitutions: Dict of template parameter substitutions. CLUSTER and
+            NAMESPACE parameters are added automatically and should not be
+            included.
+        configurations: List of additional kustomize configuration files.
+        common_labels: Dict of labels to apply to all Kubernetes objects.
+            See kustomize commonLabels documentation.
+        common_annotations: Dict of annotations to apply to all Kubernetes
+            objects. See kustomize commonAnnotations documentation.
+        deps: List of dependency targets.
+        deps_aliases: Dict mapping aliases to dependency targets.
+        images: List of container image targets to include in the deployment.
+        objects: List of additional Kubernetes objects to include.
+        gitops: If True, creates a gitops target for GitOps workflow. Set to
+            False to work with individual namespaces. Automatically set to
+            False if namespace is "{BUILD_USER}".
+        gitops_path: Directory path for gitops manifests. Defaults to "cloud".
+        deployment_branch: Git branch for deployments. If None, uses default.
+        release_branch_prefix: Prefix for release branches. Defaults to "main".
+        start_tag: Opening delimiter for template substitutions. Defaults to "{{".
+        end_tag: Closing delimiter for template substitutions. Defaults to "}}".
+        tags: List of tags to apply to all generated targets.
+        visibility: Visibility specification for generated targets.
     """
 
     if not manifests:

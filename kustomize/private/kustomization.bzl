@@ -204,7 +204,7 @@ def _kustomization_impl(ctx):
                     template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(label) + ".digest", kpi.digestfile.path)
                     template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(label) + ".short-digest", kpi.digestfile.path)
 
-                if kpi.legacy_image_name:
+                if hasattr(kpi, "legacy_image_name"):
                     template_part += " --variable={}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
 
         template_part += " "

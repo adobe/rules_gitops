@@ -28,7 +28,7 @@ bzl_library(
     name = "defs",
     srcs = ["defs.bzl"],
     deps = [
-        "//skylib:external_image",
-        "//skylib:k8s",
+        "//gitops/private:gitops",
+        "//gitops/private:k8s_deploy",
     ],
 )

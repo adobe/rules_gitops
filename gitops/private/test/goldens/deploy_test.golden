@@ -13,5 +13,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: gcr.io/repo/imagethere@{{imports.digest}}
+      - image: localhost:15000/rules_gitops/gitops/private/test/images/helloworld@sha256:c0ef560121361221102e6549edd6fd093c0e78ee7e2f743d8c8b7b87d2cf3857
         name: myapp

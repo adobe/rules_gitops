@@ -1,23 +1,18 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
+exports_files([
+    "k8s_test_namespace.sh.tpl",
+])
+
 sh_binary(
     name = "set_namespace",
     srcs = ["set_namespace.sh"],
-    env = {
-        "KUSTOMIZE_BIN": "$(KUSTOMIZE_BIN)"
-    },
     toolchains = [
-        "@rules_gitops//kustomize:resolved_toolchain"
+        "@rules_gitops//kustomize:resolved_toolchain",
     ],
-    visibility = ["//testing/private:__subpackages__"],
+    visibility = ["//testing/private:__subpackages__", "//tests:__subpackages__"],
     deps = ["@bazel_tools//tools/bash/runfiles"],
-)
-
-bzl_library(
-    name = "k8s_test_namespace",
-    srcs = ["k8s_test_namespace.bzl"],
-    visibility = ["//testing:__subpackages__"],
 )
 
 bzl_library(
@@ -28,4 +23,10 @@ bzl_library(
         "//adapters:providers",
         "//kustomize:defs",
     ],
+)
+
+bzl_library(
+    name = "k8s_test_namespace",
+    srcs = ["k8s_test_namespace.bzl"],
+    visibility = ["//testing:__subpackages__"],
 )

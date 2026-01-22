@@ -35,5 +35,6 @@ namespace: $1
 resources:
 - in.yaml
 EOF
-# KUSTOMIZE_BIN="$(rlocation kustomize_bin/kustomize)"
+KUSTOMIZE_BIN="$(rlocation @rules_gitops//kustomize:resolved_toolchain)"
+
 exec $KUSTOMIZE_BIN build ${dir}

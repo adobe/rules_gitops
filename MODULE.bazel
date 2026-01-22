@@ -51,4 +51,5 @@ pull(
     ],
     repository = "library/alpine",
     tag = "3.23",
+    dev_dependency = True
 )

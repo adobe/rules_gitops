@@ -48,6 +48,11 @@ bzl_library(
 )
 
 bzl_library(
+    name = "resolved_toolchain",
+    srcs = ["resolved_toolchain.bzl"],
+)
+
+bzl_library(
     name = "show",
     srcs = ["show.bzl"],
 )

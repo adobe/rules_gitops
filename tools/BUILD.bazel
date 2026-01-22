@@ -1,6 +1,14 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazelrc-preset.bzl", "bazelrc_preset")
 
 bazelrc_preset(
     name = "preset",
     doc_link_template = "https://registry.build/flag/bazel?filter={flag}",
+)
+
+bzl_library(
+    name = "util",
+    srcs = ["util.bzl"],
+    visibility = ["//visibility:public"],
+    deps = ["@bazel_lib//lib:write_source_files"],
 )

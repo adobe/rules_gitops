@@ -16,14 +16,16 @@ def stamp(ctx, string, files, tmpfilename):
     Returns:
         a string suitable for inclusion into bash script.
     """
+    deps = []
+
     if "{BUILD_USER}" in string and "{" not in string.format(BUILD_USER = ""):
         # shortcut for only {BUILD_USER} in placeholders
         string = string.format(
             BUILD_USER = "$(cat %s)" % ctx.file._build_user_value.path,
         )
 
-        files.append(ctx.files._build_user_value[0])
-        return string
+        deps.append(ctx.files._build_user_value[0])
+        return string, deps
 
     stamps = [ctx.file._info_file]
     stamp_args = [
@@ -31,7 +33,7 @@ def stamp(ctx, string, files, tmpfilename):
         for sf in stamps
     ]
     tmp_out_file = ctx.actions.declare_file(tmpfilename)
-    files.append(tmp_out_file)
+
     ctx.actions.run(
         executable = ctx.executable._stamper,
         arguments = [
@@ -44,7 +46,8 @@ def stamp(ctx, string, files, tmpfilename):
         tools = [ctx.executable._stamper],
     )
     string = "$(cat {})".format(tmp_out_file.path)
-    return string
+    deps.append(tmp_out_file)
+    return string, deps
 
 def _stamp_value_impl(ctx):
     stamps = [ctx.file._info_file]

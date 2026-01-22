@@ -5,7 +5,7 @@ package(
 )
 
 exports_files([
-    "run-all.sh.tpl"
+    "run-all.sh.tpl",
 ])
 
 bzl_library(

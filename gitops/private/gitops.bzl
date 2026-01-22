@@ -9,13 +9,13 @@ def _image_push_statements(
     trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
     statements += "\n".join([
         "echo  pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
-        for exe in trans_img_pushes
+        for exe in trans_img_pushes if hasattr(exe, "pusher")
     ]) + "\n"
     statements += "\n".join([
-        "async \"%s\"" % exe.files_to_run.executable.short_path
-        for exe in trans_img_pushes
+        "async \"%s\"" % exe.pusher.files_to_run.executable.short_path
+        for exe in trans_img_pushes if hasattr(exe, "pusher")
     ]) + "\nwaitpids\n"
-    files += [obj.files_to_run.executable for obj in trans_img_pushes]
+    # files += [obj.files_to_run.executable for obj in trans_img_pushes]
     dep_runfiles = [obj[DefaultInfo].default_runfiles for obj in trans_img_pushes]
     return statements, files, dep_runfiles
 

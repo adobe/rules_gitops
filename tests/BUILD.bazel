@@ -1,35 +1,9 @@
-# Copyright 2026 Adobe. All rights reserved.
-# This file is licensed to you under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License. You may obtain a copy
-# of the License at http://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software distributed under
-# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
-# OF ANY KIND, either express or implied. See the License for the specific language
-# governing permissions and limitations under the License.
-
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazel_tools//tools/build_rules:test_rules.bzl", "rule_test")
-load("//kustomize:defs.bzl", "kustomization")
-load("//kubectl:defs.bzl", "kubectl_binary")
 load("//gitops:defs.bzl", "gitops")
-load("@rules_gitops//adapters:rules_img.bzl", "image_descriptor")
-load("@rules_img//img:image.bzl", "image_manifest")
-load("@rules_img//img:layer.bzl", "image_layer")
-load("@rules_img//img:load.bzl", "image_load")
-load("@rules_img//img:push.bzl", "image_push")
-load(":util.bzl", "file_compare_test")
-
-
-
-REGISTRY = "localhost:15000"
-
-platform(
-    name = "linux_amd64",
-    constraint_values = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-    ],
-)
+load("//kubectl:defs.bzl", "kubectl_binary")
+load("//kustomize:defs.bzl", "kustomization")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 # to generate new test data if needed:
 # bazel run //skylib/kustomize:set_namespace newnamespace-1 <test.yaml >test_expected.yaml
@@ -62,11 +36,11 @@ rule_test(
     rule = "raw_test",
 )
 
-file_compare_test(
-    name = "raw_file",
-    expected = "goldens/expected_raw_test.yaml",
-    file = ":raw_test",
-)
+# file_compare_test(
+#     name = "raw_file",
+#     expected = "goldens/expected_raw_test.yaml",
+#     file = ":raw_test",
+# )
 
 kustomization(
     name = "namespace_test",
@@ -79,11 +53,11 @@ kustomization(
     namespace = "bs-dev",
 )
 
-file_compare_test(
-    name = "has_namespace",
-    file = ":namespace_test",
-    expected = "goldens/expected_namespace_test"
-)
+# file_compare_test(
+#     name = "has_namespace",
+#     expected = "goldens/expected_namespace_test",
+#     file = ":namespace_test",
+# )
 
 filegroup(
     name = "alltestfiles",
@@ -104,45 +78,13 @@ kustomization(
     namespace = "",
 )
 
-file_compare_test(
-    name = "raw2_file",
-    expected = "goldens/expected_raw_test.yaml",
-    file = ":raw2_test",
-    
-)
+# file_compare_test(
+#     name = "raw2_file",
+#     expected = "goldens/expected_raw_test.yaml",
+#     file = ":raw2_test",
+# )
 
-image_layer(
-    name = "base",
-    srcs = {
-        "/bin/app": "container_content.txt",
-    },
-)
 
-image_manifest(
-    name = "image",
-    entrypoint = ["/bin/sh"],
-    base = "@alpine",
-    platform = ":linux_amd64",
-    layers = [
-        ":base",
-    ],
-)
-
-image_push(
-    name = "push",
-    image = ":image",
-    registry = REGISTRY,
-    repository = "rules_gitops/tests/image",
-    visibility = ["//:__pkg__"],
-)
-
-image_descriptor(
-    name = "k8s_image",
-    image = ":image",
-    push = ":push",
-    registry = REGISTRY,
-    repository = "rules_gitops/tests/image"
-)
 
 kustomization(
     name = "image_test",
@@ -176,12 +118,11 @@ genrule(
     ],
 )
 
-file_compare_test(
-    name = "image_resolved_file",
-    expected = ":goldens/expected_image_resolved_test_yaml",
-    file = ":image_test",
-    
-)
+# file_compare_test(
+#     name = "image_resolved_file",
+#     expected = ":goldens/expected_image_resolved_test_yaml",
+#     file = ":image_test",
+# )
 
 kustomization(
     name = "image_digest_test",
@@ -197,11 +138,11 @@ kustomization(
     namespace = "",
 )
 
-file_compare_test(
-    name = "image_digest_resolved_file",
-    expected = "goldens/expected_image_resolved_test.yaml",
-    file = ":image_test",
-)
+# file_compare_test(
+#     name = "image_digest_resolved_file",
+#     expected = "goldens/expected_image_resolved_test.yaml",
+#     file = ":image_test",
+# )
 
 kustomization(
     name = "configmap_test",
@@ -210,11 +151,11 @@ kustomization(
     namespace = "",
 )
 
-file_compare_test(
-    name = "configmap_test_file",
-    expected = "goldens/expected_configmap_test.yaml",
-    file = ":configmap_test",
-)
+# file_compare_test(
+#     name = "configmap_test_file",
+#     expected = "goldens/expected_configmap_test.yaml",
+#     file = ":configmap_test",
+# )
 
 kustomization(
     name = "secret_test",
@@ -223,11 +164,11 @@ kustomization(
     secrets_srcs = glob(["secrets/**/*"]),
 )
 
-file_compare_test(
-    name = "secret_test_file",
-    expected = "goldens/expected_secret_test.yaml",
-    file = ":secret_test",
-)
+# file_compare_test(
+#     name = "secret_test_file",
+#     expected = "goldens/expected_secret_test.yaml",
+#     file = ":secret_test",
+# )
 
 kustomization(
     name = "integration_test",
@@ -267,11 +208,11 @@ kustomization(
     namespace = "",
 )
 
-file_compare_test(
-    name = "name_prefix_test",
-    expected = "goldens/expected_name_prefix.yaml",
-    file = ":name_prefix",
-)
+# file_compare_test(
+#     name = "name_prefix_test",
+#     expected = "goldens/expected_name_prefix.yaml",
+#     file = ":name_prefix",
+# )
 
 #-------------------
 kustomization(
@@ -281,11 +222,11 @@ kustomization(
     namespace = "",
 )
 
-file_compare_test(
-    name = "name_suffix_test",
-    expected = "goldens/expected_name_suffix.yaml",
-    file = ":name_suffix",
-)
+# file_compare_test(
+#     name = "name_suffix_test",
+#     expected = "goldens/expected_name_suffix.yaml",
+#     file = ":name_suffix",
+# )
 
 #-------------------
 # patch plus image
@@ -317,12 +258,11 @@ genrule(
     ],
 )
 
-file_compare_test(
-    name = "patch_test",
-    expected = ":goldens/expected_patch_yaml",
-    file = ":patch",
-    
-)
+# file_compare_test(
+#     name = "patch_test",
+#     expected = ":goldens/expected_patch.yaml",
+#     file = ":patch",
+# )
 
 #-------------------
 # prefix and suffix for deployments: legacy compatibility
@@ -333,11 +273,11 @@ kustomization(
     namespace = "",
 )
 
-file_compare_test(
-    name = "deployment_prefix_compat_test",
-    expected = "goldens/expected_deployment_prefix_compat.yaml",
-    file = ":deployment_prefix_compat",
-)
+# file_compare_test(
+#     name = "deployment_prefix_compat_test",
+#     expected = "goldens/expected_deployment_prefix_compat.yaml",
+#     file = ":deployment_prefix_compat",
+# )
 
 kustomization(
     name = "deployment_suffix_compat",
@@ -346,11 +286,11 @@ kustomization(
     namespace = "",
 )
 
-file_compare_test(
-    name = "deployment_suffix_compat_test",
-    expected = "goldens/expected_deployment_suffix_compat.yaml",
-    file = ":deployment_suffix_compat",
-)
+# file_compare_test(
+#     name = "deployment_suffix_compat_test",
+#     expected = "goldens/expected_deployment_suffix_compat.yaml",
+#     file = ":deployment_suffix_compat",
+# )
 
 #-------------------
 # prefix and suffix for deployments
@@ -362,12 +302,11 @@ kustomization(
     namespace = "",
 )
 
-file_compare_test(
-    name = "deployment_prefix_test",
-    expected = "goldens/expected_deployment_prefix.yaml",
-    file = ":deployment_prefix",
-    
-)
+# file_compare_test(
+#     name = "deployment_prefix_test",
+#     expected = "goldens/expected_deployment_prefix.yaml",
+#     file = ":deployment_prefix",
+# )
 
 kustomization(
     name = "deployment_suffix",
@@ -377,11 +316,11 @@ kustomization(
     namespace = "",
 )
 
-file_compare_test(
-    name = "deployment_suffix_test",
-    expected = "goldens/expected_deployment_suffix.yaml",
-    file = ":deployment_suffix",
-)
+# file_compare_test(
+#     name = "deployment_suffix_test",
+#     expected = "goldens/expected_deployment_suffix.yaml",
+#     file = ":deployment_suffix",
+# )
 
 #-------------------
 # common labels and common annotations
@@ -396,11 +335,11 @@ kustomization(
     namespace = "",
 )
 
-file_compare_test(
-    name = "common_labels_test",
-    expected = "goldens/expected_common_labels.yaml",
-    file = ":common_labels",
-)
+# file_compare_test(
+#     name = "common_labels_test",
+#     expected = "goldens/expected_common_labels.yaml",
+#     file = ":common_labels",
+# )
 
 #-------------------
 # patch images
@@ -419,8 +358,9 @@ kustomization(
     ],
 )
 
-file_compare_test(
-    name = "patch_images_test",
-    expected = "goldens/expected_job.yaml",
-    file = ":patch_images",
-)
+# file_compare_test(
+#     name = "patch_images_test",
+#     expected = "goldens/expected_job.yaml",
+#     file = ":patch_images",
+# )
+

@@ -8,7 +8,7 @@ toolchain_type(
 
 resolved_toolchain(
     name = "resolved_toolchain",
-    visibility = ["//visibility:public"]
+    visibility = ["//visibility:public"],
 )
 
 bzl_library(
@@ -19,6 +19,7 @@ bzl_library(
         "//kustomize/private:extension",
         "//kustomize/private:kustomization",
         "//kustomize/private:kustomize_binary",
+        "//kustomize/private:show",
         "//kustomize/private:toolchain",
     ],
 )
