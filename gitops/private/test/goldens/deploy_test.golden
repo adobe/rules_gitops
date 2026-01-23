@@ -13,5 +13,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: localhost:15000/rules_gitops/gitops/private/test/images/helloworld@sha256:c0ef560121361221102e6549edd6fd093c0e78ee7e2f743d8c8b7b87d2cf3857
+      - image: localhost:15000/rules_gitops/gitops/private/test/images/helloworld@sha256:4f3c8d3f0352f6989e9ddc9a1e97fa94e23ac7a31b80502ca9807442d1fe5d68
         name: myapp

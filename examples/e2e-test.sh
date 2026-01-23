@@ -19,13 +19,7 @@ bindir=$(cd `dirname "$0"` && pwd)
 repo_path=$bindir
 cd $repo_path
 
-#verify interactive workflow
-MYNAMESPACE=$USER
 
-# kubectl config use-context kind-kind
-
-kubectl create namespace $MYNAMESPACE || true
-kubectl create namespace hwteam || true
 
 bazel run //helloworld:mynamespace.apply
 kubectl -n $MYNAMESPACE wait --timeout=60s --for=condition=Available deployment/helloworld

@@ -54,7 +54,7 @@ fi
                 gitops_path = ctx.attr.gitops_path,
                 cluster = cluster,
                 file = _remove_prefixes(infile.path.split("/")[-1], strip_prefixes),
-                template_engine = ctx.executable._template_engine.short_path,
+                template_engine = ctx.executable._template_engine.path,
                 info_file = ctx.file._info_file.path,
             )
 

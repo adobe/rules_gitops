@@ -50,3 +50,8 @@ bzl_library(
     name = "providers",
     srcs = ["providers.bzl"],
 )
+
+bzl_library(
+    name = "resolved_toolchain",
+    srcs = ["resolved_toolchain.bzl"],
+)
