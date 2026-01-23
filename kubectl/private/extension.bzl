@@ -1,3 +1,5 @@
+"""Module extension for kubectl toolchain."""
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 load("//kubectl/private:platforms.bzl", "PLATFORMS")
 load("//kubectl/private/versions:versions.bzl", "LATEST_KUBECTL_VERSION", "VERSIONS")

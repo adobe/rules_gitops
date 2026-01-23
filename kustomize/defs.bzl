@@ -1,3 +1,5 @@
+"""Public API for kustomize rules."""
+
 load("//kustomize/private:extension.bzl", _kustomize = "kustomize")
 load("//kustomize/private:kustomization.bzl", _kustomization = "kustomization")
 load("//kustomize/private:kustomize_binary.bzl", _kustomize_binary = "kustomize_binary")

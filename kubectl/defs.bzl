@@ -1,3 +1,5 @@
+"""Public API for kubectl rules."""
+
 load("//kubectl/private:extension.bzl", _kubectl = "kubectl")
 load("//kubectl/private:kubectl_binary.bzl", _kubectl_binary = "kubectl_binary")
 load("//kubectl/private:resolved_toolchain.bzl", _resolved_toolchain = "resolved_toolchain")

@@ -8,10 +8,18 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-def stamp(ctx, string, files, tmpfilename):
+"""Stamping utilities for replacing placeholders in strings."""
+
+def stamp(ctx, string, _tmpfiles, tmpfilename):
     """Stamp provided string replacing placeholders like {BUILD_USER}.
 
     Uses an optimization shortcut for BUILD_USER
+
+    Args:
+        ctx: The rule context.
+        string: The string containing placeholders to stamp.
+        _tmpfiles: Unused, kept for API compatibility.
+        tmpfilename: Base name for temporary files.
 
     Returns:
         a string suitable for inclusion into bash script.

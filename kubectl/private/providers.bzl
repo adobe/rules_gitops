@@ -1,3 +1,5 @@
+"""Provider definitions for kubectl toolchain."""
+
 KubectlToolchainInfo = provider(
     doc = "Toolchain information about the kubectl executable",
     fields = {

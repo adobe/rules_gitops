@@ -1,3 +1,5 @@
+"""Utility macros for e2e testing with kind clusters."""
+
 load("@bazel_lib//lib:expand_template.bzl", "expand_template")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
@@ -7,7 +9,7 @@ def e2e_test(name, steps):
 
     Args:
         name: name of the test target
-        setups: a list of labels producing binaries to run
+        steps: a list of labels producing binaries to run
     """
 
     sh_test(

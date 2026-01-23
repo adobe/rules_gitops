@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Rules for templating / files layout
+"""Rules for templating and file layout."""
 
 def _expand_template_impl(ctx):
     """Simply spawn the template-engine in a rule."""

@@ -1,3 +1,5 @@
+"""Provider definitions for container image adapters."""
+
 K8sPushInfo = provider(
     doc = "Information required to inject image into a manifest and optionally push it",
     fields = {

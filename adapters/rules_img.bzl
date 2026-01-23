@@ -1,3 +1,5 @@
+"""Adapter for rules_img container images."""
+
 load("@rules_img//img:providers.bzl", "DeployInfo", "ImageManifestInfo")
 load("//adapters:providers.bzl", "K8sPushInfo")
 

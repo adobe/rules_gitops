@@ -1,3 +1,5 @@
+"""Rule for displaying rendered kustomize output."""
+
 def _show_impl(ctx):
     script_content = "#!/usr/bin/env bash\nset -e\n"
 

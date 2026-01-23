@@ -1,3 +1,5 @@
+"""Macro for creating Kubernetes deployment targets with GitOps support."""
+
 load("//gitops/private:gitops.bzl", _gitops = "gitops")
 load("//kubectl:defs.bzl", "kubectl_binary")
 load("//kustomize:defs.bzl", "kustomization", "show")

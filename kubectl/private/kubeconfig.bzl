@@ -1,4 +1,5 @@
-# kubectl template
+"""Repository rule for configuring kubectl and kubeconfig."""
+
 def _kubectl_config(repository_ctx, args):
     kubectl = repository_ctx.path("kubectl")
     kubeconfig_yaml = repository_ctx.path("kubeconfig")

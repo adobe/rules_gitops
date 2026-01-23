@@ -1,3 +1,5 @@
+"""Platform definitions for kustomize toolchain."""
+
 PLATFORMS = {
     "darwin_amd64": struct(
         compatible_with = [

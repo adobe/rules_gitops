@@ -1,8 +1,10 @@
+"""Rule for setting up Kubernetes test environments."""
+
 load("//adapters:providers.bzl", "K8sPushInfo")
 load("//kustomize:defs.bzl", "KustomizeInfo")
 
 def _image_push_statements(
-        ctx,
+        _ctx,
         kustomize_objs,
         files = []):
     statements = ""

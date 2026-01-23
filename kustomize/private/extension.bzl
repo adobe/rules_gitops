@@ -1,3 +1,5 @@
+"""Module extension for kustomize toolchain."""
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("//kustomize/private:platforms.bzl", "PLATFORMS")
 load("//kustomize/private/versions:versions.bzl", "LATEST_KUSTOMIZE_VERSION", "VERSIONS")

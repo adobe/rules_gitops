@@ -1,3 +1,5 @@
+"""Rule for creating Kubernetes test namespaces."""
+
 def _k8s_test_namespace_impl(ctx):
     files = []  # runfiles list
 

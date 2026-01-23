@@ -1,3 +1,5 @@
+"""Platform definitions for kubectl toolchain."""
+
 PLATFORMS = {
     "darwin_amd64": struct(
         compatible_with = [

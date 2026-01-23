@@ -1,3 +1,5 @@
+"""Provider definitions for kustomize rules."""
+
 KustomizeToolchainInfo = provider(
     doc = "Toolchain information about the kustomize executable",
     fields = {
@@ -7,6 +9,7 @@ KustomizeToolchainInfo = provider(
 )
 
 KustomizeInfo = provider(
+    doc = "Information about a kustomization target",
     fields = {
         "image_pushes": "depset of image push executables for images referenced by this kustomization",
     },

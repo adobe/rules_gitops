@@ -8,6 +8,8 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
+"""Rule for building kustomization overlays."""
+
 load("//adapters:providers.bzl", "K8sPushInfo")
 load("//kustomize/private:providers.bzl", "KustomizeInfo")
 load("//stamper:stamp.bzl", "stamp")

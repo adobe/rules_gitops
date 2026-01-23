@@ -1,3 +1,5 @@
+"""Adapter for legacy io_bazel_rules_docker container images."""
+
 load("@io_bazel_rules_docker//container:providers.bzl", "ImageInfo", "PushInfo")
 load("@rules_gitops//adapters:providers.bzl", "K8sPushInfo")
 
