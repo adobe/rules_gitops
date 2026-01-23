@@ -1,9 +1,10 @@
 bazel_dep(name = "platforms", version = "1.0.0")
+
 bazel_dep(name = "rules_gitops", dev_dependency = True)
 
 kustomize = use_extension("@rules_gitops//kustomize:defs.bzl", "kustomize")
 kustomize.toolchain(
-    version = "5.7.1"
+    version = "5.7.1",
 )
 
 local_path_override(

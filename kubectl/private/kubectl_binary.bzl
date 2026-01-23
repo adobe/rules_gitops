@@ -1,15 +1,16 @@
 """
 Simple rule for running kubectl from the toolchain config
 """
-load("//kustomize:defs.bzl", "KustomizeInfo")
+
 load("//adapters:providers.bzl", "K8sPushInfo")
+load("//kustomize:defs.bzl", "KustomizeInfo")
 load("//stamper:stamp.bzl", "stamp")
 
 def _kubectl_binary_impl(ctx):
     executable = ctx.toolchains["@rules_gitops//kubectl:toolchain_type"].kubectlinfo.executable
-    
+
     runfiles = ctx.runfiles(
-        files = ctx.files.srcs + [ctx.executable._template_engine, ctx.file._info_file, executable]
+        files = ctx.files.srcs + [ctx.executable._template_engine, ctx.file._info_file, executable],
     ).merge(ctx.attr._bash_runfiles[DefaultInfo].default_runfiles)
 
     files = []
@@ -41,7 +42,8 @@ def _kubectl_binary_impl(ctx):
         ]) + "\n"
         statements += "\n".join([
             "async \"%s\"" % exe[K8sPushInfo].pusher.files_to_run.executable.short_path
-            for exe in trans_img_pushes if hasattr(exe[K8sPushInfo], "pusher")
+            for exe in trans_img_pushes
+            if hasattr(exe[K8sPushInfo], "pusher")
         ]) + "\nwaitpids\n"
 
         transitive_runfiles += [exe[K8sPushInfo].pusher.default_runfiles for exe in trans_img_pushes if hasattr(exe[K8sPushInfo], "pusher")]

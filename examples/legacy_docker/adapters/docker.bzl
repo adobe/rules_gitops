@@ -1,4 +1,4 @@
-load("@io_bazel_rules_docker//container:providers.bzl", "PushInfo", "ImageInfo")
+load("@io_bazel_rules_docker//container:providers.bzl", "ImageInfo", "PushInfo")
 load("@rules_gitops//adapters:providers.bzl", "K8sPushInfo")
 
 def _image_descriptor_impl(ctx):
@@ -12,9 +12,8 @@ def _image_descriptor_impl(ctx):
             repository = ctx.attr.repository,
             digestfile = digestfile,
             pusher = ctx.attr.push[DefaultInfo],
-        )
+        ),
     ]
-
 
 image_descriptor = rule(
     implementation = _image_descriptor_impl,
@@ -23,5 +22,5 @@ image_descriptor = rule(
         "push": attr.label(mandatory = True, cfg = "target", providers = [PushInfo]),
         "registry": attr.string(mandatory = True),
         "repository": attr.string(mandatory = True),
-    }
+    },
 )

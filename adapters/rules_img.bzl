@@ -1,4 +1,4 @@
-load("@rules_img//img:providers.bzl", "DeployInfo", "ImageIndexInfo", "ImageManifestInfo", "PullInfo")
+load("@rules_img//img:providers.bzl", "DeployInfo", "ImageManifestInfo")
 load("//adapters:providers.bzl", "K8sPushInfo")
 
 def _image_descriptor_impl(ctx):
@@ -12,10 +12,9 @@ def _image_descriptor_impl(ctx):
             repository = ctx.attr.repository,
             digestfile = digestfile,
             pusher = ctx.attr.push[DefaultInfo],
-            run_environment = ctx.attr.push[RunEnvironmentInfo]
-        )
+            run_environment = ctx.attr.push[RunEnvironmentInfo],
+        ),
     ]
-
 
 image_descriptor = rule(
     implementation = _image_descriptor_impl,
@@ -24,5 +23,5 @@ image_descriptor = rule(
         "push": attr.label(mandatory = True, cfg = "target", providers = [DeployInfo]),
         "registry": attr.string(mandatory = True),
         "repository": attr.string(mandatory = True),
-    }
+    },
 )

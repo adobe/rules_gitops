@@ -1,6 +1,6 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("//kustomize/private:platforms.bzl", "PLATFORMS")
-load("//kustomize/private/versions:versions.bzl", "VERSIONS", "LATEST_KUSTOMIZE_VERSION")
+load("//kustomize/private/versions:versions.bzl", "LATEST_KUSTOMIZE_VERSION", "VERSIONS")
 
 def _kustomize_hub_impl(rctx):
     kustomize_hub_build_content = """

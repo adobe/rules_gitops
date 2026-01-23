@@ -1,6 +1,6 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 load("//kubectl/private:platforms.bzl", "PLATFORMS")
-load("//kubectl/private/versions:versions.bzl", "VERSIONS", "LATEST_KUBECTL_VERSION")
+load("//kubectl/private/versions:versions.bzl", "LATEST_KUBECTL_VERSION", "VERSIONS")
 
 def _kubectl_hub_impl(rctx):
     kubectl_hub_build_content = """
@@ -64,7 +64,7 @@ def _kubectl_extension_impl(module_ctx):
         http_file(
             name = "kubectl_{}".format(platform),
             urls = [
-                "https://cdn.dl.k8s.io/release/v{version}/bin/{os}/{arch}/kubectl".format(version = kubectl_version, os = os, arch = arch)
+                "https://cdn.dl.k8s.io/release/v{version}/bin/{os}/{arch}/kubectl".format(version = kubectl_version, os = os, arch = arch),
             ],
             executable = True,
             sha256 = sha256,

@@ -44,10 +44,10 @@ http_archive(
 
 http_archive(
     name = "io_bazel_rules_docker",
-    sha256 = "b1e80761a8a8243d03ebca8845e9cc1ba6c82ce7c5179ce2b295cd36f7e394bf",
     patch_args = ["-p1"],
     # https://github.com/bazelbuild/rules_docker/pull/2068#issuecomment-1242158255
     patches = ["//:patches/docker.patch"],
+    sha256 = "b1e80761a8a8243d03ebca8845e9cc1ba6c82ce7c5179ce2b295cd36f7e394bf",
     urls = [
         "https://github.com/bazelbuild/rules_docker/releases/download/v0.25.0/rules_docker-v0.25.0.tar.gz",
         "https://mirror.bazel.build/github.com/bazelbuild/rules_docker/releases/download/v0.25.0/rules_docker-v0.25.0.tar.gz",
@@ -61,7 +61,6 @@ container_repositories()
 load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
 
 container_deps()
-
 
 load(
     "@io_bazel_rules_docker//container:container.bzl",

@@ -8,6 +8,6 @@ KustomizeToolchainInfo = provider(
 
 KustomizeInfo = provider(
     fields = {
-        "image_pushes": "depset of image push executables for images referenced by this kustomization"
-    }
+        "image_pushes": "depset of image push executables for images referenced by this kustomization",
+    },
 )

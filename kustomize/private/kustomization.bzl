@@ -8,10 +8,9 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-
-load("//stamper:stamp.bzl", "stamp")
-load("//kustomize/private:providers.bzl", "KustomizeInfo")
 load("//adapters:providers.bzl", "K8sPushInfo")
+load("//kustomize/private:providers.bzl", "KustomizeInfo")
+load("//stamper:stamp.bzl", "stamp")
 
 def _stamp_file(ctx, infile, output):
     stamps = [ctx.file._info_file]
@@ -267,7 +266,7 @@ kustomization = rule(
         "name_prefix": attr.string(),
         "name_suffix": attr.string(),
         "namespace": attr.string(),
-        "objects": attr.label_list(doc = "a list of dependent kustomize objects", providers = [KustomizeInfo,]),
+        "objects": attr.label_list(doc = "a list of dependent kustomize objects", providers = [KustomizeInfo]),
         "patches": attr.label_list(allow_files = True),
         "image_name_patches": attr.string_dict(default = {}, doc = "set new names for selected images"),
         "image_tag_patches": attr.string_dict(default = {}, doc = "set new tags for selected images"),
@@ -305,5 +304,5 @@ kustomization = rule(
     outputs = {
         "yaml": "%{name}.yaml",
     },
-    toolchains = ["@rules_gitops//kustomize:toolchain_type"]
+    toolchains = ["@rules_gitops//kustomize:toolchain_type"],
 )

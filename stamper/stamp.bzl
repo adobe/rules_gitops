@@ -10,9 +10,9 @@
 
 def stamp(ctx, string, files, tmpfilename):
     """Stamp provided string replacing placeholders like {BUILD_USER}.
-    
+
     Uses an optimization shortcut for BUILD_USER
-    
+
     Returns:
         a string suitable for inclusion into bash script.
     """

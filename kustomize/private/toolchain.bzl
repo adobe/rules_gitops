@@ -1,4 +1,5 @@
 "Kustomize toolchain rule"
+
 load("//kustomize/private:providers.bzl", "KustomizeToolchainInfo")
 
 # Avoid using non-normalized paths (workspace/../other_workspace/path)

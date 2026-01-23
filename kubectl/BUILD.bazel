@@ -18,7 +18,7 @@ bzl_library(
     deps = [
         "//kubectl/private:extension",
         "//kubectl/private:kubectl_binary",
+        "//kubectl/private:resolved_toolchain",
         "//kubectl/private:toolchain",
-        "//kubectl/private:resolved_toolchain"
     ],
 )

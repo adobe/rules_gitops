@@ -1,10 +1,10 @@
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@bazel_lib//lib:expand_template.bzl", "expand_template")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 def e2e_test(name, steps):
     """Declares an e2e test interacting with a kind cluster
-    
+
     Args:
         name: name of the test target
         setups: a list of labels producing binaries to run
@@ -31,31 +31,30 @@ def e2e_test(name, steps):
         ],
     )
 
-
 def kubectl_cmd(name, args):
     expand_template(
         name = name + ".script",
         is_executable = True,
         template = "//e2e/util:kubectl_cmd.sh.tpl",
         substitutions = {
-            "$$KUBECTL_ARGS$$": " ".join(args)
+            "$$KUBECTL_ARGS$$": " ".join(args),
         },
-        out = name + ".bash"
+        out = name + ".bash",
     )
 
     sh_binary(
         name = name,
         srcs = [name + ".script"],
         env = {
-            "KUBECTL_BIN_PATH": "$(rlocationpath //kubectl:resolved_toolchain)"
+            "KUBECTL_BIN_PATH": "$(rlocationpath //kubectl:resolved_toolchain)",
         },
         data = [
-            "//kubectl:resolved_toolchain"
+            "//kubectl:resolved_toolchain",
         ],
         deps = [
             "@bazel_tools//tools/bash/runfiles",
         ],
         toolchains = [
-            "//kubectl:resolved_toolchain"
+            "//kubectl:resolved_toolchain",
         ],
     )

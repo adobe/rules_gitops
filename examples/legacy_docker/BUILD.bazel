@@ -1,13 +1,15 @@
 load(
     "@io_bazel_rules_docker//container:container.bzl",
     "container_image",
-    "container_push"
+    "container_push",
 )
 load(
-    "//adapters:docker.bzl", "image_descriptor"
+    "@rules_gitops//gitops:defs.bzl",
+    "k8s_deploy",
 )
 load(
-    "@rules_gitops//gitops:defs.bzl", "k8s_deploy"
+    "//adapters:docker.bzl",
+    "image_descriptor",
 )
 
 CLUSTER = "kind-kind"
@@ -27,16 +29,19 @@ platform(
 container_image(
     name = "image",
     base = "@alpine_linux_amd64//image",
-    cmd = ["/bin/sleep", "10"],
-    files = [":container_contents.txt"]
+    cmd = [
+        "/bin/sleep",
+        "10",
+    ],
+    files = [":container_contents.txt"],
 )
 
 container_push(
     name = "push",
+    format = "Docker",
     image = "image",
     registry = REGISTRY,
-    format = "Docker",
-    repository = "rules_gitops/examples/legacy_docker/image"
+    repository = "rules_gitops/examples/legacy_docker/image",
 )
 
 image_descriptor(
@@ -44,7 +49,7 @@ image_descriptor(
     image = "image",
     push = "push",
     registry = REGISTRY,
-    repository = "rules_gitops/examples/legacy_docker/image"
+    repository = "rules_gitops/examples/legacy_docker/image",
 )
 
 k8s_deploy(

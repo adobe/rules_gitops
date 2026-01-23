@@ -8,14 +8,14 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("@rules_gitops//gitops:defs.bzl", "k8s_deploy")
-load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_gitops//adapters:rules_img.bzl", "image_descriptor")
+load("@rules_gitops//gitops:defs.bzl", "k8s_deploy")
+load("@rules_gitops//kustomize:defs.bzl", "kustomization")
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "image_layer")
 load("@rules_img//img:load.bzl", "image_load")
 load("@rules_img//img:push.bzl", "image_push")
-load("@rules_gitops//kustomize:defs.bzl", "kustomization")
 
 CLUSTER = "kind-kind"
 
@@ -59,12 +59,12 @@ image_layer(
 
 image_manifest(
     name = "go_image",
-    entrypoint = ["/bin/app"],
     base = "@alpine",
-    platform = ":linux_amd64",
+    entrypoint = ["/bin/app"],
     layers = [
         ":go_layer",
     ],
+    platform = ":linux_amd64",
 )
 
 image_load(
@@ -88,16 +88,16 @@ image_descriptor(
     image = ":go_image",
     push = ":push",
     registry = REGISTRY,
-    repository = "rules_gitops/examples/helloworld"
+    repository = "rules_gitops/examples/helloworld",
 )
 
 kustomization(
     name = "kustomize",
     testonly = True,
+    images = [":k8s_image"],
     manifests = [
         "deployment.yaml",
     ],
-    images = [":k8s_image"],
     namespace = "",
 )
 

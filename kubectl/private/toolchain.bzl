@@ -1,4 +1,5 @@
 "Kubectl toolchain rule"
+
 load("//kubectl/private:providers.bzl", "KubectlToolchainInfo")
 
 # Avoid using non-normalized paths (workspace/../other_workspace/path)

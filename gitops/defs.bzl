@@ -11,8 +11,9 @@
 """
 GitOps rules public interface
 """
-load("//gitops/private:k8s_deploy.bzl", _k8s_deploy = "k8s_deploy")
+
 load("//gitops/private:gitops.bzl", _gitops = "gitops")
+load("//gitops/private:k8s_deploy.bzl", _k8s_deploy = "k8s_deploy")
 
 k8s_deploy = _k8s_deploy
 gitops = _gitops

@@ -1,7 +1,6 @@
 load("@rules_gitops//adapters:rules_img.bzl", "image_descriptor")
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "image_layer")
-load("@rules_img//img:load.bzl", "image_load")
 load("@rules_img//img:push.bzl", "image_push")
 
 package(

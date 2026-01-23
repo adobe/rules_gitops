@@ -10,7 +10,6 @@ load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("//adapters:external_image.bzl", "external_image")
 load("//gitops:defs.bzl", "k8s_deploy")
 load("//tools:util.bzl", "golden_test")

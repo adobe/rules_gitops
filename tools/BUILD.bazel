@@ -1,6 +1,5 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazelrc-preset.bzl", "bazelrc_preset")
-load("@gazelle//:go_tools.bzl", "GO_TOOLS")
 
 bazelrc_preset(
     name = "preset",

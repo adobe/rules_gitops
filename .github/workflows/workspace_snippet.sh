@@ -8,18 +8,14 @@ SHA=$(git archive --format=tar --prefix=${PREFIX}/ ${TAG} | gzip | shasum -a 256
 
 cat << EOF
 
-WORKSPACE snippet:
+MODULE.bazel snippet:
 
 \`\`\`starlark
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+bazel_dep(name = "rules_gitops", version = "${TAG}", dev_dependency = True)
 
-http_archive(
-    name = "com_adobe_rules_gitops",
-    sha256 = "${SHA}",
-    strip_prefix = "${PREFIX}",
-    urls = ["https://github.com/adobe/rules_gitops/archive/refs/tags/${TAG}.tar.gz"],
-)
+\`\`\`
+
 EOF
 
 awk '/---SNIP---/{f=1;next}/---END_SNIP---/{f=0}f' examples/WORKSPACE

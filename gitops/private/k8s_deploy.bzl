@@ -1,6 +1,6 @@
-load("//kustomize:defs.bzl", "show", "kustomization")
-load("//kubectl:defs.bzl", "kubectl_binary")
 load("//gitops/private:gitops.bzl", _gitops = "gitops")
+load("//kubectl:defs.bzl", "kubectl_binary")
+load("//kustomize:defs.bzl", "kustomization", "show")
 
 def k8s_deploy(
         name,  # name of the rule is important for gitops, since it will become a part of the target manifest file name in /cloud

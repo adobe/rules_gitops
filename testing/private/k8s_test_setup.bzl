@@ -1,5 +1,5 @@
-load("//kustomize:defs.bzl", "KustomizeInfo")
 load("//adapters:providers.bzl", "K8sPushInfo")
+load("//kustomize:defs.bzl", "KustomizeInfo")
 
 def _image_push_statements(
         ctx,
@@ -131,5 +131,5 @@ k8s_test_setup = rule(
     },
     executable = True,
     implementation = _k8s_test_setup_impl,
-    toolchains = ["@rules_gitops//kustomize:toolchain_type"]
+    toolchains = ["@rules_gitops//kustomize:toolchain_type"],
 )
