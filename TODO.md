@@ -1,5 +1,2 @@
-- [ ] Extract any push logic from k8s_deploy/kustomize
-- [ ] Download kubectl binary
-- [ ] Create rules_docker adapter
 - [ ] e2e testing
 - [ ] docs

@@ -45,5 +45,5 @@ gazelle(
 )
 
 kustomize_binary(
-    name = "kustomize",
+    name = "kustomize_bin",
 )
