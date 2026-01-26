@@ -39,13 +39,13 @@ jobs:
           echo "${TOOLS_DIR}/bin" >> $GITHUB_PATH
       - name: Test
         run: |
-          bazel test //...
+          bazel test //... --config=ci
       - name: Build helloworld
         run: |
           cd examples/helloworld
-          bazel build //...
+          bazel build //... --config=ci
       - name: Build legacy docker
         if: matrix.bazel-version == '7.6.0'
         run: |
           cd ../legacy_docker
-          bazel build //...
+          bazel build //... --config=ci

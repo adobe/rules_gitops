@@ -28,6 +28,40 @@ if [[ ! -f "${KIND_BIN}" ]]; then
   exit 1
 fi
 
+KUBECTL_BIN=$(rlocation "${KUBECTL_BIN_PATH}")
+if [[ ! -f "${KUBECTL_BIN}" ]]; then
+  echo >&2 "ERROR: could not find kubectl binary"
+  exit 1
+fi
+
+MYNAMESPACE="${USER}"
+
+echo "=== DEBUG: Cluster status ==="
+echo "--- Nodes ---"
+"${KUBECTL_BIN}" get nodes -o wide || true
+
+echo "--- All pods in namespace ${MYNAMESPACE} ---"
+"${KUBECTL_BIN}" get pods -n "${MYNAMESPACE}" -o wide || true
+
+echo "--- Deployment status ---"
+"${KUBECTL_BIN}" get deployments -n "${MYNAMESPACE}" -o wide || true
+
+echo "--- Describe deployment helloworld ---"
+"${KUBECTL_BIN}" describe deployment helloworld -n "${MYNAMESPACE}" || true
+
+echo "--- Pod logs (if any) ---"
+for pod in $("${KUBECTL_BIN}" get pods -n "${MYNAMESPACE}" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
+  echo "=== Logs for pod: ${pod} ==="
+  "${KUBECTL_BIN}" logs "${pod}" -n "${MYNAMESPACE}" --tail=50 || true
+  echo "=== Events for pod: ${pod} ==="
+  "${KUBECTL_BIN}" describe pod "${pod}" -n "${MYNAMESPACE}" | grep -A 20 "^Events:" || true
+done
+
+echo "--- Events in namespace ${MYNAMESPACE} ---"
+"${KUBECTL_BIN}" get events -n "${MYNAMESPACE}" --sort-by='.lastTimestamp' || true
+
+echo "=== END DEBUG ==="
+
 "${KIND_BIN}" delete cluster -n "${KIND_CLUSTER_NAME}" || true
 
 echo "Deleting kind-registry"
