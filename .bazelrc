@@ -39,6 +39,8 @@ common --lockfile_mode=off
 # GitHub actions cache.
 common:ci --disk_cache=~/.cache/bazel
 
+common --@protobuf//bazel/toolchains:prefer_prebuilt_protoc
+
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members
 # This needs to be last statement in this

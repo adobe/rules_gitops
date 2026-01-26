@@ -32,6 +32,8 @@ go_library(
 go_binary(
     name = "helloworld",
     embed = [":go_default_library"],
+    # Use pure Go (no CGO) to create a static binary compatible with Alpine (musl libc)
+    pure = "on",
 )
 
 image_layer(
