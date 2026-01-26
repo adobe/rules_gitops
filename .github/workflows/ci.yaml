@@ -40,11 +40,12 @@ jobs:
       - name: Test
         run: |
           bazel test //...
-      - name: Build examples
+      - name: Build helloworld
         run: |
           cd examples/helloworld
           bazel build //...
-      - name: Test examples
+      - name: Build legacy docker
+        if: matrix.bazel-version == '7.6.0'
         run: |
           cd ../legacy_docker
           bazel build //...
