@@ -47,5 +47,5 @@ jobs:
       - name: Build legacy docker
         if: matrix.bazel-version == '7.6.0'
         run: |
-          cd ../legacy_docker
+          cd examples/legacy_docker
           bazel --output_base=~/.bazel/ build //...
