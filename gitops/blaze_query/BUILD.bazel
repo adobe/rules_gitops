@@ -1,5 +1,5 @@
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_go//proto:def.bzl", "go_proto_library")
-load("@rules_proto//proto:defs.bzl", "proto_library")
 
 # Copyright 2026 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
