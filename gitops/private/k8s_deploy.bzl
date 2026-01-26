@@ -91,8 +91,8 @@ def k8s_deploy(
         manifests = native.glob(["*.yaml", "*.yaml.tpl"])
     if prefix_suffix_app_labels:
         configurations = configurations + [
-            "//gitops:nameprefix_deployment_labels_config.yaml",
-            "//gitops:namesuffix_deployment_labels_config.yaml",
+            str(Label("//gitops:nameprefix_deployment_labels_config.yaml")),
+            str(Label("//gitops:namesuffix_deployment_labels_config.yaml")),
         ]
     for reservedname in ["CLUSTER", "NAMESPACE"]:
         if substitutions.get(reservedname):
