@@ -38,7 +38,6 @@ common --lockfile_mode=off
 # as these are generally faster to download again than to fetch them from the
 # GitHub actions cache.
 common:ci --disk_cache=~/.cache/bazel
-common:ci --output_base=~/.bazel/
 
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members
