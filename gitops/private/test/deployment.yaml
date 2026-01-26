@@ -13,4 +13,4 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: //gitops/private/test/images:go_image
+        image: //gitops/private/test/images:image

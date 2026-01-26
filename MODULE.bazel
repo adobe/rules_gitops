@@ -52,3 +52,9 @@ pull(
     repository = "library/alpine",
     tag = "3.23",
 )
+
+preset = use_repo_rule("//tools:preset.bzl", "preset")
+
+preset(
+    name = "preset.bzl",
+)

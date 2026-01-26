@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# Determine which preset bazelrc to use based on USE_BAZEL_VERSION
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PRESET_LINK="${SCRIPT_DIR}/preset.bazelrc"
+
+if [[ -z "${USE_BAZEL_VERSION}" ]]; then
+  TARGET="preset7.bazelrc"
+elif [[ "${USE_BAZEL_VERSION}" == 8* ]]; then
+  TARGET="preset8.bazelrc"
+elif [[ "${USE_BAZEL_VERSION}" == 9* ]]; then
+  TARGET="preset9.bazelrc"
+else
+  TARGET="preset7.bazelrc"
+fi
+
+ln -sf "${TARGET}" "${PRESET_LINK}"
+
+"${BAZEL_REAL}" "$@"

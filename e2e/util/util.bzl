@@ -17,14 +17,14 @@ def e2e_test(name, steps):
         srcs = ["//e2e/util:test.sh"],
         args = ["$(rlocationpath {label})".format(label = label) for label in steps],
         data = [
-            "//e2e/util:setup",
+            "//e2e/util:setup.sh",
             "@io_k8s_sigs_kind//:kind",
             "//kubectl:resolved_toolchain",
-            "//e2e/util:teardown",
+            "//e2e/util:teardown.sh",
         ] + steps,
         env = {
-            "SETUP": "$(rlocationpath //e2e/util:setup)",
-            "TEARDOWN": "$(rlocationpath //e2e/util:teardown)",
+            "SETUP": "$(rlocationpath //e2e/util:setup.sh)",
+            "TEARDOWN": "$(rlocationpath //e2e/util:teardown.sh)",
             "KIND_BIN_PATH": "$(rlocationpath @io_k8s_sigs_kind//:kind)",
             "KUBECTL_BIN_PATH": "$(rlocationpath //kubectl:resolved_toolchain)",
         },

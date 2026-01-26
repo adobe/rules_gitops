@@ -1,5 +1,4 @@
 load("@rules_gitops//adapters:rules_img.bzl", "image_descriptor")
-load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "image_layer")
 load("@rules_img//img:load.bzl", "image_load")
@@ -19,46 +18,33 @@ platform(
     ],
 )
 
-go_library(
-    name = "go_default_library",
-    srcs = ["helloworld.go"],
-    importpath = "github.com/adobe/rules_gitops/gitops/private/test/images",
-    visibility = ["//visibility:private"],
-)
-
-go_binary(
-    name = "helloworld",
-    embed = [":go_default_library"],
-    visibility = ["//visibility:public"],
-)
-
 image_layer(
-    name = "go_layer",
+    name = "layer",
     srcs = {
-        "/bin/app": ":helloworld",
+        "/bin/app": "container_content.txt",
     },
 )
 
 image_manifest(
-    name = "go_image",
+    name = "image",
     base = "@alpine",
     entrypoint = ["/bin/app"],
     layers = [
-        ":go_layer",
+        ":layer",
     ],
     platform = ":linux_amd64",
 )
 
 image_load(
     name = "load",
-    image = ":go_image",
+    image = ":image",
     tag = "helloworld:latest",
     visibility = ["//:__pkg__"],
 )
 
 image_push(
     name = "push",
-    image = ":go_image",
+    image = ":image",
     registry = REGISTRY,
     repository = "rules_gitops/gitops/private/test/images/helloworld",
     tag = "native",
@@ -67,14 +53,8 @@ image_push(
 
 image_descriptor(
     name = "k8s_image",
-    image = ":go_image",
+    image = ":image",
     push = ":push",
     registry = REGISTRY,
     repository = "rules_gitops/gitops/private/test/images/helloworld",
-)
-
-go_test(
-    name = "go_default_test",
-    srcs = ["helloworld_test.go"],
-    embed = [":go_default_library"],
 )

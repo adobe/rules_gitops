@@ -39,7 +39,7 @@ def _is_ignored_src(src):
 _script_template = """\
 #!/usr/bin/env bash
 set -euo pipefail
-{kustomize} build --load-restrictor LoadRestrictionsNone --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
+{kustomize} build --load-restrictor LoadRestrictionsNone {kustomize_dir} {template_part} {resolver_part} >{out}
 """
 
 def _kustomization_impl(ctx):
@@ -50,6 +50,7 @@ def _kustomization_impl(ctx):
     use_stamp = False
     tmpfiles = []
     kustomization_yaml = "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\n"
+    kustomization_yaml += "sortOptions:\n  order: legacy\n"
     kustomization_yaml += "resources:\n"
     for _, f in enumerate(ctx.files.manifests):
         kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
@@ -91,10 +92,10 @@ def _kustomization_impl(ctx):
                 kustomization_yaml += "  newName: \"{}\"\n".format(new_name)
 
     if ctx.attr.common_labels:
-        kustomization_yaml += "commonLabels:\n"
+        kustomization_yaml += "labels:\n- includeSelectors: true\n  pairs:\n"
         for k in ctx.attr.common_labels:
             use_stamp = use_stamp or "{" in ctx.attr.common_labels[k]
-            kustomization_yaml += "  {}: '{}'\n".format(k, ctx.attr.common_labels[k])
+            kustomization_yaml += "    {}: '{}'\n".format(k, ctx.attr.common_labels[k])
 
     if ctx.attr.common_annotations:
         kustomization_yaml += "commonAnnotations:\n"
