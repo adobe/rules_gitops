@@ -34,7 +34,8 @@ def k8s_deploy(
         start_tag = "{{",
         end_tag = "}}",
         tags = [],
-        visibility = None):
+        visibility = None,
+        verify_images = True):
     """Generates Kubernetes deployment targets with optional GitOps support.
 
     This macro creates kustomization targets and kubectl binaries for deploying
@@ -85,6 +86,7 @@ def k8s_deploy(
         end_tag: Closing delimiter for template substitutions. Defaults to "}}".
         tags: List of tags to apply to all generated targets.
         visibility: Visibility specification for generated targets.
+        verify_images: Whether or not to fail if a Bazel image could not be resolved.
     """
 
     if not manifests:
@@ -133,6 +135,7 @@ def k8s_deploy(
             image_tag_patches = image_tag_patches,
             tags = tags,
             visibility = visibility,
+            verify_images = verify_images,
         )
         kubectl_binary(
             name = name + ".apply",
