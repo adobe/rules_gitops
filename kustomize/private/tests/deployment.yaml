@@ -13,4 +13,4 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: //skylib/kustomize/tests:image
+        image: //tests/images:image

@@ -5,6 +5,9 @@ load("//tools:util.bzl", "golden_test")
 kustomization(
     name = "raw",
     testonly = True,
+    images = [
+        "//tests/images:k8s_image",
+    ],
     manifests = [
         "deployment.yaml",
         "service.yaml",

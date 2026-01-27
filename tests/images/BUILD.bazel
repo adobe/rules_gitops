@@ -4,7 +4,10 @@ load("@rules_img//img:layer.bzl", "image_layer")
 load("@rules_img//img:push.bzl", "image_push")
 
 package(
-    default_visibility = ["//tests:__subpackages__"],
+    default_visibility = [
+        "//kustomize/private/tests:__subpackages__",
+        "//tests:__subpackages__",
+    ],
 )
 
 REGISTRY = "localhost:15000"

@@ -36,10 +36,18 @@ def _is_ignored_src(src):
     basename = src.rsplit("/", 1)[-1]
     return basename.startswith(".")
 
+VERIFY_IMAGE_SCRIPT = """
+if grep -E 'image:\\s+@{{0,2}}//' {out}; then
+    echo "ERROR: Found unreplaced bazel label in kustomize output" >&2
+    exit 1
+fi
+"""
+
 _script_template = """\
 #!/usr/bin/env bash
 set -euo pipefail
 {kustomize} build --load-restrictor LoadRestrictionsNone {kustomize_dir} {template_part} {resolver_part} >{out}
+{verify}
 """
 
 def _kustomization_impl(ctx):
@@ -221,6 +229,9 @@ def _kustomization_impl(ctx):
         resolver_part = resolver_part,
         template_part = template_part,
         out = ctx.outputs.yaml.path,
+        verify = VERIFY_IMAGE_SCRIPT.format(
+            out = ctx.outputs.yaml.path,
+        ) if ctx.attr.verify_images else "",
     )
     ctx.actions.write(script, script_content, is_executable = True)
 
@@ -279,6 +290,7 @@ kustomization = rule(
         "configurations": attr.label_list(allow_files = True),
         "common_labels": attr.string_dict(default = {}),
         "common_annotations": attr.string_dict(default = {}),
+        "verify_images": attr.bool(doc = "check whether all images which point to bazel labels were resolved", default = True),
         "_build_user_value": attr.label(
             default = Label("//stamper:build_user_value.txt"),
             allow_single_file = True,

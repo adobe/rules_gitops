@@ -35,5 +35,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: //skylib/kustomize/tests:image
+      - image: localhost:15000/rules_gitops/tests/images/image@sha256:1e45ec723bb85e017c2a4dc6c4cc3a75b03cda095df5df8c5ebf8ba665dd2501
         name: myapp
