@@ -16,7 +16,7 @@ def _image_push_statements(
         if hasattr(exe[K8sPushInfo], "pusher")
     ]) + "\n"
     statements += "\n".join([
-        "async \"%s\"" % exe[K8sPushInfo].pusher.files_to_run.executable.path
+        "async \"./%s\"" % exe[K8sPushInfo].pusher.files_to_run.executable.short_path
         for exe in trans_img_pushes
         if hasattr(exe[K8sPushInfo], "pusher")
     ]) + "\nwaitpids\n"
@@ -39,10 +39,12 @@ def _gitops_impl(ctx):
     files = []
 
     push_statements, files, pushes_runfiles = _image_push_statements(ctx, ctx.attr.srcs, files)
-    statements = """if [ "$PERFORM_PUSH" == "1" ]; then
+    push_statements = """if [ "$PERFORM_PUSH" == "1" ]; then
 {}
 fi
     """.format(push_statements)
+
+    statements = ""
 
     namespace = ctx.attr.namespace
     for inattr in ctx.attr.srcs:
@@ -68,6 +70,7 @@ fi
         template = ctx.file._template,
         substitutions = {
             "%{deployment_branch}": ctx.attr.deployment_branch,
+            "%{push_statements}": push_statements,
             "%{statements}": statements,
         },
         output = ctx.outputs.executable,
@@ -75,7 +78,9 @@ fi
     runfiles = files + ctx.files.srcs + [ctx.executable._template_engine, ctx.file._info_file]
     transitive = depset(transitive = [obj.default_runfiles.files for obj in ctx.attr.srcs])
 
-    rf = ctx.runfiles(files = runfiles, transitive_files = transitive)
+    rf = ctx.runfiles(files = runfiles, transitive_files = transitive).merge(
+        ctx.attr._bash_runfiles[DefaultInfo].default_runfiles
+    )
     for dep_rf in pushes_runfiles:
         rf = rf.merge(dep_rf)
     return [
@@ -106,6 +111,9 @@ gitops = rule(
         "_template": attr.label(
             default = Label("//gitops/private:k8s_gitops.sh.tpl"),
             allow_single_file = True,
+        ),
+        "_bash_runfiles": attr.label(
+            default = Label("@bazel_tools//tools/bash/runfiles"),
         ),
     },
     executable = True,

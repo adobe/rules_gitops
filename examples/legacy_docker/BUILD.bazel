@@ -59,6 +59,7 @@ k8s_deploy(
     manifests = [
         "deployment.yaml",
     ],
-    namespace = "{BUILD_USER}",
+    gitops = True,
+    namespace = "hwteam",
     user = USER,
 )
