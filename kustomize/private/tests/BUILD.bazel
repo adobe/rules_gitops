@@ -14,6 +14,7 @@ kustomization(
         "crb.yaml",
     ],
     namespace = "",
+    verify_images = False,
 )
 
 golden_test(

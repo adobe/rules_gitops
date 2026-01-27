@@ -39,6 +39,7 @@ def _kubectl_binary_impl(ctx):
             "# {}\n".format(exe[K8sPushInfo].image_label) +
             "echo  pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
             for exe in trans_img_pushes
+            if hasattr(exe[K8sPushInfo], "pusher")
         ]) + "\n"
         statements += "\n".join([
             "async \"%s\"" % exe[K8sPushInfo].pusher.files_to_run.executable.short_path

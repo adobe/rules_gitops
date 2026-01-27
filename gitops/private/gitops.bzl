@@ -9,19 +9,20 @@ def _image_push_statements(
         files = []):
     statements = ""
     trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
+
     statements += "\n".join([
         "echo  pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
         for exe in trans_img_pushes
-        if hasattr(exe, "pusher")
+        if hasattr(exe[K8sPushInfo], "pusher")
     ]) + "\n"
     statements += "\n".join([
-        "async \"%s\"" % exe.pusher.files_to_run.executable.short_path
+        "async \"%s\"" % exe[K8sPushInfo].pusher.files_to_run.executable.path
         for exe in trans_img_pushes
-        if hasattr(exe, "pusher")
+        if hasattr(exe[K8sPushInfo], "pusher")
     ]) + "\nwaitpids\n"
 
     # files += [obj.files_to_run.executable for obj in trans_img_pushes]
-    dep_runfiles = [obj[DefaultInfo].default_runfiles for obj in trans_img_pushes]
+    dep_runfiles = [obj[K8sPushInfo].pusher.default_runfiles for obj in trans_img_pushes if hasattr(obj[K8sPushInfo], "pusher")]
     return statements, files, dep_runfiles
 
 def _remove_prefix(s, prefix):

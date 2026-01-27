@@ -35,10 +35,12 @@ sh_binary(
     name = "teardown",
     srcs = ["teardown.sh"],
     data = [
+        "//kubectl:resolved_toolchain",
         "@io_k8s_sigs_kind//:kind",
     ],
     env = {
         "KIND_BIN_PATH": "$(rlocationpath @io_k8s_sigs_kind//:kind)",
+        "KUBECTL_BIN_PATH": "$(rlocationpath //kubectl:resolved_toolchain)",
     },
     deps = [
         "@bazel_tools//tools/bash/runfiles",

@@ -13,4 +13,4 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: //tests/images:image
+        image: //tests/images:nonexistent

@@ -78,7 +78,7 @@ var (
 )
 
 func init() {
-	flag.Var(&gitopsKind, "gitops_dependencies_kind", "dependency kind(s) to run during gitops phase. Can be specified multiple times. Default is 'k8s_container_push'")
+	flag.Var(&gitopsKind, "gitops_dependencies_kind", "dependency kind(s) to run during gitops phase. Can be specified multiple times. Default is empty")
 	flag.Var(&gitopsRuleName, "gitops_dependencies_name", "dependency name(s) to run during gitops phase. Can be specified multiple times. Default is empty")
 	flag.Var(&gitopsRuleAttr, "gitops_dependencies_attr", "dependency attribute(s) to run during gitops phase. Use attribute=value format. Can be specified multiple times. Default is empty")
 }
@@ -144,9 +144,6 @@ func main() {
 		if err := os.Chdir(*workspace); err != nil {
 			log.Fatal(err)
 		}
-	}
-	if len(gitopsKind) == 0 {
-		gitopsKind = []string{"k8s_container_push"}
 	}
 
 	var gitServer git.Server
