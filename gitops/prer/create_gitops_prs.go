@@ -40,7 +40,7 @@ func init() {
 }
 
 var (
-	releaseBranch          = flag.String("release_branch", "master", "filter gitops targets by release branch")
+	releaseBranch          = flag.String("release_branch", "main", "filter gitops targets by release branch")
 	bazelCmd               = flag.String("bazel_cmd", "tools/bazel", "bazel binary to use")
 	workspace              = flag.String("workspace", "", "path to workspace root")
 	repo                   = flag.String("git_repo", "", "git repo location")
@@ -48,7 +48,7 @@ var (
 	gitopsPath             = flag.String("gitops_path", "cloud", "location to store files in repo.")
 	gitopsTmpDir           = flag.String("gitops_tmpdir", os.TempDir(), "location to check out git tree with /cloud.")
 	target                 = flag.String("target", "//... except //experimental/...", "target to scan. Useful for debugging only")
-	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as the source branch and target for deployment PR")
+	prInto                 = flag.String("gitops_pr_into", "main", "use this branch as the source branch and target for deployment PR")
 	prBody                 = flag.String("gitops_pr_body", "", "a body message for deployment PR")
 	prTitle                = flag.String("gitops_pr_title", "", "a title for deployment PR")
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")

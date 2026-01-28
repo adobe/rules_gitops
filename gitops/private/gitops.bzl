@@ -3,8 +3,15 @@
 load("//adapters:providers.bzl", "K8sPushInfo")
 load("//kustomize:defs.bzl", "KustomizeInfo")
 
+# Convert short_path to runfiles manifest path for use with rlocation
+def _to_manifest_path(ctx, file):
+    if file.short_path.startswith("../"):
+        return "external/" + file.short_path[3:]
+    else:
+        return ctx.workspace_name + "/" + file.short_path
+
 def _image_push_statements(
-        _ctx,
+        ctx,
         kustomize_objs,
         files = []):
     statements = ""
@@ -16,10 +23,10 @@ def _image_push_statements(
         if hasattr(exe[K8sPushInfo], "pusher")
     ]) + "\n"
     statements += "\n".join([
-        "async \"./%s\"" % exe[K8sPushInfo].pusher.files_to_run.executable.short_path
+        "  async \"$(rlocation %s)\"" % _to_manifest_path(ctx, exe[K8sPushInfo].pusher.files_to_run.executable)
         for exe in trans_img_pushes
         if hasattr(exe[K8sPushInfo], "pusher")
-    ]) + "\nwaitpids\n"
+    ]) + "\n  waitpids\n"
 
     # files += [obj.files_to_run.executable for obj in trans_img_pushes]
     dep_runfiles = [obj[K8sPushInfo].pusher.default_runfiles for obj in trans_img_pushes if hasattr(obj[K8sPushInfo], "pusher")]
