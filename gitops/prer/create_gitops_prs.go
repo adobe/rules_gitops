@@ -20,7 +20,6 @@ import (
 	"os"
 	oe "os/exec"
 	"strings"
-	"sync"
 
 	"github.com/adobe/rules_gitops/gitops/analysis"
 	"github.com/adobe/rules_gitops/gitops/bazel"
@@ -40,18 +39,6 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
-// SliceFlags should be used with flags.Var to define a command line flag with multiple values
-type SliceFlags []string
-
-func (i *SliceFlags) String() string {
-	return "[" + strings.Join(*i, ",") + "]"
-}
-
-func (i *SliceFlags) Set(value string) error {
-	*i = append(*i, value)
-	return nil
-}
-
 var (
 	releaseBranch          = flag.String("release_branch", "master", "filter gitops targets by release branch")
 	bazelCmd               = flag.String("bazel_cmd", "tools/bazel", "bazel binary to use")
@@ -61,7 +48,6 @@ var (
 	gitopsPath             = flag.String("gitops_path", "cloud", "location to store files in repo.")
 	gitopsTmpDir           = flag.String("gitops_tmpdir", os.TempDir(), "location to check out git tree with /cloud.")
 	target                 = flag.String("target", "//... except //experimental/...", "target to scan. Useful for debugging only")
-	pushParallelism        = flag.Int("push_parallelism", 5, "Number of image pushes to perform concurrently")
 	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as the source branch and target for deployment PR")
 	prBody                 = flag.String("gitops_pr_body", "", "a body message for deployment PR")
 	prTitle                = flag.String("gitops_pr_title", "", "a title for deployment PR")
@@ -70,18 +56,9 @@ var (
 	deploymentBranchPrefix = flag.String("deployment_branch_prefix", "deploy/", "the prefix to add to all deployment branch names")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
 	gitHost                = flag.String("git_server", "bitbucket", "the git server api to use. 'bitbucket', 'github' or 'gitlab'")
-	gitopsKind             SliceFlags
-	gitopsRuleName         SliceFlags
-	gitopsRuleAttr         SliceFlags
 	stamp                  = flag.Bool("stamp", false, "Stamp results of gitops targets with volatile information")
 	dryRun                 = flag.Bool("dry_run", false, "Do not create PRs, just print what would be done")
 )
-
-func init() {
-	flag.Var(&gitopsKind, "gitops_dependencies_kind", "dependency kind(s) to run during gitops phase. Can be specified multiple times. Default is empty")
-	flag.Var(&gitopsRuleName, "gitops_dependencies_name", "dependency name(s) to run during gitops phase. Can be specified multiple times. Default is empty")
-	flag.Var(&gitopsRuleAttr, "gitops_dependencies_attr", "dependency attribute(s) to run during gitops phase. Use attribute=value format. Can be specified multiple times. Default is empty")
-}
 
 func bazelQuery(query string) *analysis.CqueryResult {
 	log.Println("Executing bazel cquery ", query)
@@ -193,7 +170,6 @@ func main() {
 	}
 	workdir.Fetch(*deploymentBranchPrefix + "*")
 
-	var updatedGitopsTargets []string
 	var updatedGitopsBranches []string
 
 	for train, targets := range releaseTrains {
@@ -219,7 +195,7 @@ func main() {
 		for _, target := range targets {
 			log.Println("train", train, "target", target)
 			bin := bazel.TargetToExecutable(target)
-			exec.Mustex("", bin, "--nopush", "--nobazel", "--deployment_root", gitopsdir)
+			exec.Mustex("", bin, "--deployment_root", gitopsdir)
 		}
 		if *stamp {
 			changedFiles := workdir.GetChangedFiles()
@@ -238,57 +214,13 @@ func main() {
 		}
 		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets)), *gitopsPath) {
 			log.Println("branch", branch, "has changes, push is required")
-			updatedGitopsTargets = append(updatedGitopsTargets, targets...)
 			updatedGitopsBranches = append(updatedGitopsBranches, branch)
 		}
 	}
-	if len(updatedGitopsTargets) == 0 {
+	if len(updatedGitopsBranches) == 0 {
 		log.Println("No gitops changes to push")
 		return
 	}
-
-	// Push images
-
-	// Create space separated set('//a' '//b' ... '//z') of targets.
-	// Target names need to be quoted to protect from + and other special characters
-	depsList := "set('" + strings.Join(updatedGitopsTargets, "' '") + "')"
-	var qv []string
-	for _, kind := range gitopsKind {
-		q := fmt.Sprintf("kind(%s, deps(%s))", kind, depsList)
-		qv = append(qv, q)
-	}
-	for _, name := range gitopsRuleName {
-		q := fmt.Sprintf("filter(%s, deps(%s))", name, depsList)
-		qv = append(qv, q)
-	}
-	for _, attr := range gitopsRuleAttr {
-		name, value, found := strings.Cut(attr, "=")
-		if !found {
-			value = ".*"
-		}
-		q := fmt.Sprintf("attr(%s, %s, deps(%s))", name, value, depsList)
-		qv = append(qv, q)
-	}
-
-	query := strings.Join(qv, " union ")
-	qr = bazelQuery(query)
-	targetsCh := make(chan string)
-	var wg sync.WaitGroup
-	wg.Add(*pushParallelism)
-	for i := 0; i < *pushParallelism; i++ {
-		go func() {
-			defer wg.Done()
-			for target := range targetsCh {
-				bin := bazel.TargetToExecutable(target)
-				exec.Mustex("", bin)
-			}
-		}()
-	}
-	for _, t := range qr.Results {
-		targetsCh <- t.Target.Rule.GetName()
-	}
-	close(targetsCh)
-	wg.Wait()
 
 	if *dryRun {
 		log.Println("dry-run: updated gitops branches: ", updatedGitopsBranches)

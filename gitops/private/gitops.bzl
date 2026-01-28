@@ -39,13 +39,7 @@ def _gitops_impl(ctx):
     files = []
 
     push_statements, files, pushes_runfiles = _image_push_statements(ctx, ctx.attr.srcs, files)
-    push_statements = """if [ "$PERFORM_PUSH" == "1" ]; then
-{}
-fi
-    """.format(push_statements)
-
     statements = ""
-
     namespace = ctx.attr.namespace
     for inattr in ctx.attr.srcs:
         if "{" in namespace:
@@ -79,7 +73,7 @@ fi
     transitive = depset(transitive = [obj.default_runfiles.files for obj in ctx.attr.srcs])
 
     rf = ctx.runfiles(files = runfiles, transitive_files = transitive).merge(
-        ctx.attr._bash_runfiles[DefaultInfo].default_runfiles
+        ctx.attr._bash_runfiles[DefaultInfo].default_runfiles,
     )
     for dep_rf in pushes_runfiles:
         rf = rf.merge(dep_rf)

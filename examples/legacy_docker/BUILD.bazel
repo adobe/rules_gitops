@@ -55,11 +55,11 @@ image_descriptor(
 k8s_deploy(
     name = "mynamespace",
     cluster = CLUSTER,
+    gitops = True,
     images = [":k8s_image"],
     manifests = [
         "deployment.yaml",
     ],
-    gitops = True,
     namespace = "hwteam",
     user = USER,
 )

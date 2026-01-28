@@ -24,7 +24,6 @@ source "$(grep -sm1 "^$f " "$0.exe.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/
 { echo>&2 "ERROR: cannot find $f"; exit 1; }; f=; set -e
 # --- end runfiles.bash initialization v3 ---
 
-is_bazel_run=true
 DEPLOYMENT_ROOT=""
 PERFORM_PUSH="1"
 # parse command line parameters
@@ -36,10 +35,6 @@ do
     DEPLOYMENT_ROOT="$2"
     shift # past argument
     shift # past value
-    ;;
-    --nobazel)
-    is_bazel_run=false
-    shift
     ;;
     --nopush)
     PERFORM_PUSH=""
@@ -68,7 +63,9 @@ function waitpids() {
   fi
 }
 
-%{push_statements}
+if [ "$PERFORM_PUSH" == "1" ]; then
+  %{push_statements}
+fi
 
 cd $BUILD_WORKSPACE_DIRECTORY
 
