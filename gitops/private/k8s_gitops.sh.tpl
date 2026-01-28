@@ -24,6 +24,8 @@ source "$(grep -sm1 "^$f " "$0.exe.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/
 { echo>&2 "ERROR: cannot find $f"; exit 1; }; f=; set -e
 # --- end runfiles.bash initialization v3 ---
 
+runfiles_export_envvars
+
 DEPLOYMENT_ROOT=""
 PERFORM_PUSH="1"
 # parse command line parameters
