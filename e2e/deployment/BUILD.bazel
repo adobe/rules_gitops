@@ -1,4 +1,4 @@
-load("@rules_gitops//adapters:rules_img.bzl", "image_descriptor")
+load("@rules_gitops//adapters:rules_img.bzl", "k8s_push_info")
 load("@rules_gitops//gitops:defs.bzl", "k8s_deploy")
 load("@rules_go//go:def.bzl", "go_binary", "go_library")
 load("@rules_img//img:image.bzl", "image_manifest")
@@ -60,7 +60,7 @@ image_push(
     repository = "rules_gitops/e2e/deployment/helloworld",
 )
 
-image_descriptor(
+k8s_push_info(
     name = "k8s_image",
     image = ":go_image",
     push = ":push",

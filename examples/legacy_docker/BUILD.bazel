@@ -9,7 +9,7 @@ load(
 )
 load(
     "//adapters:docker.bzl",
-    "image_descriptor",
+    "k8s_push_info",
 )
 
 CLUSTER = "kind-kind"
@@ -36,15 +36,23 @@ container_image(
     files = [":container_contents.txt"],
 )
 
+genrule(
+    name = "image.digestsha256",
+    srcs = [":image.digest"],
+    outs = ["image.digestsha256"],
+    cmd = "sed 's/sha256://' $< > $@",
+)
+
 container_push(
     name = "push",
     format = "Docker",
     image = "image",
+    tag_file = "image.digestsha256",
     registry = REGISTRY,
     repository = "rules_gitops/examples/legacy_docker/image",
 )
 
-image_descriptor(
+k8s_push_info(
     name = "k8s_image",
     image = "image",
     push = "push",

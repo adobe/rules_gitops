@@ -1,4 +1,4 @@
-load("@rules_gitops//adapters:rules_img.bzl", "image_descriptor")
+load("@rules_gitops//adapters:rules_img.bzl", "k8s_push_info")
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "image_layer")
 load("@rules_img//img:load.bzl", "image_load")
@@ -51,7 +51,7 @@ image_push(
     visibility = ["//:__pkg__"],
 )
 
-image_descriptor(
+k8s_push_info(
     name = "k8s_image",
     image = ":image",
     push = ":push",

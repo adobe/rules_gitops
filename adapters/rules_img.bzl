@@ -3,7 +3,7 @@
 load("@rules_img//img:providers.bzl", "DeployInfo", "ImageManifestInfo")
 load("//adapters:providers.bzl", "K8sPushInfo")
 
-def _image_descriptor_impl(ctx):
+def _k8s_push_info_impl(ctx):
     digestfile = ctx.attr.image[OutputGroupInfo].digest.to_list()[0]
 
     return [
@@ -18,8 +18,8 @@ def _image_descriptor_impl(ctx):
         ),
     ]
 
-image_descriptor = rule(
-    implementation = _image_descriptor_impl,
+k8s_push_info = rule(
+    implementation = _k8s_push_info_impl,
     attrs = {
         "image": attr.label(mandatory = True, providers = [ImageManifestInfo]),
         "push": attr.label(mandatory = True, cfg = "target", providers = [DeployInfo]),

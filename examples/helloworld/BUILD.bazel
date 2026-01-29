@@ -8,7 +8,7 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("@rules_gitops//adapters:rules_img.bzl", "image_descriptor")
+load("@rules_gitops//adapters:rules_img.bzl", "k8s_push_info")
 load("@rules_gitops//gitops:defs.bzl", "k8s_deploy")
 load("@rules_gitops//kustomize:defs.bzl", "kustomization")
 load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
@@ -83,7 +83,7 @@ image_push(
     visibility = ["//:__pkg__"],
 )
 
-image_descriptor(
+k8s_push_info(
     name = "k8s_image",
     image = ":go_image",
     push = ":push",
