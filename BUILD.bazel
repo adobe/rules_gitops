@@ -31,7 +31,7 @@ buildifier_test(
     lint_mode = "warn",
     mode = "check",
     no_sandbox = True,
-    workspace = ":WORKSPACE.bazel",
+    workspace = ":MODULE.bazel",
 )
 
 package_metadata(

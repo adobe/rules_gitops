@@ -83,6 +83,7 @@ k8s_deploy(
 k8s_deploy(
     name = "gitops",
     cluster = CLUSTER,
+    deployment_branch = "e2e-deployment",
     gitops = True,
     images = [":k8s_image"],
     manifests = [
@@ -90,7 +91,6 @@ k8s_deploy(
         "manifests/service.yaml",
     ],
     namespace = "hwteam",
-    deployment_branch = "e2e-deployment",
     release_branch_prefix = "main",
     user = USER,
 )

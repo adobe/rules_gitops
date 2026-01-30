@@ -47,9 +47,9 @@ container_push(
     name = "push",
     format = "Docker",
     image = "image",
-    tag_file = "image.digestsha256",
     registry = REGISTRY,
     repository = "rules_gitops/examples/legacy_docker/image",
+    tag_file = "image.digestsha256",
 )
 
 k8s_push_info(

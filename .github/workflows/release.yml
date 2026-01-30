@@ -2,17 +2,15 @@
 # You should use an annotated tag, like `git tag -a v1.2.3`
 # and put the release notes into the commit message for the tag.
 name: Release
-
 on:
   push:
     tags:
       - "v*.*.*"
-
 jobs:
   build:
     runs-on: ubuntu-24.04
     env:
-      USE_BAZEL_VERSION: 6.5.0
+      USE_BAZEL_VERSION: 7.6.0
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -33,17 +31,13 @@ jobs:
           echo "${TOOLS_DIR}/bin" >> $GITHUB_PATH
       - name: Test
         run: |
-          bazel test //...
+          bazel --output_base=~/.bazel/ test //... --config=ci
       - name: Build helloworld
         run: |
           cd examples/helloworld
-          bazel build //...
-      - name: Build legacy_docker
-        run: |
-          cd ../legacy_docker
-          bazel build //...
-      - name: Prepare workspace snippet
-        run: .github/workflows/workspace_snippet.sh ${{ env.GITHUB_REF_NAME }} > release_notes.txt
+          bazel --output_base=~/.bazel/ build //...
+      - name: Prepare MODULE.bazel snippet
+        run: .github/workflows/module_snippet.sh ${{ env.GITHUB_REF_NAME }} > release_notes.txt
       - name: Release
         uses: softprops/action-gh-release@v1
         with:

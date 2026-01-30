@@ -17,6 +17,3 @@ bazel_dep(name = "rules_gitops", version = "${TAG}", dev_dependency = True)
 \`\`\`
 
 EOF
-
-awk '/---SNIP---/{f=1;next}/---END_SNIP---/{f=0}f' examples/WORKSPACE
-echo "\`\`\`"

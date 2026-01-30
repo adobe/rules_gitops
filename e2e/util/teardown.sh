@@ -34,6 +34,8 @@ if [[ ! -f "${KUBECTL_BIN}" ]]; then
   exit 1
 fi
 
+"${KUBECTL_BIN}" config use-context kind-kind
+
 MYNAMESPACE="${USER}"
 
 echo "=== DEBUG: Cluster status ==="
