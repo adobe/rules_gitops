@@ -74,9 +74,9 @@ type imageTagTransformer struct {
 }
 
 /*
- findAndReplaceTag replaces the image tags inside one object
- It searches the object for container session
- then loops though all images inside containers session, finds matched ones and update the tag name
+findAndReplaceTag replaces the image tags inside one object
+It searches the object for container session
+then loops though all images inside containers session, finds matched ones and update the tag name
 */
 func (pt *imageTagTransformer) findAndReplaceTag(obj map[string]interface{}) error {
 	found := false
@@ -115,24 +115,33 @@ func (pt *imageTagTransformer) updateContainers(obj map[string]interface{}, path
 	if obj[path] == nil {
 		return nil
 	}
-	containers := obj[path].([]interface{})
-	for i := range containers {
-		container := containers[i].(map[string]interface{})
-		image, found := container["image"]
-		if !found {
-			continue
-		}
-		imagename, imagenameOk := image.(string)
-		if imagenameOk {
-			if newname, ok := pt.images[imagename]; ok {
-				container["image"] = newname
+
+	switch containers := obj[path].(type) {
+	case []interface{}:
+		for i := range containers {
+			container, ok := containers[i].(map[string]interface{})
+			if !ok {
 				continue
 			}
-			if strings.HasPrefix(imagename, "//") {
-				return fmt.Errorf("Unresolved image found: %s", imagename)
+			image, found := container["image"]
+			if !found {
+				continue
+			}
+			imagename, imagenameOk := image.(string)
+			if imagenameOk {
+				if newname, ok := pt.images[imagename]; ok {
+					container["image"] = newname
+					continue
+				}
+				if strings.HasPrefix(imagename, "//") {
+					return fmt.Errorf("Unresolved image found: %s", imagename)
+				}
 			}
 		}
+	default:
+		return nil
 	}
+
 	return nil
 }
 
