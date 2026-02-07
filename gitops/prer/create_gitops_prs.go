@@ -15,7 +15,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	oe "os/exec"
@@ -32,7 +31,7 @@ import (
 	"github.com/adobe/rules_gitops/gitops/git/gitlab"
 	"github.com/adobe/rules_gitops/templating/fasttemplate"
 
-	proto "github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 func init() {
@@ -159,7 +158,7 @@ func main() {
 		}
 	}
 
-	gitopsdir, err := ioutil.TempDir(*gitopsTmpDir, "gitops")
+	gitopsdir, err := os.MkdirTemp(*gitopsTmpDir, "gitops")
 	if err != nil {
 		log.Fatalf("Unable to create tempdir in %s: %v", *gitopsTmpDir, err)
 	}
