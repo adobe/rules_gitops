@@ -66,7 +66,7 @@ def _kubectl_extension_impl(module_ctx):
         http_file(
             name = "kubectl_{}".format(platform),
             urls = [
-                "https://cdn.dl.k8s.io/release/v{version}/bin/{os}/{arch}/kubectl".format(version = kubectl_version, os = os, arch = arch),
+                "https://dl.k8s.io/release/v{version}/bin/{os}/{arch}/kubectl".format(version = kubectl_version, os = os, arch = arch),
             ],
             executable = True,
             sha256 = sha256,
