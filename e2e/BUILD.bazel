@@ -13,6 +13,6 @@ e2e_test(
         "//e2e/deployment:mynamespace.delete",
     ],
     tags = [
-        "e2e-test",
+        "skip-bazel-ci",
     ],
 )

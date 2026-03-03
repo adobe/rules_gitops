@@ -9,6 +9,6 @@ bcr_test_module:
             bazel: ${{ bazel }}
             platform: ${{ platform }}
             test_flags:
-                - "--test_tag_filter=-e2e-test"
+                - "--test_tag_filters=-skip-bazel-ci"
             test_targets:
                 - '//...'
