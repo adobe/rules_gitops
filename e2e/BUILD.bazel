@@ -12,4 +12,7 @@ e2e_test(
         "//e2e:verify_application",
         "//e2e/deployment:mynamespace.delete",
     ],
+    tags = [
+        "e2e-test",
+    ],
 )

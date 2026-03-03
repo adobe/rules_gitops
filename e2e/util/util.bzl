@@ -4,12 +4,13 @@ load("@bazel_lib//lib:expand_template.bzl", "expand_template")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
-def e2e_test(name, steps):
+def e2e_test(name, steps, **kwargs):
     """Declares an e2e test interacting with a kind cluster
 
     Args:
         name: name of the test target
         steps: a list of labels producing binaries to run
+        **kwargs: additional options to pass to the underlying test rule
     """
 
     sh_test(
@@ -31,6 +32,7 @@ def e2e_test(name, steps):
         deps = [
             "@bazel_tools//tools/bash/runfiles",
         ],
+        **kwargs
     )
 
 def kubectl_cmd(name, args):

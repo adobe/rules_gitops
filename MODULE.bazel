@@ -1,5 +1,8 @@
+"adobe/rules_gitops"
+
 module(
     name = "rules_gitops",
+    version = "",
     compatibility_level = 0,
 )
 
