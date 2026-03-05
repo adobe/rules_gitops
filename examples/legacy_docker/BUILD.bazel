@@ -37,7 +37,7 @@ container_image(
 )
 
 genrule(
-    name = "image.digestsha256",
+    name = "image_digestsha256",
     srcs = [":image.digest"],
     outs = ["image.digestsha256"],
     cmd = "sed 's/sha256://' $< > $@",
