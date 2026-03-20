@@ -1,6 +1,6 @@
 """Adapter for rules_img container images."""
 
-load("@rules_img//img:providers.bzl", "DeployInfo", "ImageManifestInfo", "ImageIndexInfo")
+load("@rules_img//img:providers.bzl", "DeployInfo", "ImageIndexInfo", "ImageManifestInfo")
 load("//adapters:providers.bzl", "K8sPushInfo")
 
 def _k8s_push_info_impl(ctx):
