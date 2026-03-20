@@ -1,6 +1,6 @@
 """Adapter for rules_img container images."""
 
-load("@rules_img//img:providers.bzl", "DeployInfo", "ImageManifestInfo")
+load("@rules_img//img:providers.bzl", "DeployInfo", "ImageManifestInfo", "ImageIndexInfo")
 load("//adapters:providers.bzl", "K8sPushInfo")
 
 def _k8s_push_info_impl(ctx):
@@ -21,7 +21,7 @@ def _k8s_push_info_impl(ctx):
 k8s_push_info = rule(
     implementation = _k8s_push_info_impl,
     attrs = {
-        "image": attr.label(mandatory = True, providers = [ImageManifestInfo]),
+        "image": attr.label(mandatory = True, providers = [[ImageManifestInfo], [ImageIndexInfo]]),
         "push": attr.label(mandatory = True, cfg = "target", providers = [DeployInfo]),
         "registry": attr.string(mandatory = True),
         "repository": attr.string(mandatory = True),
