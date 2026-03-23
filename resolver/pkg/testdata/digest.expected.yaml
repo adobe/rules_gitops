@@ -1,0 +1,10 @@
+deployment-templates:
+  deployment:
+    containers:
+      hello:
+        image:
+          digest: sha256:{{@@//hello-world:image.digest}}
+kind: CustomDeployment
+metadata:
+  name: hellow-world
+  namespace: helm

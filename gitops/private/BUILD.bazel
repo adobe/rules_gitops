@@ -1,0 +1,30 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+
+package(
+    default_visibility = ["//gitops:__subpackages__"],
+)
+
+exports_files([
+    "nameprefix_deployment_labels_config.yaml",
+    "namesuffix_deployment_labels_config.yaml",
+    "k8s_gitops.sh.tpl",
+])
+
+bzl_library(
+    name = "k8s_deploy",
+    srcs = ["k8s_deploy.bzl"],
+    deps = [
+        ":gitops",
+        "//kubectl:defs",
+        "//kustomize:defs",
+    ],
+)
+
+bzl_library(
+    name = "gitops",
+    srcs = ["gitops.bzl"],
+    deps = [
+        "//adapters:providers",
+        "//kustomize:defs",
+    ],
+)

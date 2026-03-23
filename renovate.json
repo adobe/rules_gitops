@@ -1,36 +1,18 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
-  ],
-  "timezone": "America/Los_Angeles",
-  "schedule": [
-    "before 8am every weekday"
+    ":dependencyDashboard",
+    ":enablePreCommit",
+    ":semanticPrefixFixDepsChoreOthers",
+    "group:monorepos",
+    "group:recommended",
+    "replacements:all",
+    "workarounds:all"
   ],
   "packageRules": [
     {
-      "groupName": "Go modules",
-      "groupSlug": "go-modules",
-      "matchDatasources": [
-        "go",
-        "gomod"
-      ],
-      "matchPackagePatterns": [
-        "*"
-      ]
-    },
-    {
-      "groupName": "Bazel modules",
-      "groupSlug": "bazel-modules",
-      "matchCategories": [
-        "bazel"
-      ],
-      "matchDepTypes": [
-        "http_archive"
-      ],
-      "matchPackagePatterns": [
-        "*"
-      ]
+      "matchFiles": ["MODULE.bazel"],
+      "enabled": false
     }
   ]
 }

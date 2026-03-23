@@ -1,0 +1,31 @@
+bazel_dep(name = "platforms", version = "1.0.0")
+
+bazel_dep(name = "rules_gitops", dev_dependency = True)
+
+kustomize = use_extension("@rules_gitops//kustomize:defs.bzl", "kustomize")
+kustomize.toolchain(
+    version = "5.7.1",
+)
+
+local_path_override(
+    module_name = "rules_gitops",
+    path = "../..",
+)
+
+bazel_dep(name = "rules_go", version = "0.52.0")
+
+bazel_dep(name = "rules_img", version = "0.3.3", dev_dependency = True)
+
+pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
+
+pull(
+    name = "alpine",
+    digest = "sha256:51183f2cfa6320055da30872f211093f9ff1d3cf06f39a0bdb212314c5dc7375",
+    layer_handling = "lazy",
+    registries = [
+        "mirror.gcr.io",
+        "index.docker.io",
+    ],
+    repository = "library/alpine",
+    tag = "3.23",
+)

@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: ci
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - image: localhost:15000/rules_gitops/gitops/private/test/images/helloworld@sha256:c361bf07a58f30284effb92ee1c6504b75428c5019e8a60a27120038a20e9c3e
+        name: myapp

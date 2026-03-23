@@ -1,0 +1,385 @@
+load("@bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@bazel_tools//tools/build_rules:test_rules.bzl", "rule_test")
+load("//gitops:defs.bzl", "gitops")
+load("//kubectl:defs.bzl", "kubectl_binary")
+load("//kustomize:defs.bzl", "kustomization")
+load("//tools:util.bzl", "golden_test")
+
+genrule(
+    name = "set_namespace",
+    srcs = [
+        "test.yaml",
+    ],
+    outs = ["test_replaced.yaml"],
+    cmd = "cat $(location test.yaml) | $(location //testing/private:set_namespace) newnamespace-1 > $@",
+    tools = [
+        "//testing/private:set_namespace",
+    ],
+)
+
+diff_test(
+    name = "set_namespace_test",
+    file1 = "set_namespace",
+    file2 = "test_expected.yaml",
+)
+
+#-------------------
+
+kustomization(
+    name = "namespace",
+    testonly = True,
+    images = [
+        "//tests/images:k8s_image",
+    ],
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+        "crb.yaml",
+    ],
+    namespace = "bs-dev",
+)
+
+golden_test(
+    name = "namespace_test",
+    extension = ".yaml",
+    in_file = "namespace",
+)
+
+#-------------------
+
+kustomization(
+    name = "raw",
+    testonly = True,
+    images = [
+        "//tests/images:k8s_image",
+    ],
+    manifests = [
+        "crb.yaml",
+        "deployment.yaml",
+        "service.yaml",
+    ],
+    namespace = "",
+)
+
+rule_test(
+    name = "raw_generates_yaml",
+    generates = ["raw.yaml"],
+    rule = "raw",
+)
+
+golden_test(
+    name = "raw_test",
+    extension = ".yaml",
+    in_file = "raw",
+)
+
+#-------------------
+
+kustomization(
+    name = "image_resolved",
+    testonly = True,
+    images = [
+        "//tests/images:k8s_image",
+    ],
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+        "crb.yaml",
+    ],
+    namespace = "",
+)
+
+genrule(
+    name = "expected_image_resolved",
+    srcs = [
+        ":expected_image_resolved_test.tpl.yaml",
+        "//tests/images:image.digest",
+    ],
+    outs = ["goldens/expected_image_resolved.golden.yaml"],
+    cmd = " ".join([
+        "./$(location //templating:fast_template_engine)",
+        "--template=$(location expected_image_resolved_test.tpl.yaml)",
+        "--variable=IMAGE_DIGEST=$$(cat $(location //tests/images:image.digest))",
+        "--output=$@",
+    ]),
+    tools = [
+        "//templating:fast_template_engine",
+    ],
+)
+
+golden_test(
+    name = "expected_image_resolved_test",
+    extension = ".yaml",
+    in_file = "image_resolved",
+)
+
+diff_test(
+    name = "image_resolved_conformance",
+    # ignore changes in the amount of white space
+    diff_args = ["-b"],
+    file1 = "image_resolved",
+    file2 = "expected_image_resolved",
+)
+
+#-------------------
+
+kustomization(
+    name = "image_digest",
+    testonly = True,
+    images = [
+        "//tests/images:k8s_image",
+    ],
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+        "crb.yaml",
+    ],
+    namespace = "",
+)
+
+golden_test(
+    name = "image_digest_test",
+    extension = ".yaml",
+    in_file = "image_digest",
+)
+
+#-------------------
+
+kustomization(
+    name = "configmap",
+    testonly = True,
+    configmaps_srcs = glob(["configmaps/**/*"]),
+    namespace = "",
+)
+
+golden_test(
+    name = "configmap_test",
+    extension = ".yaml",
+    in_file = "configmap",
+)
+
+#-------------------
+
+kustomization(
+    name = "secrets",
+    testonly = True,
+    namespace = "",
+    secrets_srcs = glob(["secrets/**/*"]),
+)
+
+golden_test(
+    name = "secrets_test",
+    extension = ".yaml",
+    in_file = "secrets",
+)
+
+#-------------------
+
+## TODO
+
+kustomization(
+    name = "integration_test",
+    testonly = True,
+    images = [
+        "//tests/images:k8s_image",
+    ],
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+        ":configmap",
+    ],
+    namespace = "{BUILD_USER}",
+)
+
+kubectl_binary(
+    name = "mynamespace.apply",
+    testonly = True,
+    srcs = [":integration_test"],
+    cluster = "dev3",
+    namespace = "test",
+)
+
+gitops(
+    name = "dev-something.gitops",
+    testonly = True,
+    srcs = [":namespace"],
+    cluster = "dev",
+    namespace = "test",
+)
+
+#-------------------
+
+kustomization(
+    name = "name_prefix",
+    manifests = ["test.yaml"],
+    name_prefix = "prefix-",
+    namespace = "",
+)
+
+golden_test(
+    name = "name_prefix_test",
+    extension = ".yaml",
+    in_file = "name_prefix",
+)
+
+#-------------------
+
+kustomization(
+    name = "name_suffix",
+    manifests = ["test.yaml"],
+    name_suffix = "-suffix",
+    namespace = "",
+)
+
+golden_test(
+    name = "name_suffix_test",
+    extension = ".yaml",
+    in_file = "name_suffix",
+)
+
+#-------------------
+
+kustomization(
+    name = "patch",
+    images = [
+        "//tests/images:k8s_image",
+    ],
+    manifests = ["deployment.yaml"],
+    namespace = "",
+    patches = ["overlay/deployment.yaml"],
+)
+
+genrule(
+    name = "expected_patch",
+    srcs = [
+        ":expected_patch.tpl.yaml",
+        "//tests/images:image.digest",
+    ],
+    outs = ["goldens/expected_patch.golden.yaml"],
+    cmd = " ".join([
+        "./$(location //templating:fast_template_engine)",
+        "--template=$(location expected_patch.tpl.yaml)",
+        "--variable=IMAGE_DIGEST=$$(cat $(location //tests/images:image.digest))",
+        "--output=$@",
+    ]),
+    tools = [
+        "//templating:fast_template_engine",
+    ],
+)
+
+diff_test(
+    name = "patch_conformance",
+    # ignore changes in the amount of white space
+    diff_args = ["-b"],
+    file1 = "patch",
+    file2 = "expected_patch",
+)
+
+golden_test(
+    name = "expected_patch_test",
+    extension = ".yaml",
+    in_file = "patch",
+)
+
+#-------------------
+
+kustomization(
+    name = "deployment_prefix_compat",
+    manifests = ["deployment_with_labels.yaml"],
+    name_prefix = "prefix-",
+    namespace = "",
+)
+
+golden_test(
+    name = "deployment_prefix_compat_test",
+    extension = ".yaml",
+    in_file = "deployment_prefix_compat",
+)
+
+#-------------------
+
+kustomization(
+    name = "deployment_suffix_compat",
+    manifests = ["deployment_with_labels.yaml"],
+    name_suffix = "-suffix",
+    namespace = "",
+)
+
+golden_test(
+    name = "deployment_suffix_compat_test",
+    extension = ".yaml",
+    in_file = "deployment_suffix_compat",
+)
+
+#-------------------
+
+kustomization(
+    name = "deployment_prefix",
+    configurations = ["//gitops:nameprefix_deployment_labels_config.yaml"],
+    manifests = ["deployment_with_labels.yaml"],
+    name_prefix = "prefix-",
+    namespace = "",
+)
+
+golden_test(
+    name = "deployment_prefix_test",
+    extension = ".yaml",
+    in_file = "deployment_prefix",
+)
+
+#-------------------
+
+kustomization(
+    name = "deployment_suffix",
+    configurations = ["//gitops:namesuffix_deployment_labels_config.yaml"],
+    manifests = ["deployment_with_labels.yaml"],
+    name_suffix = "-suffix",
+    namespace = "",
+)
+
+golden_test(
+    name = "deployment_suffix_test",
+    extension = ".yaml",
+    in_file = "deployment_suffix",
+)
+
+#-------------------
+
+kustomization(
+    name = "common_labels",
+    common_annotations = {"ownerTeam": "apps"},
+    common_labels = {"flavor": "canary"},
+    manifests = [
+        "deployment_with_labels.yaml",
+        "service.yaml",
+    ],
+    namespace = "",
+)
+
+golden_test(
+    name = "common_labels_test",
+    extension = ".yaml",
+    in_file = "common_labels",
+)
+
+#-------------------
+
+kustomization(
+    name = "patch_images",
+    image_name_patches = {
+        "busybox": "alpine",
+        "debian": "ubuntu",
+    },
+    image_tag_patches = {
+        "busybox": "3",
+    },
+    manifests = [
+        "job.yaml",
+    ],
+)
+
+golden_test(
+    name = "patch_images_test",
+    extension = ".yaml",
+    in_file = "patch_images",
+)

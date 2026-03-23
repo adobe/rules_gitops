@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacydocker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: legacydocker
+  template:
+    metadata:
+      labels:
+        app: legacydocker
+    spec:
+      containers:
+        - name: legacydocker
+          image: //:image

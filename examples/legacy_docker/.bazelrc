@@ -1,0 +1,2 @@
+common --lockfile_mode=off
+common --@io_bazel_rules_docker//transitions:enable=false

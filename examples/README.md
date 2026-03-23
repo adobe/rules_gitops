@@ -1,23 +1,11 @@
-# Bazel GitOps Rules Example Repository
+# Bazel GitOps Rules Examples
 
 ## Overview
 
-The example Bazel project to demonstrate Bazel GitOps Rules use:
+Examples projects to demonstrate Bazel GitOps Rules in use:
 
-- [WORKSPACE](./WORKSPACE) -- the minimal workspace setup file
-- [helloworld](./helloworld) -- the minimal Go application with `k8s_deploy` manifests
+- [helloworld](./helloworld) -- a minimal Go application with `k8s_deploy` manifests
+- [legacy_docker](./legacy_docker/) -- a minimal container image built with rules_docker and adapted for use with rules_gitops
 
-All following commands assume that `/examples` is the current directory.
 
-## Build & Test
-
-```
-bazel test //...
-```
-
-## Render Helloworld Application Deployment Manifests
-
-```
-bazel run //helloworld:mynamespace.show
-```
 

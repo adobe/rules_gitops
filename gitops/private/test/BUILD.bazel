@@ -1,0 +1,69 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+
+# Copyright 2026 Adobe. All rights reserved.
+# This file is licensed to you under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software distributed under
+# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+# OF ANY KIND, either express or implied. See the License for the specific language
+# governing permissions and limitations under the License.
+
+load("//adapters:external_image.bzl", "external_image")
+load("//gitops:defs.bzl", "k8s_deploy")
+load("//tools:util.bzl", "golden_test")
+
+licenses(["notice"])  # Apache 2.0
+
+k8s_deploy(
+    name = "deploy_test",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = True,
+    images = ["//gitops/private/test/images:k8s_image"],
+    manifests = [
+        ":deployment.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
+golden_test(
+    name = "deploy_test_golden",
+    in_file = "deploy_test",
+)
+
+external_image(
+    name = "external_image",
+    digest = "sha:1234567890",
+    image = "gcr.io/repo/someimage:thetag",
+)
+
+k8s_deploy(
+    name = "external_image_test",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = True,
+    images = [
+        ":external_image",
+    ],
+    manifests = [
+        ":deployment1.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
+golden_test(
+    name = "external_image_golden",
+    in_file = "external_image_test",
+)
+
+bzl_library(
+    name = "templates",
+    srcs = ["templates.bzl"],
+    visibility = ["//gitops:__subpackages__"],
+)

@@ -11,11 +11,10 @@ spec:
     metadata:
       labels:
         app: helloworld
-        app_label_image_short_digest: "{{//helloworld:image.short-digest}}"
     spec:
       containers:
         - name: helloworld
-          image: //helloworld:image
+          image: //:go_image
           args:
             - --port=8080
           ports:

@@ -12,7 +12,7 @@ governing permissions and limitations under the License.
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -27,7 +27,7 @@ func TestHome(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Fatalf("Unexpected status code %d, expectted 200", resp.StatusCode)
 	}
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	if !strings.Contains(string(body), "Hello World") {
 		t.Error("Unexpected content returned:", string(body))
 	}

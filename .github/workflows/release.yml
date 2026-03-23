@@ -1,87 +1,34 @@
 # Cut a release whenever a new tag is pushed to the repo.
-# You should use an annotated tag, like `git tag -a v1.2.3`
-# and put the release notes into the commit message for the tag.
 name: Release
-
 on:
+  # Can be triggered from the tag.yaml workflow
+  workflow_call:
+    inputs:
+      tag_name:
+        required: true
+        type: string
+    secrets:
+      publish_token:
+        required: true
+  # Or, developers can manually push a tag from their clone
   push:
     tags:
       - "v*.*.*"
-
+permissions:
+  id-token: write
+  attestations: write
+  contents: write
 jobs:
-  build:
-    runs-on: ubuntu-24.04
-    env:
-      USE_BAZEL_VERSION: 6.5.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Mount Bazel cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/bazel
-          key: bazel-${{ env.USE_BAZEL_VERSION }}-${{ github.sha }}
-          restore-keys: |
-            bazel-${{ env.USE_BAZEL_VERSION }}-
-            bazel-
-      - name: Setup build tools
-        run: |
-          TOOLS_DIR="${HOME}/.cache/tools"
-          mkdir -p "${TOOLS_DIR}/bin/"
-          curl -Ls -o "${TOOLS_DIR}/bin/bazel" "https://github.com/bazelbuild/bazelisk/releases/download/v1.14.0/bazelisk-linux-amd64"
-          chmod +x "${TOOLS_DIR}/bin/bazel"
-          curl -Ls -o "${TOOLS_DIR}/bin/buildifier" "https://github.com/bazelbuild/buildtools/releases/download/0.29.0/buildifier"
-          chmod +x "${TOOLS_DIR}/bin/buildifier"
-          curl -Ls -o "${TOOLS_DIR}/bin/kind" "https://github.com/kubernetes-sigs/kind/releases/download/v0.29.0/kind-linux-amd64"
-          chmod +x "${TOOLS_DIR}/bin/kind"
-          echo "${TOOLS_DIR}/bin" >> $GITHUB_PATH
-      - name: Setup kind cluster
-        run: |
-          ./create_kind_cluster.sh
-      - name: Build
-        run: |
-          bazel build //...
-      - name: Check
-        # run downloaded version of buildifier to reduce uncached build times
-        # see: bazel run //:buildifier-check
-        run: |
-          find . -type f \(\
-            -name '*.bzl' \
-            -o -name '*.sky' \
-            -o -name BUILD \
-            -o -name BUILD.bazel \
-            -o -name WORKSPACE \
-            -o -name WORKSPACE.bazel \
-          \) | xargs buildifier \
-            -mode=check \
-            -lint=warn \
-            --warnings=-module-docstring,-function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-print \
-          || {
-            buildifier_exit_code=$?
-            echo "Error: failed buildifier checks. Please run \"bazel run //:buildifier-fix\" and commit the changes."
-            exit $buildifier_exit_code
-          }
-      - name: Test
-        run: |
-          bazel test //...
-      - name: Build examples
-        run: |
-          cd examples
-          bazel build //...
-      - name: Test examples
-        run: |
-          cd examples
-          bazel test //...
-      - name: E2E
-        run: |
-          cd examples
-          ./e2e-test.sh
-      - name: Prepare workspace snippet
-        run: .github/workflows/workspace_snippet.sh ${{ env.GITHUB_REF_NAME }} > release_notes.txt
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          prerelease: true
-          # Use GH feature to populate the changelog automatically
-          generate_release_notes: true
-          body_path: release_notes.txt
+  release:
+    uses: bazel-contrib/.github/.github/workflows/release_ruleset.yaml@v7.2.2
+    with:
+      release_files: rules_gitops-*.tar.gz
+      prerelease: false
+      tag_name: ${{ inputs.tag_name || github.ref_name }}
+  publish:
+    needs: release
+    uses: ./.github/workflows/publish.yaml
+    with:
+      tag_name: ${{ inputs.tag_name || github.ref_name }}
+    secrets:
+      publish_token: ${{ secrets.publish_token || secrets.BCR_PUBLISH_TOKEN }}

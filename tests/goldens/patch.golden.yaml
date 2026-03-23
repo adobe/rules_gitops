@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - image: localhost:15000/rules_gitops/tests/images/image@sha256:1e45ec723bb85e017c2a4dc6c4cc3a75b03cda095df5df8c5ebf8ba665dd2501
+        name: myapp
+        resources:
+          limits:
+            cpu: "1"
+            memory: 4Gi
+          requests:
+            cpu: "1"
+            memory: 2Gi

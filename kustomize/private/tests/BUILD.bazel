@@ -1,0 +1,23 @@
+load("//kustomize/private:kustomization.bzl", "kustomization")
+load("//tools:util.bzl", "golden_test")
+
+# Verify that rule is combining files without processing
+kustomization(
+    name = "raw",
+    testonly = True,
+    images = [
+        "//tests/images:k8s_image",
+    ],
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+        "crb.yaml",
+    ],
+    namespace = "",
+    verify_images = False,
+)
+
+golden_test(
+    name = "raw_test",
+    in_file = "raw",
+)

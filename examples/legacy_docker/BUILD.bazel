@@ -1,0 +1,73 @@
+load(
+    "@io_bazel_rules_docker//container:container.bzl",
+    "container_image",
+    "container_push",
+)
+load(
+    "@rules_gitops//gitops:defs.bzl",
+    "k8s_deploy",
+)
+load(
+    "//adapters:docker.bzl",
+    "k8s_push_info",
+)
+
+CLUSTER = "kind-kind"
+
+USER = "kind-kind"
+
+REGISTRY = "localhost:15000"
+
+platform(
+    name = "linux_amd64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+container_image(
+    name = "image",
+    base = "@alpine_linux_amd64//image",
+    cmd = [
+        "/bin/sleep",
+        "10",
+    ],
+    files = [":container_contents.txt"],
+)
+
+genrule(
+    name = "image_digestsha256",
+    srcs = [":image.digest"],
+    outs = ["image.digestsha256"],
+    cmd = "sed 's/sha256://' $< > $@",
+)
+
+container_push(
+    name = "push",
+    format = "Docker",
+    image = "image",
+    registry = REGISTRY,
+    repository = "rules_gitops/examples/legacy_docker/image",
+    tag_file = "image.digestsha256",
+)
+
+k8s_push_info(
+    name = "k8s_image",
+    image = "image",
+    push = "push",
+    registry = REGISTRY,
+    repository = "rules_gitops/examples/legacy_docker/image",
+)
+
+k8s_deploy(
+    name = "mynamespace",
+    cluster = CLUSTER,
+    gitops = True,
+    images = [":k8s_image"],
+    manifests = [
+        "deployment.yaml",
+    ],
+    namespace = "hwteam",
+    user = USER,
+)

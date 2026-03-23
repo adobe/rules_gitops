@@ -25,19 +25,6 @@
 
 > Replace this line with your answer.
 
-### Snippet of the `WORKSPACE` file that includes rules_gitops rules.
-
-> Replace this line with your answer.
-
-###  Have you found anything relevant by searching the web?
-
-> Replace these lines with your answer.
->
-> Places to look:
-> - StackOverflow: http://stackoverflow.com/questions/tagged/bazel
-> - GitHub issues: https://github.com/bazelbuild/bazel/issues
-> - Slack: https://bazelbuild.slack.com
-
 ### Any other information, logs, or outputs that you want to share?
 
 > Replace these lines with your answer.

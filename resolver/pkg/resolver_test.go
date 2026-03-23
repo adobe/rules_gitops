@@ -43,6 +43,9 @@ func TestNoError(t *testing.T) {
 		{"emptyinit", map[string]string{
 			"helloworld-image": "docker.io/kube/hello/image:tag",
 		}},
+		{"digest", map[string]string{
+			"helloworld-image": "dummy",
+		}},
 	}
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {

@@ -1,0 +1,28 @@
+"""Adapter for legacy io_bazel_rules_docker container images."""
+
+load("@io_bazel_rules_docker//container:providers.bzl", "ImageInfo", "PushInfo")
+load("@rules_gitops//adapters:providers.bzl", "K8sPushInfo")
+
+def _k8s_push_info_impl(ctx):
+    digestfile = ctx.attr.image[ImageInfo].container_parts["digest"]
+
+    return [
+        DefaultInfo(),
+        K8sPushInfo(
+            image_label = ctx.attr.image.label,
+            registry = ctx.attr.registry,
+            repository = ctx.attr.repository,
+            digestfile = digestfile,
+            pusher = ctx.attr.push[DefaultInfo],
+        ),
+    ]
+
+k8s_push_info = rule(
+    implementation = _k8s_push_info_impl,
+    attrs = {
+        "image": attr.label(mandatory = True, providers = [ImageInfo]),
+        "push": attr.label(mandatory = True, cfg = "target", providers = [PushInfo]),
+        "registry": attr.string(mandatory = True),
+        "repository": attr.string(mandatory = True),
+    },
+)

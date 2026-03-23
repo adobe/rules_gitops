@@ -1,0 +1,18 @@
+load("//e2e/util:util.bzl", "e2e_test", "kubectl_cmd")
+
+kubectl_cmd(
+    name = "verify_application",
+    args = ["-n \"$${USER}\" wait --timeout=180s --for=condition=Available deployment.apps/helloworld"],
+)
+
+e2e_test(
+    name = "manual_k8s",
+    steps = [
+        "//e2e/deployment:mynamespace.apply",
+        "//e2e:verify_application",
+        "//e2e/deployment:mynamespace.delete",
+    ],
+    tags = [
+        "skip-bazel-ci",
+    ],
+)

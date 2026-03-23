@@ -1,0 +1,57 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+
+package(
+    default_visibility = ["//kubectl:__subpackages__"],
+)
+
+exports_files([
+    "run-all.sh.tpl",
+])
+
+bzl_library(
+    name = "extension",
+    srcs = ["extension.bzl"],
+    deps = [
+        ":platforms",
+        "//kubectl/private/versions",
+        "@bazel_tools//tools/build_defs/repo:cache.bzl",
+        "@bazel_tools//tools/build_defs/repo:http.bzl",
+        "@bazel_tools//tools/build_defs/repo:utils.bzl",
+    ],
+)
+
+bzl_library(
+    name = "toolchain",
+    srcs = ["toolchain.bzl"],
+    deps = [":providers"],
+)
+
+bzl_library(
+    name = "kubectl_binary",
+    srcs = ["kubectl_binary.bzl"],
+    deps = [
+        "//adapters:providers",
+        "//kustomize:defs",
+        "//stamper:stamp",
+    ],
+)
+
+bzl_library(
+    name = "kubeconfig",
+    srcs = ["kubeconfig.bzl"],
+)
+
+bzl_library(
+    name = "platforms",
+    srcs = ["platforms.bzl"],
+)
+
+bzl_library(
+    name = "providers",
+    srcs = ["providers.bzl"],
+)
+
+bzl_library(
+    name = "resolved_toolchain",
+    srcs = ["resolved_toolchain.bzl"],
+)

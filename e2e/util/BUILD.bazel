@@ -1,0 +1,57 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+
+package(
+    default_visibility = ["//e2e:__subpackages__"],
+)
+
+exports_files(
+    [
+        "test.sh",
+        "kubectl_cmd.sh.tpl",
+    ],
+)
+
+sh_binary(
+    name = "setup",
+    srcs = ["setup.sh"],
+    data = [
+        "//kubectl:resolved_toolchain",
+        "@io_k8s_sigs_kind//:kind",
+    ],
+    env = {
+        "KIND_BIN_PATH": "$(rlocationpath @io_k8s_sigs_kind//:kind)",
+        "KUBECTL_BIN_PATH": "$(rlocationpath //kubectl:resolved_toolchain)",
+    },
+    toolchains = [
+        "//kubectl:resolved_toolchain",
+    ],
+    deps = [
+        "@bazel_tools//tools/bash/runfiles",
+    ],
+)
+
+sh_binary(
+    name = "teardown",
+    srcs = ["teardown.sh"],
+    data = [
+        "//kubectl:resolved_toolchain",
+        "@io_k8s_sigs_kind//:kind",
+    ],
+    env = {
+        "KIND_BIN_PATH": "$(rlocationpath @io_k8s_sigs_kind//:kind)",
+        "KUBECTL_BIN_PATH": "$(rlocationpath //kubectl:resolved_toolchain)",
+    },
+    deps = [
+        "@bazel_tools//tools/bash/runfiles",
+    ],
+)
+
+bzl_library(
+    name = "util",
+    srcs = ["util.bzl"],
+    deps = [
+        "@bazel_lib//lib:expand_template",
+        "@rules_shell//shell:rules_bzl",
+    ],
+)
