@@ -211,7 +211,7 @@ func main() {
 				}
 			}
 		}
-		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets)), *gitopsPath) {
+		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets, *branchName, *gitCommit)), *gitopsPath) {
 			log.Println("branch", branch, "has changes, push is required")
 			updatedGitopsBranches = append(updatedGitopsBranches, branch)
 		}

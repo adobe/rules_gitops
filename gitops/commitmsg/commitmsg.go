@@ -40,9 +40,15 @@ func ExtractTargets(msg string) (packages []string) {
 	return
 }
 
-// Generate generates a commit message from a list of targets
-func Generate(targets []string) string {
+// Generate generates a commit message from a list of targets, including git branch and commit info above the targets block
+func Generate(targets []string, branchName, gitCommit string) string {
 	var sb strings.Builder
+	sb.WriteByte('\n')
+	sb.WriteString("Branch: ")
+	sb.WriteString(branchName)
+	sb.WriteByte('\n')
+	sb.WriteString("Commit: ")
+	sb.WriteString(gitCommit)
 	sb.WriteByte('\n')
 	sb.WriteString(begin)
 	sb.WriteByte('\n')
