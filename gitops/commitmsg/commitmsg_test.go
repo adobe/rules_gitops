@@ -21,7 +21,7 @@ import (
 
 func TestRoundtrip(t *testing.T) {
 	targets := []string{"target1", "target2"}
-	msg := commitmsg.Generate(targets)
+	msg := commitmsg.Generate(targets, "my-branch", "abc123")
 	t2 := commitmsg.ExtractTargets(msg)
 	if !reflect.DeepEqual(targets, t2) {
 		t.Errorf("Unexpected targets after parsing: %v", t2)
@@ -30,9 +30,11 @@ func TestRoundtrip(t *testing.T) {
 
 func ExampleGenerate() {
 	targets := []string{"target1", "target2"}
-	msg := commitmsg.Generate(targets)
+	msg := commitmsg.Generate(targets, "my-branch", "abc123")
 	fmt.Println(msg)
 	// Output:
+	// Branch: my-branch
+	// Commit: abc123
 	// --- gitops targets begin ---
 	// target1
 	// target2
