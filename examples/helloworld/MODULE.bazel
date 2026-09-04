@@ -14,7 +14,7 @@ local_path_override(
 
 bazel_dep(name = "rules_go", version = "0.52.0")
 
-bazel_dep(name = "rules_img", version = "0.3.3", dev_dependency = True)
+bazel_dep(name = "rules_img", version = "0.3.20", dev_dependency = True)
 
 pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
 
