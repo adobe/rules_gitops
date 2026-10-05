@@ -12,6 +12,7 @@ governing permissions and limitations under the License.
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -19,6 +20,7 @@ import (
 	"os"
 	oe "os/exec"
 	"strings"
+	"time"
 
 	"github.com/adobe/rules_gitops/gitops/analysis"
 	"github.com/adobe/rules_gitops/gitops/bazel"
@@ -33,6 +35,12 @@ import (
 
 	"google.golang.org/protobuf/proto"
 )
+
+// maxPushRetries bounds how many times a rejected push is regenerated and retried.
+const maxPushRetries = 5
+
+// pushRetryBaseDelay: attempt N waits N * pushRetryBaseDelay before retrying.
+const pushRetryBaseDelay = 5 * time.Second
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -114,6 +122,107 @@ func stampFile(fullPath string, ctx map[string]interface{}) {
 	}
 }
 
+// buildReleaseTrains regenerates every release train's deployment branch (switching or
+// recreating the branch, running each target's gitops binary, stamping, committing).
+func buildReleaseTrains(
+	workdir *git.Repo,
+	releaseTrains map[string][]string,
+	gitopsdir string,
+) (updatedGitopsBranches []string) {
+	for train, targets := range releaseTrains {
+		log.Println("train", train)
+		branch := *deploymentBranchPrefix + train + *deploymentBranchSuffix
+		newBranch := workdir.SwitchToBranch(branch, *prInto)
+		if !newBranch {
+			// Find if we need to recreate the branch because target was deleted
+			msg := workdir.GetLastCommitMessage()
+			targetset := make(map[string]bool)
+			for _, t := range targets {
+				targetset[t] = true
+			}
+			oldtargets := commitmsg.ExtractTargets(msg)
+			for _, t := range oldtargets {
+				if !targetset[t] {
+					// target t is not present in a new list
+					workdir.RecreateBranch(branch, *prInto)
+					break
+				}
+			}
+		}
+		for _, target := range targets {
+			log.Println("train", train, "target", target)
+			bin := bazel.TargetToExecutable(target)
+			exec.Mustex("", bin, "--deployment_root", gitopsdir)
+		}
+		if *stamp {
+			changedFiles := workdir.GetChangedFiles()
+			if len(changedFiles) > 0 {
+				ctx := getGitStatusDict(workdir, *gitCommit, *branchName)
+				for _, filePath := range changedFiles {
+					fullPath := gitopsdir + "/" + filePath
+					if digester.VerifyDigest(fullPath) {
+						workdir.RestoreFile(fullPath)
+					} else {
+						digester.SaveDigest(fullPath)
+						stampFile(fullPath, ctx)
+					}
+				}
+			}
+		}
+		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets, *branchName, *gitCommit)), *gitopsPath) {
+			log.Println("branch", branch, "has changes, push is required")
+			updatedGitopsBranches = append(updatedGitopsBranches, branch)
+		}
+	}
+	return updatedGitopsBranches
+}
+
+// pushWithRetry pushes updatedGitopsBranches, and on a rejected non-fast-forward push
+// re-fetches prInto and regenerates all release trains before retrying, up to
+// maxPushRetries times.
+func pushWithRetry(
+	workdir *git.Repo,
+	releaseTrains map[string][]string,
+	gitopsdir string,
+	updatedGitopsBranches []string,
+) []string {
+	for attempt := 1; ; attempt++ {
+		err := workdir.Push(updatedGitopsBranches)
+		if err == nil {
+			return updatedGitopsBranches
+		}
+
+		var rejected *git.PushRejectedError
+		if !errors.As(err, &rejected) {
+			log.Fatalf("unable to push gitops branches: %v", err)
+		}
+		if attempt >= maxPushRetries {
+			log.Fatalf("unable to push gitops branches after %d attempts, giving up: %v", attempt, err)
+		}
+
+		delay := time.Duration(attempt) * pushRetryBaseDelay
+		log.Printf(
+			"push rejected (attempt %d/%d): remote branch moved ahead of this clone, likely a concurrent "+
+				"create_gitops_prs run -- waiting %s, then re-fetching %s and regenerating before retrying: %v",
+			attempt, maxPushRetries, delay, *prInto, err,
+		)
+		time.Sleep(delay)
+
+		workdir.UpdatePrimaryBranch(*prInto)
+		// Reset each train's branch to the remote tip so the retry doesn't collide again.
+		workdir.Fetch(*deploymentBranchPrefix + "*")
+		for train := range releaseTrains {
+			branch := *deploymentBranchPrefix + train + *deploymentBranchSuffix
+			workdir.ResyncBranchWithRemote(branch)
+		}
+		updatedGitopsBranches = buildReleaseTrains(workdir, releaseTrains, gitopsdir)
+		if len(updatedGitopsBranches) == 0 {
+			log.Println("no gitops changes remain after regenerating against the updated remote; nothing to push")
+			return nil
+		}
+	}
+}
+
 func main() {
 	flag.Parse()
 	if *workspace != "" {
@@ -169,53 +278,7 @@ func main() {
 	}
 	workdir.Fetch(*deploymentBranchPrefix + "*")
 
-	var updatedGitopsBranches []string
-
-	for train, targets := range releaseTrains {
-		log.Println("train", train)
-		branch := *deploymentBranchPrefix + train + *deploymentBranchSuffix
-		newBranch := workdir.SwitchToBranch(branch, *prInto)
-		if !newBranch {
-			// Find if we need to recreate the branch because target was deleted
-			msg := workdir.GetLastCommitMessage()
-			targetset := make(map[string]bool)
-			for _, t := range targets {
-				targetset[t] = true
-			}
-			oldtargets := commitmsg.ExtractTargets(msg)
-			for _, t := range oldtargets {
-				if !targetset[t] {
-					// target t is not present in a new list
-					workdir.RecreateBranch(branch, *prInto)
-					break
-				}
-			}
-		}
-		for _, target := range targets {
-			log.Println("train", train, "target", target)
-			bin := bazel.TargetToExecutable(target)
-			exec.Mustex("", bin, "--deployment_root", gitopsdir)
-		}
-		if *stamp {
-			changedFiles := workdir.GetChangedFiles()
-			if len(changedFiles) > 0 {
-				ctx := getGitStatusDict(workdir, *gitCommit, *branchName)
-				for _, filePath := range changedFiles {
-					fullPath := gitopsdir + "/" + filePath
-					if digester.VerifyDigest(fullPath) {
-						workdir.RestoreFile(fullPath)
-					} else {
-						digester.SaveDigest(fullPath)
-						stampFile(fullPath, ctx)
-					}
-				}
-			}
-		}
-		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets, *branchName, *gitCommit)), *gitopsPath) {
-			log.Println("branch", branch, "has changes, push is required")
-			updatedGitopsBranches = append(updatedGitopsBranches, branch)
-		}
-	}
+	updatedGitopsBranches := buildReleaseTrains(workdir, releaseTrains, gitopsdir)
 	if len(updatedGitopsBranches) == 0 {
 		log.Println("No gitops changes to push")
 		return
@@ -225,7 +288,11 @@ func main() {
 		log.Println("dry-run: updated gitops branches: ", updatedGitopsBranches)
 		log.Println("dry-run: skipping push")
 	} else {
-		workdir.Push(updatedGitopsBranches)
+		updatedGitopsBranches = pushWithRetry(workdir, releaseTrains, gitopsdir, updatedGitopsBranches)
+		if len(updatedGitopsBranches) == 0 {
+			log.Println("No gitops changes to push after regenerating against the updated remote")
+			return
+		}
 	}
 
 	for _, branch := range updatedGitopsBranches {
