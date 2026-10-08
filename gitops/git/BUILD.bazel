@@ -8,7 +8,7 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -21,4 +21,10 @@ go_library(
     importpath = "github.com/adobe/rules_gitops/gitops/git",
     visibility = ["//visibility:public"],
     deps = ["//gitops/exec:go_default_library"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["git_test.go"],
+    embed = [":go_default_library"],
 )
