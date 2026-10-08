@@ -44,6 +44,13 @@ func TestPushWithRetrySucceedsOnFirstPush(t *testing.T) {
 	remoteDir := t.TempDir()
 	runGit(t, "", "init", "--bare", "--initial-branch=main", remoteDir)
 
+	seedDir := t.TempDir()
+	runGit(t, "", "clone", remoteDir, seedDir)
+	writeFile(t, seedDir, "README.md", "seed")
+	runGit(t, seedDir, "add", ".")
+	runGit(t, seedDir, "-c", "user.email=t@test", "-c", "user.name=t", "commit", "-m", "seed")
+	runGit(t, seedDir, "push", "origin", "main")
+
 	cloneDir := t.TempDir()
 	repo, err := git.Clone(remoteDir, cloneDir, "", "main", ".")
 	if err != nil {
