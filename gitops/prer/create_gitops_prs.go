@@ -177,13 +177,11 @@ func buildReleaseTrains(
 	return updatedGitopsBranches
 }
 
-// pushWithRetry pushes updatedGitopsBranches, and on a rejected non-fast-forward push
-// re-fetches prInto and regenerates all release trains before retrying, up to
-// maxPushRetries times.
+// pushWithRetry pushes updatedGitopsBranches, calling regenerate() to rebuild them against
+// the updated remote on a rejected non-fast-forward push, up to maxPushRetries times.
 func pushWithRetry(
 	workdir *git.Repo,
-	releaseTrains map[string][]string,
-	gitopsdir string,
+	regenerate func() []string,
 	updatedGitopsBranches []string,
 ) []string {
 	for attempt := 1; ; attempt++ {
@@ -203,19 +201,12 @@ func pushWithRetry(
 		delay := time.Duration(attempt) * pushRetryBaseDelay
 		log.Printf(
 			"push rejected (attempt %d/%d): remote branch moved ahead of this clone, likely a concurrent "+
-				"create_gitops_prs run -- waiting %s, then re-fetching %s and regenerating before retrying: %v",
-			attempt, maxPushRetries, delay, *prInto, err,
+				"create_gitops_prs run -- waiting %s before regenerating and retrying: %v",
+			attempt, maxPushRetries, delay, err,
 		)
 		time.Sleep(delay)
 
-		workdir.UpdatePrimaryBranch(*prInto)
-		// Reset each train's branch to the remote tip so the retry doesn't collide again.
-		workdir.Fetch(*deploymentBranchPrefix + "*")
-		for train := range releaseTrains {
-			branch := *deploymentBranchPrefix + train + *deploymentBranchSuffix
-			workdir.ResyncBranchWithRemote(branch)
-		}
-		updatedGitopsBranches = buildReleaseTrains(workdir, releaseTrains, gitopsdir)
+		updatedGitopsBranches = regenerate()
 		if len(updatedGitopsBranches) == 0 {
 			log.Println("no gitops changes remain after regenerating against the updated remote; nothing to push")
 			return nil
@@ -288,7 +279,15 @@ func main() {
 		log.Println("dry-run: updated gitops branches: ", updatedGitopsBranches)
 		log.Println("dry-run: skipping push")
 	} else {
-		updatedGitopsBranches = pushWithRetry(workdir, releaseTrains, gitopsdir, updatedGitopsBranches)
+		updatedGitopsBranches = pushWithRetry(workdir, func() []string {
+			workdir.UpdatePrimaryBranch(*prInto)
+			workdir.Fetch(*deploymentBranchPrefix + "*")
+			for train := range releaseTrains {
+				branch := *deploymentBranchPrefix + train + *deploymentBranchSuffix
+				workdir.ResyncBranchWithRemote(branch)
+			}
+			return buildReleaseTrains(workdir, releaseTrains, gitopsdir)
+		}, updatedGitopsBranches)
 		if len(updatedGitopsBranches) == 0 {
 			log.Println("No gitops changes to push after regenerating against the updated remote")
 			return

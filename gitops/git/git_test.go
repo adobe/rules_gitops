@@ -19,47 +19,78 @@ import (
 	"testing"
 )
 
-func TestIsNonFastForwardRejection(t *testing.T) {
+func TestNonFastForwardRejection(t *testing.T) {
 	tests := []struct {
-		name   string
-		output string
-		want   bool
+		name       string
+		output     string
+		wantReject bool
+		wantReason string
 	}{
 		{
-			name:   "fetch first",
-			output: "! [rejected]  deploy/app -> deploy/app (fetch first)\nhint: Updates were rejected",
-			want:   true,
+			name: "fetch first",
+			output: "To /path/to/remote\n" +
+				"!\trefs/heads/deploy/app:refs/heads/deploy/app\t[rejected] (fetch first)\n" +
+				"Done\nerror: failed to push some refs to '/path/to/remote'\nhint: Updates were rejected",
+			wantReject: true,
+			wantReason: "[rejected] (fetch first)",
 		},
 		{
-			name:   "non-fast-forward",
-			output: "! [rejected]  deploy/app -> deploy/app (non-fast-forward)",
-			want:   true,
+			name: "non-fast-forward",
+			output: "To /path/to/remote\n" +
+				"!\trefs/heads/deploy/app:refs/heads/deploy/app\t[rejected] (non-fast-forward)\n" +
+				"Done\n",
+			wantReject: true,
+			wantReason: "[rejected] (non-fast-forward)",
 		},
 		{
-			name:   "server-side deny (branch protection)",
-			output: "remote: error: denying non-fast-forward refs/heads/deploy/app\n! [remote rejected] deploy/app -> deploy/app (non-fast-forward)",
-			want:   true,
+			name: "server-side deny (branch protection)",
+			output: "To /path/to/remote\n" +
+				"!\trefs/heads/deploy/app:refs/heads/deploy/app\t[remote rejected] (non-fast-forward)\n" +
+				"Done\nremote: error: denying non-fast-forward refs/heads/deploy/app\n",
+			wantReject: true,
+			wantReason: "[remote rejected] (non-fast-forward)",
 		},
 		{
-			name:   "stale info",
-			output: "! [rejected]  deploy/app -> deploy/app (stale info)",
-			want:   true,
+			name: "stale info",
+			output: "To /path/to/remote\n" +
+				"!\trefs/heads/deploy/app:refs/heads/deploy/app\t[rejected] (stale info)\n" +
+				"Done\n",
+			wantReject: true,
+			wantReason: "[rejected] (stale info)",
 		},
 		{
-			name:   "permission denied",
-			output: "remote: Permission to foo/bar.git denied\nfatal: unable to access",
-			want:   false,
+			name: "permission denied",
+			output: "remote: Permission to foo/bar.git denied\n" +
+				"fatal: unable to access 'https://example.com/': The requested URL returned error: 403",
+			wantReject: false,
 		},
 		{
-			name:   "unrelated failure",
-			output: "fatal: unable to access 'https://example.com/': Could not resolve host",
-			want:   false,
+			name:       "unrelated failure",
+			output:     "fatal: unable to access 'https://example.com/': Could not resolve host",
+			wantReject: false,
+		},
+		{
+			name: "server-side hook decline is not a race",
+			output: "To /path/to/remote\n" +
+				"!\trefs/heads/deploy/app:refs/heads/deploy/app\t[remote rejected] (pre-receive hook declined)\n" +
+				"Done\n",
+			wantReject: false,
+		},
+		{
+			name: "keywords outside the porcelain field are ignored",
+			output: "remote: this push would not be a fast-forward, see fetch first for details\n" +
+				"fatal: unable to access 'https://example.com/': Could not resolve host",
+			wantReject: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := isNonFastForwardRejection(tt.output); got != tt.want {
-				t.Errorf("isNonFastForwardRejection() = %v, want %v", got, tt.want)
+			gotReject, gotReason := nonFastForwardRejection(tt.output)
+			if gotReject != tt.wantReject {
+				t.Errorf("nonFastForwardRejection() rejected = %v, want %v", gotReject, tt.wantReject)
+			}
+			if gotReject && gotReason != tt.wantReason {
+				t.Errorf("nonFastForwardRejection() reason = %q, want %q", gotReason, tt.wantReason)
 			}
 		})
 	}

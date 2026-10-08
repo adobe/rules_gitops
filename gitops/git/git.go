@@ -34,16 +34,21 @@ func (e *PushRejectedError) Error() string {
 	return fmt.Sprintf("push rejected, remote has new commits: %s", e.Output)
 }
 
-func isNonFastForwardRejection(output string) bool {
-	// Matches both a client-side rejection ("[rejected]", before the push even reaches the
-	// server, when the local ref is known stale) and a server-side one ("[remote rejected]",
-	// e.g. from receive.denyNonFastForwards / branch protection after -f reaches the server).
-	if !strings.Contains(output, "rejected]") {
-		return false
+func nonFastForwardRejection(output string) (rejected bool, reason string) {
+	// Parses `git push --porcelain` summary lines: "<flag>\t<from>:<to>\t<summary>".
+	for _, line := range strings.Split(output, "\n") {
+		fields := strings.SplitN(line, "\t", 3)
+		if len(fields) != 3 || fields[0] != "!" {
+			continue
+		}
+		summary := fields[2]
+		if strings.Contains(summary, "non-fast-forward") ||
+			strings.Contains(summary, "fetch first") ||
+			strings.Contains(summary, "stale info") {
+			return true, summary
+		}
 	}
-	return strings.Contains(output, "fetch first") ||
-		strings.Contains(output, "non-fast-forward") ||
-		strings.Contains(output, "stale info")
+	return false, ""
 }
 
 var (
@@ -199,11 +204,11 @@ func (r *Repo) IsClean() bool {
 // All changes should already be committed. Returns a *PushRejectedError for a
 // non-fast-forward rejection; any other failure is returned as a plain error.
 func (r *Repo) Push(branches []string) error {
-	args := append([]string{"push", r.RemoteName, "-f", "--set-upstream"}, branches...)
+	args := append([]string{"push", r.RemoteName, "-f", "--set-upstream", "--porcelain"}, branches...)
 	output, err := exec.Ex(r.Dir, "git", args...)
 	if err != nil {
-		if isNonFastForwardRejection(output) {
-			return &PushRejectedError{Output: output}
+		if rejected, reason := nonFastForwardRejection(output); rejected {
+			return &PushRejectedError{Output: reason}
 		}
 		return fmt.Errorf("git push failed: %w (output: %s)", err, output)
 	}
