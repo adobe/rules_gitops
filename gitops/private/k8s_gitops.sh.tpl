@@ -62,8 +62,8 @@ function waitpids() {
   local rc=0 r
   if [ "${#PIDS[@]}" != 0 ]; then
     for pid in "${PIDS[@]}"; do
-      wait "${pid}"
-      r=$?
+      r=0
+      wait "${pid}" || r=$?
       if [ "$rc" == 0 ]; then rc=$r; fi
     done
   fi
@@ -77,8 +77,9 @@ function retry_push() {
   local max_delay=${GITOPS_PUSH_MAX_RETRY_DELAY_SECONDS:-60}
   local n=1 rc
   while true; do
-    "$@"
-    rc=$?
+    # errexit may be enabled by the runfiles init, so capture the exit code without tripping it.
+    rc=0
+    "$@" || rc=$?
     if [ "$rc" == 0 ]; then return 0; fi
     if [ "$n" -ge "$max" ]; then
       echo "push failed after $n attempt(s) (exit code $rc): $*" >&2

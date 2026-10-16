@@ -26,6 +26,9 @@ source "$TMP/helpers.sh"
 
 export GITOPS_PUSH_RETRY_DELAY_SECONDS=0
 
+# The generated script runs with errexit enabled (runfiles init), so test under the same condition.
+set -e
+
 FAILURES=0
 function check() {
   if [ "$2" != "$3" ]; then
@@ -52,31 +55,35 @@ function attempts() { cat "$1" 2>/dev/null || echo 0; }
 
 # succeeds first time
 rm -f "$TMP/c1"
-retry_push "$TMP/fake_pusher.sh" "$TMP/c1" 0 2>/dev/null
-check "success without retry: rc" 0 $?
+rc=0
+retry_push "$TMP/fake_pusher.sh" "$TMP/c1" 0 2>/dev/null || rc=$?
+check "success without retry: rc" 0 $rc
 check "success without retry: attempts" 1 "$(attempts "$TMP/c1")"
 
 # transient failures are retried until success
 rm -f "$TMP/c2"
-retry_push "$TMP/fake_pusher.sh" "$TMP/c2" 3 2>/dev/null
-check "recovers after transient failures: rc" 0 $?
+rc=0
+retry_push "$TMP/fake_pusher.sh" "$TMP/c2" 3 2>/dev/null || rc=$?
+check "recovers after transient failures: rc" 0 $rc
 check "recovers after transient failures: attempts" 4 "$(attempts "$TMP/c2")"
 
 # persistent failure gives up after max attempts and preserves the exit code
 rm -f "$TMP/c3"
-retry_push "$TMP/fake_pusher.sh" "$TMP/c3" 100 2>/dev/null
-check "gives up: rc preserved" 7 $?
+rc=0
+retry_push "$TMP/fake_pusher.sh" "$TMP/c3" 100 2>/dev/null || rc=$?
+check "gives up: rc preserved" 7 $rc
 check "gives up: attempts" 5 "$(attempts "$TMP/c3")"
 
 # GITOPS_PUSH_MAX_ATTEMPTS=1 disables retries
 rm -f "$TMP/c4"
-GITOPS_PUSH_MAX_ATTEMPTS=1 retry_push "$TMP/fake_pusher.sh" "$TMP/c4" 100 2>/dev/null
-check "retries disabled: rc" 7 $?
+rc=0
+GITOPS_PUSH_MAX_ATTEMPTS=1 retry_push "$TMP/fake_pusher.sh" "$TMP/c4" 100 2>/dev/null || rc=$?
+check "retries disabled: rc" 7 $rc
 check "retries disabled: attempts" 1 "$(attempts "$TMP/c4")"
 
 # custom max attempts
 rm -f "$TMP/c5"
-GITOPS_PUSH_MAX_ATTEMPTS=2 retry_push "$TMP/fake_pusher.sh" "$TMP/c5" 100 2>/dev/null
+GITOPS_PUSH_MAX_ATTEMPTS=2 retry_push "$TMP/fake_pusher.sh" "$TMP/c5" 100 2>/dev/null || true
 check "custom max: attempts" 2 "$(attempts "$TMP/c5")"
 
 # parallel pushers: one flaky recovers, all succeed
@@ -84,8 +91,9 @@ rm -f "$TMP/p1" "$TMP/p2"
 PIDS=()
 async retry_push "$TMP/fake_pusher.sh" "$TMP/p1" 0
 async retry_push "$TMP/fake_pusher.sh" "$TMP/p2" 2
-waitpids 2>/dev/null
-check "parallel flaky recovers: rc" 0 $?
+rc=0
+waitpids 2>/dev/null || rc=$?
+check "parallel flaky recovers: rc" 0 $rc
 check "parallel flaky recovers: attempts" 3 "$(attempts "$TMP/p2")"
 
 # parallel pushers: one persistently failing makes waitpids fail, others still complete
@@ -94,8 +102,9 @@ PIDS=()
 async retry_push "$TMP/fake_pusher.sh" "$TMP/q1" 100
 async retry_push "$TMP/fake_pusher.sh" "$TMP/q2" 0
 async retry_push "$TMP/fake_pusher.sh" "$TMP/q3" 1
-waitpids 2>/dev/null
-check "parallel persistent failure: rc" 7 $?
+rc=0
+waitpids 2>/dev/null || rc=$?
+check "parallel persistent failure: rc" 7 $rc
 check "parallel persistent failure: others complete" "1 2" "$(attempts "$TMP/q2") $(attempts "$TMP/q3")"
 
 if [ "$FAILURES" != 0 ]; then
