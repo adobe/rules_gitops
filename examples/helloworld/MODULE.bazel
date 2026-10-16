@@ -20,12 +20,12 @@ pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
 
 pull(
     name = "alpine",
-    digest = "sha256:51183f2cfa6320055da30872f211093f9ff1d3cf06f39a0bdb212314c5dc7375",
+    digest = "sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6",
     layer_handling = "lazy",
     registries = [
         "mirror.gcr.io",
         "index.docker.io",
     ],
     repository = "library/alpine",
-    tag = "3.23",
+    tag = "3.24",
 )
