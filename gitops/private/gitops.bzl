@@ -14,6 +14,7 @@ def _image_push_statements(
         ctx,
         kustomize_objs,
         files = []):
+    retry_exe = ctx.executable._push_retry
     statements = ""
     trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
 
@@ -23,13 +24,14 @@ def _image_push_statements(
         if hasattr(exe[K8sPushInfo], "pusher")
     ]) + "\n"
     statements += "\n".join([
-        "  async \"$(rlocation %s)\"" % _to_manifest_path(ctx, exe[K8sPushInfo].pusher.files_to_run.executable)
+        "  async \"$(rlocation %s)\" -- \"$(rlocation %s)\"" % (_to_manifest_path(ctx, retry_exe), _to_manifest_path(ctx, exe[K8sPushInfo].pusher.files_to_run.executable))
         for exe in trans_img_pushes
         if hasattr(exe[K8sPushInfo], "pusher")
     ]) + "\n  waitpids\n"
 
     # files += [obj.files_to_run.executable for obj in trans_img_pushes]
     dep_runfiles = [obj[K8sPushInfo].pusher.default_runfiles for obj in trans_img_pushes if hasattr(obj[K8sPushInfo], "pusher")]
+    dep_runfiles.append(ctx.attr._push_retry[DefaultInfo].default_runfiles)
     return statements, files, dep_runfiles
 
 def _remove_prefix(s, prefix):
@@ -106,6 +108,11 @@ gitops = rule(
         ),
         "_template_engine": attr.label(
             default = Label("//templating:fast_template_engine"),
+            executable = True,
+            cfg = "exec",
+        ),
+        "_push_retry": attr.label(
+            default = Label("//gitops/pushretry"),
             executable = True,
             cfg = "exec",
         ),
