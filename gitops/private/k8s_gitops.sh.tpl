@@ -49,6 +49,7 @@ do
   esac
 done
 
+# --- begin push helpers ---
 PIDS=()
 function async() {
     # Launch the command asynchronously and track its process id.
@@ -57,13 +58,41 @@ function async() {
 }
 
 function waitpids() {
-  # Wait for all of the subprocesses, returning the exit code of the first failed process.
+  # Wait for all subprocesses, returning the exit code of the first failed one.
+  local rc=0 r
   if [ "${#PIDS[@]}" != 0 ]; then
-    for pid in ${PIDS[@]}; do
-      wait ${pid} || return $?
+    for pid in "${PIDS[@]}"; do
+      wait "${pid}"
+      r=$?
+      if [ "$rc" == 0 ]; then rc=$r; fi
     done
   fi
+  return $rc
 }
+
+function retry_push() {
+  # Run an image pusher, retrying on any non-zero exit with exponential backoff and jitter.
+  local max=${GITOPS_PUSH_MAX_ATTEMPTS:-5}
+  local delay=${GITOPS_PUSH_RETRY_DELAY_SECONDS:-5}
+  local max_delay=${GITOPS_PUSH_MAX_RETRY_DELAY_SECONDS:-60}
+  local n=1 rc
+  while true; do
+    "$@"
+    rc=$?
+    if [ "$rc" == 0 ]; then return 0; fi
+    if [ "$n" -ge "$max" ]; then
+      echo "push failed after $n attempt(s) (exit code $rc): $*" >&2
+      return $rc
+    fi
+    local sleep_for=$((delay + (delay > 0 ? RANDOM % (delay / 2 + 1) : 0)))
+    echo "push attempt $n/$max failed (exit code $rc), retrying in ${sleep_for}s: $*" >&2
+    sleep "$sleep_for"
+    delay=$((delay * 2))
+    if [ "$delay" -gt "$max_delay" ]; then delay=$max_delay; fi
+    n=$((n + 1))
+  done
+}
+# --- end push helpers ---
 
 if [ "$PERFORM_PUSH" == "1" ]; then
   %{push_statements}

@@ -23,7 +23,7 @@ def _image_push_statements(
         if hasattr(exe[K8sPushInfo], "pusher")
     ]) + "\n"
     statements += "\n".join([
-        "  async \"$(rlocation %s)\"" % _to_manifest_path(ctx, exe[K8sPushInfo].pusher.files_to_run.executable)
+        "  async retry_push \"$(rlocation %s)\"" % _to_manifest_path(ctx, exe[K8sPushInfo].pusher.files_to_run.executable)
         for exe in trans_img_pushes
         if hasattr(exe[K8sPushInfo], "pusher")
     ]) + "\n  waitpids\n"
