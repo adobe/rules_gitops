@@ -1,5 +1,5 @@
-# @TODO: Request Adobe org adming to remove
-# FasterCI app before removing this config file
+# @TODO: Request Adobe org admins to remove the FasterCI app 
+# from this repo before removing this config file
 workflows:
   - name: disabled
     on:
