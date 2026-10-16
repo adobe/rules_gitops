@@ -9,6 +9,7 @@
     "replacements:all",
     "workarounds:all"
   ],
+  "semanticCommits": "enabled",
   "packageRules": [
     {
       "matchFiles": ["MODULE.bazel"],
