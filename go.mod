@@ -7,7 +7,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v32 v32.1.0
 	github.com/xanzy/go-gitlab v0.80.2
-	golang.org/x/oauth2 v0.5.0
+	golang.org/x/oauth2 v0.27.0
 	google.golang.org/protobuf v1.36.11
 	k8s.io/api v0.26.1
 	k8s.io/apimachinery v0.26.1
