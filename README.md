@@ -120,6 +120,18 @@ bazel run //path/to:my_deployment.gitops
 See the [examples/helloworld](./examples/helloworld) directory for a complete working example.
 
 <a name="gitops-workflow"></a>
+### Image Push Retries
+
+Image pushes run by the generated `gitops` script are retried on any non-zero exit. Tune them with environment variables:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `GITOPS_PUSH_MAX_ATTEMPTS` | `5` | Total attempts per image (`1` disables retries) |
+| `GITOPS_PUSH_RETRY_DELAY_SECONDS` | `5` | Initial backoff, doubled after each attempt |
+| `GITOPS_PUSH_MAX_RETRY_DELAY_SECONDS` | `60` | Backoff cap |
+| `GITOPS_PUSH_ATTEMPT_TIMEOUT_SECONDS` | `600` | Kill a single attempt after this long (`0` disables) |
+| `GITOPS_PUSH_DEADLINE_SECONDS` | `1500` | Stop retrying once this much time has elapsed (`0` disables) |
+
 ## GitOps Workflow
 
 The `create_gitops_prs` tool automates the creation of GitOps pull requests as part of your CI pipeline:
