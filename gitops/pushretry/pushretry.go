@@ -14,6 +14,7 @@ governing permissions and limitations under the License.
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -30,6 +31,9 @@ type Config struct {
 	MaxAttempts int
 	Delay       time.Duration
 	MaxDelay    time.Duration
+	// AttemptTimeout kills a single attempt; Deadline bounds all attempts. Zero disables.
+	AttemptTimeout time.Duration
+	Deadline       time.Duration
 }
 
 func envInt(name string, def int) int {
@@ -43,9 +47,11 @@ func envInt(name string, def int) int {
 
 func defaultConfig() Config {
 	return Config{
-		MaxAttempts: envInt("GITOPS_PUSH_MAX_ATTEMPTS", 5),
-		Delay:       time.Duration(envInt("GITOPS_PUSH_RETRY_DELAY_SECONDS", 5)) * time.Second,
-		MaxDelay:    time.Duration(envInt("GITOPS_PUSH_MAX_RETRY_DELAY_SECONDS", 60)) * time.Second,
+		MaxAttempts:    envInt("GITOPS_PUSH_MAX_ATTEMPTS", 5),
+		Delay:          time.Duration(envInt("GITOPS_PUSH_RETRY_DELAY_SECONDS", 5)) * time.Second,
+		MaxDelay:       time.Duration(envInt("GITOPS_PUSH_MAX_RETRY_DELAY_SECONDS", 60)) * time.Second,
+		AttemptTimeout: time.Duration(envInt("GITOPS_PUSH_ATTEMPT_TIMEOUT_SECONDS", 600)) * time.Second,
+		Deadline:       time.Duration(envInt("GITOPS_PUSH_DEADLINE_SECONDS", 1500)) * time.Second,
 	}
 }
 
@@ -68,6 +74,10 @@ func run(cfg Config, attempt func() error, sleep func(time.Duration)) int {
 		cfg.MaxAttempts = 1
 	}
 	delay := cfg.Delay
+	if cfg.MaxDelay > 0 && delay > cfg.MaxDelay {
+		delay = cfg.MaxDelay
+	}
+	start := time.Now()
 	for n := 1; ; n++ {
 		err := attempt()
 		if err == nil {
@@ -82,10 +92,14 @@ func run(cfg Config, attempt func() error, sleep func(time.Duration)) int {
 		if delay > 0 {
 			wait += time.Duration(rand.Int63n(int64(delay/2) + 1))
 		}
+		if cfg.Deadline > 0 && time.Since(start)+wait >= cfg.Deadline {
+			log.Printf("push failed after %d attempt(s), retry deadline %s reached: %v", n, cfg.Deadline, err)
+			return code
+		}
 		log.Printf("push attempt %d/%d failed: %v; retrying in %s", n, cfg.MaxAttempts, err, wait)
 		sleep(wait)
 		delay *= 2
-		if delay > cfg.MaxDelay {
+		if cfg.MaxDelay > 0 && delay > cfg.MaxDelay {
 			delay = cfg.MaxDelay
 		}
 	}
@@ -101,10 +115,17 @@ func main() {
 		flag.Usage()
 		os.Exit(2)
 	}
+	cfg := defaultConfig()
 	attempt := func() error {
-		cmd := exec.Command(args[0], args[1:]...)
+		ctx := context.Background()
+		if cfg.AttemptTimeout > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, cfg.AttemptTimeout)
+			defer cancel()
+		}
+		cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 		cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 		return cmd.Run()
 	}
-	os.Exit(run(defaultConfig(), attempt, time.Sleep))
+	os.Exit(run(cfg, attempt, time.Sleep))
 }

@@ -77,6 +77,24 @@ func TestRunBackoff(t *testing.T) {
 	}
 }
 
+func TestRunFirstWaitCappedByMaxDelay(t *testing.T) {
+	cfg := Config{MaxAttempts: 2, Delay: time.Second, MaxDelay: 10 * time.Millisecond}
+	var waits []time.Duration
+	run(cfg, func() error { return helperCmd(t, 1).Run() }, func(d time.Duration) { waits = append(waits, d) })
+	if len(waits) != 1 || waits[0] > 15*time.Millisecond {
+		t.Errorf("first wait not capped: %v", waits)
+	}
+}
+
+func TestRunStopsAtDeadline(t *testing.T) {
+	cfg := Config{MaxAttempts: 100, Delay: time.Second, Deadline: 500 * time.Millisecond}
+	calls := 0
+	got := run(cfg, func() error { calls++; return helperCmd(t, 7).Run() }, func(time.Duration) { t.Error("must not sleep past deadline") })
+	if got != 7 || calls != 1 {
+		t.Errorf("got exit %d after %d calls, want 7 after 1", got, calls)
+	}
+}
+
 func TestExitCodeNonExitError(t *testing.T) {
 	err := exec.Command("/nonexistent/binary").Run()
 	if got := exitCode(err); got != 1 {
@@ -91,6 +109,9 @@ func TestDefaultConfigFromEnv(t *testing.T) {
 	cfg := defaultConfig()
 	if cfg.MaxAttempts != 2 || cfg.Delay != 0 || cfg.MaxDelay != 9*time.Second {
 		t.Errorf("unexpected config: %+v", cfg)
+	}
+	if cfg.AttemptTimeout != 10*time.Minute || cfg.Deadline != 25*time.Minute {
+		t.Errorf("unexpected timeouts: %+v", cfg)
 	}
 	t.Setenv("GITOPS_PUSH_MAX_ATTEMPTS", "garbage")
 	if got := defaultConfig().MaxAttempts; got != 5 {

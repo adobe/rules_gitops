@@ -6,7 +6,7 @@ load("//kustomize:defs.bzl", "KustomizeInfo")
 # Convert short_path to runfiles manifest path for use with rlocation
 def _to_manifest_path(ctx, file):
     if file.short_path.startswith("../"):
-        return "external/" + file.short_path[3:]
+        return file.short_path[3:]
     else:
         return ctx.workspace_name + "/" + file.short_path
 
