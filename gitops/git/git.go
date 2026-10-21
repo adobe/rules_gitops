@@ -212,6 +212,35 @@ func (r *Repo) Push(branches []string) error {
 		}
 		return fmt.Errorf("git push failed: %w (output: %s)", err, output)
 	}
+	return r.verifyPushed(branches)
+}
+
+// verifyPushed checks the remote tip of each branch. Some git clients exit 0 for a push the
+// remote refused, so the exit status alone can't be trusted.
+func (r *Repo) verifyPushed(branches []string) error {
+	refs := make([]string, len(branches))
+	for i, b := range branches {
+		refs[i] = "refs/heads/" + b
+	}
+	output, err := exec.Ex(r.Dir, "git", append([]string{"ls-remote", r.RemoteName}, refs...)...)
+	if err != nil {
+		return fmt.Errorf("git ls-remote failed after push: %w (output: %s)", err, output)
+	}
+	remote := make(map[string]string)
+	for _, line := range strings.Split(output, "\n") {
+		if fields := strings.Fields(line); len(fields) == 2 {
+			remote[fields[1]] = fields[0]
+		}
+	}
+	for i, b := range branches {
+		local, err := exec.Ex(r.Dir, "git", "rev-parse", refs[i])
+		if err != nil {
+			return fmt.Errorf("git rev-parse %s failed: %w (output: %s)", refs[i], err, local)
+		}
+		if got := remote[refs[i]]; got != strings.TrimSpace(local) {
+			return &PushRejectedError{Output: fmt.Sprintf("remote %s is at %q after push, expected %s", b, got, strings.TrimSpace(local))}
+		}
+	}
 	return nil
 }
 

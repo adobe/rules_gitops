@@ -33,6 +33,18 @@ func runGit(t *testing.T, dir string, args ...string) string {
 	return string(out)
 }
 
+func initBareRemote(t *testing.T, dir string) {
+	t.Helper()
+	runGit(t, "", "init", "--bare", dir)
+	runGit(t, dir, "symbolic-ref", "HEAD", "refs/heads/main")
+}
+
+func cloneEmptyRemote(t *testing.T, remoteDir, cloneDir string) {
+	t.Helper()
+	runGit(t, "", "clone", remoteDir, cloneDir)
+	runGit(t, cloneDir, "symbolic-ref", "HEAD", "refs/heads/main")
+}
+
 func writeFile(t *testing.T, dir, name, content string) {
 	t.Helper()
 	if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0644); err != nil {
@@ -42,10 +54,10 @@ func writeFile(t *testing.T, dir, name, content string) {
 
 func TestPushWithRetrySucceedsOnFirstPush(t *testing.T) {
 	remoteDir := t.TempDir()
-	runGit(t, "", "init", "--bare", "--initial-branch=main", remoteDir)
+	initBareRemote(t, remoteDir)
 
 	seedDir := t.TempDir()
-	runGit(t, "", "clone", remoteDir, seedDir)
+	cloneEmptyRemote(t, remoteDir, seedDir)
 	writeFile(t, seedDir, "README.md", "seed")
 	runGit(t, seedDir, "add", ".")
 	runGit(t, seedDir, "-c", "user.email=t@test", "-c", "user.name=t", "commit", "-m", "seed")
@@ -81,11 +93,11 @@ func TestPushWithRetrySucceedsOnFirstPush(t *testing.T) {
 
 func TestPushWithRetryRecoversFromRejection(t *testing.T) {
 	remoteDir := t.TempDir()
-	runGit(t, "", "init", "--bare", "--initial-branch=main", remoteDir)
+	initBareRemote(t, remoteDir)
 	runGit(t, remoteDir, "config", "receive.denyNonFastForwards", "true")
 
 	seedDir := t.TempDir()
-	runGit(t, "", "clone", remoteDir, seedDir)
+	cloneEmptyRemote(t, remoteDir, seedDir)
 	writeFile(t, seedDir, "README.md", "seed")
 	runGit(t, seedDir, "add", ".")
 	runGit(t, seedDir, "-c", "user.email=t@test", "-c", "user.name=t", "commit", "-m", "seed")
@@ -145,11 +157,11 @@ func TestPushWithRetryRecoversFromRejection(t *testing.T) {
 
 func TestPushWithRetryStopsWhenRegenerateHasNothingToPush(t *testing.T) {
 	remoteDir := t.TempDir()
-	runGit(t, "", "init", "--bare", "--initial-branch=main", remoteDir)
+	initBareRemote(t, remoteDir)
 	runGit(t, remoteDir, "config", "receive.denyNonFastForwards", "true")
 
 	seedDir := t.TempDir()
-	runGit(t, "", "clone", remoteDir, seedDir)
+	cloneEmptyRemote(t, remoteDir, seedDir)
 	writeFile(t, seedDir, "README.md", "seed")
 	runGit(t, seedDir, "add", ".")
 	runGit(t, seedDir, "-c", "user.email=t@test", "-c", "user.name=t", "commit", "-m", "seed")

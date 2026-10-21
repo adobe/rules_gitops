@@ -13,10 +13,17 @@ package git
 
 import (
 	"errors"
+	"fmt"
+	"net"
+	"net/http/cgi"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestNonFastForwardRejection(t *testing.T) {
@@ -109,6 +116,18 @@ func runGit(t *testing.T, dir string, args ...string) string {
 	return string(out)
 }
 
+func initBareRemote(t *testing.T, dir string) {
+	t.Helper()
+	runGit(t, "", "init", "--bare", dir)
+	runGit(t, dir, "symbolic-ref", "HEAD", "refs/heads/main")
+}
+
+func cloneEmptyRemote(t *testing.T, remoteDir, cloneDir string) {
+	t.Helper()
+	runGit(t, "", "clone", remoteDir, cloneDir)
+	runGit(t, cloneDir, "symbolic-ref", "HEAD", "refs/heads/main")
+}
+
 func writeFile(t *testing.T, dir, name, content string) {
 	t.Helper()
 	if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0644); err != nil {
@@ -122,11 +141,11 @@ func writeFile(t *testing.T, dir, name, content string) {
 // + regenerate + Commit) recovers and pushes cleanly.
 func TestPushRetryRecoversFromRejection(t *testing.T) {
 	remoteDir := t.TempDir()
-	runGit(t, "", "init", "--bare", "--initial-branch=main", remoteDir)
+	initBareRemote(t, remoteDir)
 	runGit(t, remoteDir, "config", "receive.denyNonFastForwards", "true")
 
 	seedDir := t.TempDir()
-	runGit(t, "", "clone", remoteDir, seedDir)
+	cloneEmptyRemote(t, remoteDir, seedDir)
 	writeFile(t, seedDir, "README.md", "seed")
 	runGit(t, seedDir, "add", ".")
 	runGit(t, seedDir, "-c", "user.email=t@test", "-c", "user.name=t", "commit", "-m", "seed")
@@ -178,5 +197,114 @@ func TestPushRetryRecoversFromRejection(t *testing.T) {
 	}
 	if err := repoB.Push([]string{deployBranch}); err != nil {
 		t.Fatalf("retried repoB.Push should succeed: %v", err)
+	}
+}
+
+func remoteURL(t *testing.T, transport, remoteDir string) string {
+	t.Helper()
+	parent, name := filepath.Split(remoteDir)
+	switch transport {
+	case "http":
+		backend := filepath.Join(strings.TrimSpace(runGit(t, "", "--exec-path")), "git-http-backend")
+		if _, err := os.Stat(backend); err != nil {
+			t.Skipf("git-http-backend not available: %v", err)
+		}
+		srv := httptest.NewServer(&cgi.Handler{
+			Path: backend,
+			Env:  []string{"GIT_PROJECT_ROOT=" + parent, "GIT_HTTP_EXPORT_ALL=1", "PATH=" + os.Getenv("PATH")},
+		})
+		t.Cleanup(srv.Close)
+		return srv.URL + "/" + name
+	case "git":
+		l, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		port := l.Addr().(*net.TCPAddr).Port
+		l.Close()
+		cmd := exec.Command("git", "daemon", "--reuseaddr", "--base-path="+parent, "--export-all",
+			"--enable=receive-pack", "--listen=127.0.0.1", "--port="+strconv.Itoa(port))
+		if err := cmd.Start(); err != nil {
+			t.Skipf("cannot start git daemon: %v", err)
+		}
+		t.Cleanup(func() {
+			cmd.Process.Kill()
+			cmd.Wait()
+		})
+		for i := 0; ; i++ {
+			conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+			if err == nil {
+				conn.Close()
+				break
+			}
+			if i == 50 {
+				t.Fatalf("git daemon did not start: %v", err)
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		return fmt.Sprintf("git://127.0.0.1:%d/%s", port, name)
+	}
+	return remoteDir
+}
+
+func TestPushRejectedOverTransports(t *testing.T) {
+	for _, transport := range []string{"local", "git", "http"} {
+		t.Run(transport, func(t *testing.T) {
+			remoteDir, err := filepath.EvalSymlinks(t.TempDir())
+			if err != nil {
+				t.Fatal(err)
+			}
+			initBareRemote(t, remoteDir)
+			for _, kv := range [][2]string{
+				{"receive.denyNonFastForwards", "true"},
+				{"http.receivepack", "true"},
+				{"uploadpack.allowFilter", "true"},
+				{"uploadpack.allowAnySHA1InWant", "true"},
+			} {
+				runGit(t, remoteDir, "config", kv[0], kv[1])
+			}
+
+			seedDir := t.TempDir()
+			cloneEmptyRemote(t, remoteDir, seedDir)
+			writeFile(t, seedDir, "README.md", "seed")
+			runGit(t, seedDir, "add", ".")
+			runGit(t, seedDir, "-c", "user.email=t@test", "-c", "user.name=t", "commit", "-m", "seed")
+			runGit(t, seedDir, "push", "origin", "main")
+
+			url := remoteURL(t, transport, remoteDir)
+			cloneA, cloneB := t.TempDir(), t.TempDir()
+			repoA, err := Clone(url, cloneA, "", "main", ".")
+			if err != nil {
+				t.Fatalf("Clone (A) failed: %v", err)
+			}
+			repoB, err := Clone(url, cloneB, "", "main", ".")
+			if err != nil {
+				t.Fatalf("Clone (B) failed: %v", err)
+			}
+			for _, r := range []*Repo{repoA, repoB} {
+				runGit(t, r.Dir, "config", "user.email", "t@test")
+				runGit(t, r.Dir, "config", "user.name", "t")
+			}
+
+			const deployBranch = "deploy/app-stage"
+			repoA.SwitchToBranch(deployBranch, "main")
+			writeFile(t, cloneA, "out.yaml", "from-a")
+			if !repoA.Commit("from A", ".") {
+				t.Fatal("expected repoA.Commit to report changes")
+			}
+			if err := repoA.Push([]string{deployBranch}); err != nil {
+				t.Fatalf("repoA.Push should succeed: %v", err)
+			}
+
+			repoB.SwitchToBranch(deployBranch, "main")
+			writeFile(t, cloneB, "out.yaml", "from-b")
+			if !repoB.Commit("from B", ".") {
+				t.Fatal("expected repoB.Commit to report changes")
+			}
+			var rejected *PushRejectedError
+			if err := repoB.Push([]string{deployBranch}); !errors.As(err, &rejected) {
+				t.Fatalf("expected a *PushRejectedError, got: %v", err)
+			}
+		})
 	}
 }
