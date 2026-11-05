@@ -33,6 +33,18 @@ func runGit(t *testing.T, dir string, args ...string) string {
 	return string(out)
 }
 
+func initBareRemote(t *testing.T, dir string) {
+	t.Helper()
+	runGit(t, "", "init", "--bare", dir)
+	runGit(t, dir, "symbolic-ref", "HEAD", "refs/heads/main")
+}
+
+func cloneEmptyRemote(t *testing.T, remoteDir, cloneDir string) {
+	t.Helper()
+	runGit(t, "", "clone", remoteDir, cloneDir)
+	runGit(t, cloneDir, "symbolic-ref", "HEAD", "refs/heads/main")
+}
+
 func writeFile(t *testing.T, dir, name, content string) {
 	t.Helper()
 	if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0644); err != nil {
@@ -42,10 +54,10 @@ func writeFile(t *testing.T, dir, name, content string) {
 
 func TestPushWithRetrySucceedsOnFirstPush(t *testing.T) {
 	remoteDir := t.TempDir()
-	runGit(t, "", "init", "--bare", "--initial-branch=main", remoteDir)
+	initBareRemote(t, remoteDir)
 
 	seedDir := t.TempDir()
-	runGit(t, "", "clone", remoteDir, seedDir)
+	cloneEmptyRemote(t, remoteDir, seedDir)
 	writeFile(t, seedDir, "README.md", "seed")
 	runGit(t, seedDir, "add", ".")
 	runGit(t, seedDir, "-c", "user.email=t@test", "-c", "user.name=t", "commit", "-m", "seed")
@@ -81,11 +93,11 @@ func TestPushWithRetrySucceedsOnFirstPush(t *testing.T) {
 
 func TestPushWithRetryRecoversFromRejection(t *testing.T) {
 	remoteDir := t.TempDir()
-	runGit(t, "", "init", "--bare", "--initial-branch=main", remoteDir)
+	initBareRemote(t, remoteDir)
 	runGit(t, remoteDir, "config", "receive.denyNonFastForwards", "true")
 
 	seedDir := t.TempDir()
-	runGit(t, "", "clone", remoteDir, seedDir)
+	cloneEmptyRemote(t, remoteDir, seedDir)
 	writeFile(t, seedDir, "README.md", "seed")
 	runGit(t, seedDir, "add", ".")
 	runGit(t, seedDir, "-c", "user.email=t@test", "-c", "user.name=t", "commit", "-m", "seed")
@@ -143,55 +155,94 @@ func TestPushWithRetryRecoversFromRejection(t *testing.T) {
 	}
 }
 
-func TestPushWithRetryStopsWhenRegenerateHasNothingToPush(t *testing.T) {
-	remoteDir := t.TempDir()
-	runGit(t, "", "init", "--bare", "--initial-branch=main", remoteDir)
+func init() {
+	pushRetryBaseDelay = 0
+}
+
+func seedRemoteWithClones(t *testing.T) (remoteDir string, a, b *git.Repo, cloneA, cloneB string) {
+	t.Helper()
+	remoteDir = t.TempDir()
+	initBareRemote(t, remoteDir)
 	runGit(t, remoteDir, "config", "receive.denyNonFastForwards", "true")
 
 	seedDir := t.TempDir()
-	runGit(t, "", "clone", remoteDir, seedDir)
+	cloneEmptyRemote(t, remoteDir, seedDir)
 	writeFile(t, seedDir, "README.md", "seed")
 	runGit(t, seedDir, "add", ".")
 	runGit(t, seedDir, "-c", "user.email=t@test", "-c", "user.name=t", "commit", "-m", "seed")
 	runGit(t, seedDir, "push", "origin", "main")
 
-	cloneA := t.TempDir()
-	repoA, err := git.Clone(remoteDir, cloneA, "", "main", ".")
-	if err != nil {
+	cloneA, cloneB = t.TempDir(), t.TempDir()
+	var err error
+	if a, err = git.Clone(remoteDir, cloneA, "", "main", "."); err != nil {
 		t.Fatalf("Clone (A) failed: %v", err)
 	}
-	cloneB := t.TempDir()
-	repoB, err := git.Clone(remoteDir, cloneB, "", "main", ".")
-	if err != nil {
+	if b, err = git.Clone(remoteDir, cloneB, "", "main", "."); err != nil {
 		t.Fatalf("Clone (B) failed: %v", err)
 	}
-	for _, r := range []*git.Repo{repoA, repoB} {
+	for _, r := range []*git.Repo{a, b} {
 		runGit(t, r.Dir, "config", "user.email", "t@test")
 		runGit(t, r.Dir, "config", "user.name", "t")
 	}
+	return
+}
 
+func commitFile(t *testing.T, r *git.Repo, dir, branch, content string) {
+	t.Helper()
+	r.SwitchToBranch(branch, "main")
+	writeFile(t, dir, "out-"+filepath.Base(branch)+".yaml", content)
+	if !r.Commit(content, ".") {
+		t.Fatalf("expected Commit to report changes on %s", branch)
+	}
+}
+
+// A lands and B is refused in the same push. After regenerating, A already matches the remote
+// so it has no changes, but it still needs its PR.
+func TestPushWithRetryKeepsLandedBranchesForPRCreation(t *testing.T) {
+	_, repoA, repoB, cloneA, cloneB := seedRemoteWithClones(t)
+	const branchA, branchB = "deploy/a", "deploy/b"
+
+	commitFile(t, repoA, cloneA, branchB, "from-concurrent-run")
+	if err := repoA.Push([]string{branchB}); err != nil {
+		t.Fatalf("concurrent push should succeed: %v", err)
+	}
+
+	commitFile(t, repoB, cloneB, branchA, "a")
+	commitFile(t, repoB, cloneB, branchB, "b")
+
+	got := pushWithRetry(repoB, func() []string {
+		repoB.Fetch("deploy/*")
+		repoB.ResyncBranchWithRemote(branchA)
+		repoB.ResyncBranchWithRemote(branchB)
+		writeFile(t, cloneB, "out-b.yaml", "b-retry")
+		repoB.SwitchToBranch(branchB, "main")
+		if !repoB.Commit("b retry", ".") {
+			t.Fatal("expected B to have changes after resync")
+		}
+		return []string{branchB}
+	}, []string{branchA, branchB})
+
+	want := map[string]bool{branchA: true, branchB: true}
+	if len(got) != 2 || !want[got[0]] || !want[got[1]] || got[0] == got[1] {
+		t.Errorf("got %v, want both %s and %s so each gets a PR", got, branchA, branchB)
+	}
+}
+
+// The push landed (or an identical push by a concurrent run did) so regenerating finds nothing
+// to commit. The branch must still be returned so its PR is created.
+func TestPushWithRetryKeepsBranchWhenRegenerateHasNothingToPush(t *testing.T) {
+	_, repoA, repoB, cloneA, cloneB := seedRemoteWithClones(t)
 	const deployBranch = "deploy/app"
 
-	repoA.SwitchToBranch(deployBranch, "main")
-	writeFile(t, cloneA, "out.yaml", "from-a")
-	if !repoA.Commit("from A", ".") {
-		t.Fatal("expected repoA.Commit to report changes")
-	}
+	commitFile(t, repoA, cloneA, deployBranch, "from-a")
 	if err := repoA.Push([]string{deployBranch}); err != nil {
 		t.Fatalf("repoA.Push should succeed: %v", err)
 	}
+	commitFile(t, repoB, cloneB, deployBranch, "from-b")
 
-	repoB.SwitchToBranch(deployBranch, "main")
-	writeFile(t, cloneB, "out.yaml", "from-b")
-	if !repoB.Commit("from B", ".") {
-		t.Fatal("expected repoB.Commit to report changes")
-	}
+	got := pushWithRetry(repoB, func() []string { return nil }, []string{deployBranch})
 
-	got := pushWithRetry(repoB, func() []string {
-		return nil
-	}, []string{deployBranch})
-
-	if got != nil {
-		t.Errorf("got %v, want nil", got)
+	if len(got) != 1 || got[0] != deployBranch {
+		t.Errorf("got %v, want [%s]", got, deployBranch)
 	}
 }

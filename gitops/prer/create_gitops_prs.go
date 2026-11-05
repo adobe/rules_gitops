@@ -40,7 +40,7 @@ import (
 const maxPushRetries = 5
 
 // pushRetryBaseDelay: attempt N waits N * pushRetryBaseDelay before retrying.
-const pushRetryBaseDelay = 5 * time.Second
+var pushRetryBaseDelay = 5 * time.Second
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -177,17 +177,36 @@ func buildReleaseTrains(
 	return updatedGitopsBranches
 }
 
+// mergeBranches appends the branches in extra that are not already in branches.
+func mergeBranches(branches, extra []string) []string {
+	seen := make(map[string]bool, len(branches))
+	for _, b := range branches {
+		seen[b] = true
+	}
+	for _, b := range extra {
+		if !seen[b] {
+			seen[b] = true
+			branches = append(branches, b)
+		}
+	}
+	return branches
+}
+
 // pushWithRetry pushes updatedGitopsBranches, calling regenerate() to rebuild them against
 // the updated remote on a rejected non-fast-forward push, up to maxPushRetries times.
+// It returns every branch that needs a PR: a branch can already have landed (or been pushed
+// identically by a concurrent run) and so have no changes left after regenerating, but its
+// PR still has to be created.
 func pushWithRetry(
 	workdir *git.Repo,
 	regenerate func() []string,
 	updatedGitopsBranches []string,
 ) []string {
+	allBranches := append([]string(nil), updatedGitopsBranches...)
 	for attempt := 1; ; attempt++ {
 		err := workdir.Push(updatedGitopsBranches)
 		if err == nil {
-			return updatedGitopsBranches
+			return allBranches
 		}
 
 		var rejected *git.PushRejectedError
@@ -207,9 +226,10 @@ func pushWithRetry(
 		time.Sleep(delay)
 
 		updatedGitopsBranches = regenerate()
+		allBranches = mergeBranches(allBranches, updatedGitopsBranches)
 		if len(updatedGitopsBranches) == 0 {
-			log.Println("no gitops changes remain after regenerating against the updated remote; nothing to push")
-			return nil
+			log.Println("no gitops changes remain after regenerating against the updated remote; nothing more to push")
+			return allBranches
 		}
 	}
 }
@@ -288,10 +308,6 @@ func main() {
 			}
 			return buildReleaseTrains(workdir, releaseTrains, gitopsdir)
 		}, updatedGitopsBranches)
-		if len(updatedGitopsBranches) == 0 {
-			log.Println("No gitops changes to push after regenerating against the updated remote")
-			return
-		}
 	}
 
 	for _, branch := range updatedGitopsBranches {
