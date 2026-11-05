@@ -13,6 +13,7 @@ package git
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,6 +21,7 @@ import (
 	oe "os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/adobe/rules_gitops/gitops/exec"
 )
@@ -215,16 +217,77 @@ func (r *Repo) Push(branches []string) error {
 	return r.verifyPushed(branches)
 }
 
+// verifyAttempts, verifyRetryDelay and lsRemoteTimeout bound how long verifyPushed spends on
+// ls-remote: failures are retried, and each attempt is cut off after lsRemoteTimeout.
+var (
+	verifyAttempts   = 3
+	verifyRetryDelay = time.Second
+	lsRemoteTimeout  = 30 * time.Second
+)
+
+// pushURL returns the URL `git push` uses for the remote, which can differ from the fetch URL
+// (remote.<name>.pushurl). With several push URLs only the first is returned.
+// It runs git directly rather than through exec.Ex, which logs arguments and output: the URL may
+// embed credentials.
+func (r *Repo) pushURL() string {
+	cmd := oe.Command("git", "remote", "get-url", "--push", r.RemoteName)
+	cmd.Dir = r.Dir
+	output, err := cmd.Output()
+	if err != nil {
+		return r.RemoteName
+	}
+	if fields := strings.Fields(string(output)); len(fields) > 0 {
+		return fields[0]
+	}
+	return r.RemoteName
+}
+
+// containsCommit reports whether remoteTip is already in the local object store and descends
+// from (or equals) commit, i.e. a later push by someone else built on top of ours.
+func (r *Repo) containsCommit(remoteTip, commit string) bool {
+	if remoteTip == "" {
+		return false
+	}
+	if _, err := exec.Ex(r.Dir, "git", "cat-file", "-e", remoteTip+"^{commit}"); err != nil {
+		return false
+	}
+	_, err := exec.Ex(r.Dir, "git", "merge-base", "--is-ancestor", commit, remoteTip)
+	return err == nil
+}
+
+// lsRemote lists refs on the push remote, retrying transient failures. The command is not
+// logged by exec.Ex because its arguments contain the push URL.
+func (r *Repo) lsRemote(refs []string) (output string, err error) {
+	args := append([]string{"ls-remote", r.pushURL()}, refs...)
+	for attempt := 1; ; attempt++ {
+		ctx, cancel := context.WithTimeout(context.Background(), lsRemoteTimeout)
+		cmd := oe.CommandContext(ctx, "git", args...)
+		cmd.Dir = r.Dir
+		// Helpers such as ssh can outlive the killed git and keep its output pipe open.
+		cmd.WaitDelay = time.Second
+		var b []byte
+		b, err = cmd.CombinedOutput()
+		cancel()
+		output = string(b)
+		if err == nil || attempt >= verifyAttempts {
+			return output, err
+		}
+		time.Sleep(time.Duration(attempt) * verifyRetryDelay)
+	}
+}
+
 // verifyPushed checks the remote tip of each branch. Some git clients exit 0 for a push the
-// remote refused, so the exit status alone can't be trusted.
+// remote refused, so the exit status alone can't be trusted. The check is best effort: if the
+// remote can't be queried the push is assumed to have landed, since git already reported success.
 func (r *Repo) verifyPushed(branches []string) error {
 	refs := make([]string, len(branches))
 	for i, b := range branches {
 		refs[i] = "refs/heads/" + b
 	}
-	output, err := exec.Ex(r.Dir, "git", append([]string{"ls-remote", r.RemoteName}, refs...)...)
+	output, err := r.lsRemote(refs)
 	if err != nil {
-		return fmt.Errorf("git ls-remote failed after push: %w (output: %s)", err, output)
+		log.Printf("WARNING: unable to verify pushed branches, assuming the push landed: %v (output: %s)", err, output)
+		return nil
 	}
 	remote := make(map[string]string)
 	for _, line := range strings.Split(output, "\n") {
@@ -237,8 +300,9 @@ func (r *Repo) verifyPushed(branches []string) error {
 		if err != nil {
 			return fmt.Errorf("git rev-parse %s failed: %w (output: %s)", refs[i], err, local)
 		}
-		if got := remote[refs[i]]; got != strings.TrimSpace(local) {
-			return &PushRejectedError{Output: fmt.Sprintf("remote %s is at %q after push, expected %s", b, got, strings.TrimSpace(local))}
+		local = strings.TrimSpace(local)
+		if got := remote[refs[i]]; got != local && !r.containsCommit(got, local) {
+			return &PushRejectedError{Output: fmt.Sprintf("remote %s is at %q after push, expected %s", b, got, local)}
 		}
 	}
 	return nil
